@@ -8,91 +8,78 @@ from oauth2client.service_account import ServiceAccountCredentials
 import time
 import base64
 
-# --- 1. PAGE CONFIG & TAB LOGO ---
+# --- 1. PAGE CONFIG & FAVICON ---
 LOGO_PATH = "backend/agribotailogo.png"
 
 st.set_page_config(
-    page_title="AgriBot-AI | Smart Management",
+    page_title="AgriBot-AI | Smart Monitor",
     page_icon=LOGO_PATH if os.path.exists(LOGO_PATH) else "🌱",
     layout="wide"
 )
 
-# --- 2. THE DESIGN MIMICRY (Modern Light UI) ---
+# --- 2. THE "LETTUCE PALETTE" ADAPTIVE CSS ---
 def get_base64(bin_file):
     with open(bin_file, 'rb') as f:
         return base64.b64encode(f.read()).decode()
 
-# Modern CSS to mimic the uploaded mockups
+# Palette: Fresh Green (#4CAF50), Deep Leaf (#2E7D32), and soft Mint washes
 css_code = """
     <style>
-    /* Main Background Color */
-    .stApp {
-        background-color: #F0F2F5;
-    }
-
-    /* Header & Decoration Removal */
+    /* 1. REMOVE STREAMLIT BRANDS */
     header {visibility: hidden;}
     [data-testid="stDecoration"] { display: none; }
     
-    /* Content Padding */
+    /* 2. ADAPTIVE BACKGROUND & PADDING */
     .block-container {
-        padding-top: 2rem !important; 
+        padding-top: 5rem !important; 
         max-width: 95% !important;
     }
 
-    /* SIDEBAR STYLING - Bigger Navigation */
+    /* 3. SIDEBAR - 1/3 Height logic for Nav */
     section[data-testid="stSidebar"] {
-        background-color: #ffffff !important;
-        border-right: 1px solid #e0e0e0;
-        width: 350px !important; /* Increased width */
-    }
-
-    /* Sidebar Radio Buttons (Pill Design) */
-    .stRadio > div {
-        gap: 15px;
-        padding-top: 20px;
+        width: 350px !important;
     }
     
-    .stRadio [data-testid="stWidgetLabel"] {
-        font-size: 1.5rem !important;
-        font-weight: 700 !important;
-        color: #333;
-        margin-bottom: 15px;
+    /* Increase Nav Menu Size */
+    .stRadio > div { gap: 20px; }
+    .stRadio label { 
+        font-size: 22px !important; 
+        font-weight: 600 !important;
+        padding: 10px !important;
     }
 
-    /* Making Nav options 1/3 height of metrics */
-    div[data-testid="stMarkdownContainer"] p {
-        font-size: 20px !important;
-    }
-
-    /* METRIC CARDS (Mimicking the image design) */
+    /* 4. METRIC BOXES - LETTUCE GRADIENT & SHADES */
     div[data-testid="stMetric"] {
-        background-color: #ffffff !important;
-        border: 1px solid #e0e0e0 !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
-        padding: 40px 20px !important; /* Taller boxes */
-        border-radius: 20px !important;
-        text-align: left !important;
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(46, 125, 50, 0.05) 100%) !important;
+        border: 2px solid #4CAF50 !important;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1) !important;
+        padding: 40px 20px !important;
+        border-radius: 24px !important;
+        transition: transform 0.3s ease;
     }
     
+    div[data-testid="stMetric"]:hover {
+        transform: translateY(-5px);
+        border-color: #81C784 !important;
+    }
+    
+    /* Sensor Text Colors */
     [data-testid="stMetricValue"] { 
-        font-size: 48px !important; 
+        font-size: 60px !important; 
         font-weight: 800 !important; 
-        color: #1a1a1a !important;
+        color: #2E7D32 !important; /* Deep Lettuce Green */
     }
     
     [data-testid="stMetricLabel"] { 
-        font-size: 18px !important; 
-        font-weight: 600 !important; 
-        color: #666 !important;
-        text-transform: uppercase;
+        font-size: 20px !important; 
+        letter-spacing: 1.5px;
+        color: #4CAF50 !important; /* Fresh Green */
     }
 
-    /* AI Status & Image Containers */
+    /* 5. AI ALERTS - Shade Matching */
     .stAlert {
         border-radius: 20px !important;
-        border: none !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+        border-left: 10px solid #2E7D32 !important;
     }
     </style>
 """
@@ -103,7 +90,7 @@ if os.path.exists(LOGO_PATH):
 
 st.markdown(css_code, unsafe_allow_html=True)
 
-# --- 3. DATA & AI LOADING (Backend remains untouched) ---
+# --- 3. DATA LOADING ---
 @st.cache_resource
 def load_assets():
     try:
@@ -129,34 +116,34 @@ def get_data():
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH, use_container_width=True)
-    st.markdown("### NAVIGATION")
-    page = st.radio("", ["📡 Live Dashboard", "📈 Environmental Analysis", "📜 History & Logs"], label_visibility="collapsed")
+    st.markdown("<br>", unsafe_allow_html=True)
+    page = st.radio("NAVIGATION", ["📡 Live Dashboard", "📈 Environmental Analysis", "📜 System Logs"])
     st.markdown("---")
-    st.markdown("#### System Status: <span style='color:#22c55e'>● Connected</span>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#4CAF50; text-align:center;'>System: ONLINE</h3>", unsafe_allow_html=True)
 
 # --- 5. DATA PROCESSING ---
 model, scaler = load_assets()
 df = get_data()
 
 if df.empty:
-    latest = {"Temperature (°C)": 0, "Humidity (%)": 0, "pH Level": 0, "Soil Moisture": 0}
+    latest = {"Temperature (°C)": "--", "Humidity (%)": "--", "pH Level": "--", "Soil Moisture": "--"}
 else:
     latest = df.iloc[-1]
 
-# --- 6. PAGE 1: LIVE MONITOR ---
+# --- 6. MAIN CONTENT ---
 if page == "📡 Live Dashboard":
-    st.title("Real-Time Monitoring")
+    st.markdown(f"<h1 style='color:#2E7D32;'>Real-Time Monitoring</h1>", unsafe_allow_html=True)
     
-    # 4 BIG WHITE CARDS (Mimicry)
+    # Adaptive Sensor Row
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Temperature", f"{latest.get('Temperature (°C)')}°C")
     m2.metric("Humidity", f"{latest.get('Humidity (%)')}%")
     m3.metric("pH Level", f"{latest.get('pH Level')}")
-    m4.metric("System", "ONLINE")
+    m4.metric("Soil Moisture", f"{latest.get('Soil Moisture', '--')}%")
 
-    st.markdown("---")
+    st.markdown("<br>", unsafe_allow_html=True)
     
-    col_cam, col_ai = st.columns([1.5, 1])
+    col_cam, col_ai = st.columns([1.6, 1])
     
     with col_cam:
         st.subheader("📸 Plant Health Feed")
@@ -165,32 +152,30 @@ if page == "📡 Live Dashboard":
             files = [f for f in os.listdir(mock_dir) if f.lower().endswith(('.png', '.jpg'))]
             if files:
                 latest_file = sorted(files)[-1]
-                st.image(os.path.join(mock_dir, latest_file), use_container_width=True, caption="Live Camera Feed")
+                st.image(os.path.join(mock_dir, latest_file), use_container_width=True)
     
     with col_ai:
-        st.subheader("🤖 AI Recommendations")
+        st.subheader("🤖 AI Health Recommendation")
         if not df.empty and model and scaler:
             try:
                 features = np.array([[float(latest['Temperature (°C)']), float(latest['Humidity (%)']), float(latest['pH Level'])]])
                 prediction = model.predict(scaler.transform(features))[0]
                 if prediction == -1:
-                    st.error("**Condition: Anomaly Detected**\n\nRecommendation: Check pH balance and irrigation flow.")
+                    st.error("### 🚨 ANOMALY DETECTED\nConditions are deviating from the 'Lettuce Optimal' range. Auto-ventilation engaged.")
                 else:
-                    st.success("**Condition: Healthy**\n\nRecommendation: Maintain current nutrient levels.")
-            except: st.info("Analyzing data...")
-        else:
-            st.info("Waiting for sensor data connection...")
+                    st.success("### ✅ HEALTHY\nEnvironment is perfectly stabilized for optimal crop growth.")
+            except: st.info("Calibrating AI...")
 
-# --- OTHER PAGES (Trends & Logs) ---
 elif page == "📈 Environmental Analysis":
-    st.title("Sensor History")
+    st.title("Growth Analytics")
     if not df.empty:
-        st.line_chart(df[['Temperature (°C)', 'Humidity (%)']].tail(100))
-        st.area_chart(df['pH Level'].tail(100))
-elif page == "📜 History & Logs":
-    st.title("Data History Table")
+        st.line_chart(df[['Temperature (°C)', 'Humidity (%)']].tail(50))
+    else: st.info("No historical data to visualize yet.")
+
+elif page == "📜 System Logs":
+    st.title("Data Records")
     st.dataframe(df.sort_index(ascending=False), use_container_width=True)
 
-# 7. REFRESH
+# --- 7. AUTO-REFRESH ---
 time.sleep(10)
 st.rerun()
