@@ -15,46 +15,52 @@ st.set_page_config(
     page_title="AgriBot-AI | Dashboard",
     page_icon=LOGO_PATH if os.path.exists(LOGO_PATH) else "🌱",
     layout="wide",
-    initial_sidebar_state="expanded" 
+    initial_sidebar_state="expanded"
 )
 
-# --- 2. CSS: PERSISTENT SIDEBAR & ALIGNMENT ---
+# --- 2. THE ULTIMATE UI CSS ---
 def get_base64(bin_file):
     with open(bin_file, 'rb') as f:
         return base64.b64encode(f.read()).decode()
 
 css_code = """
     <style>
-    /* Global Reset */
-    header {visibility: hidden;}
-    [data-testid="stDecoration"] { display: none; }
+    /* 1. SIDEBAR RETRIEVAL FIX: Ensure the toggle is NEVER hidden */
+    [data-testid="stHeader"] {
+        background-color: transparent !important;
+    }
     
-    /* 1. SIDEBAR BASE */
+    /* Style the sidebar button to look like a floating action button */
+    button[kind="headerNoSpacing"] {
+        visibility: visible !important;
+        background-color: #2E7D32 !important;
+        color: white !important;
+        border-radius: 12px !important;
+        padding: 10px 15px !important;
+        top: 15px !important;
+        left: 15px !important;
+        box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
+        transition: 0.3s;
+    }
+    
+    button[kind="headerNoSpacing"]:hover {
+        background-color: #1b5e20 !important;
+        transform: scale(1.05);
+    }
+
+    /* 2. SIDEBAR ELEMENTS (Aligned to Sketch) */
     section[data-testid="stSidebar"] {
         width: 350px !important;
         background-color: rgba(46, 125, 50, 0.05) !important;
         border-right: 2px solid #4CAF50;
     }
 
-    /* 2. PERSISTENT RETRIEVAL BUTTON (The "Where is it?" Fix) */
-    /* This styles the standard Streamlit 'open' button so it's always visible and green */
-    button[kind="headerNoSpacing"] {
-        display: flex !important;
-        visibility: visible !important;
-        left: 10px !important;
-        top: 10px !important;
-        color: #2E7D32 !important;
-        background-color: #ffffff !important;
-        border: 2px solid #4CAF50 !important;
-        border-radius: 10px !important;
-        z-index: 999999;
-    }
-
-    /* 3. ALIGNED CIRCULAR LOGO */
+    /* Circular Logo Alignment */
     [data-testid="stSidebar"] [data-testid="stImage"] {
         display: flex;
         justify-content: center;
-        padding-top: 20px;
+        padding-top: 40px !important;
+        margin-bottom: 0px !important;
     }
     
     [data-testid="stSidebar"] [data-testid="stImage"] img {
@@ -65,12 +71,10 @@ css_code = """
         object-fit: cover;
     }
 
-    /* 4. NAVIGATION ALIGNMENT (Vertical Stack) */
+    /* Navigation Stack Alignment */
     .stRadio > div {
-        gap: 10px;
-        padding: 20px 0;
-        display: flex;
-        flex-direction: column;
+        gap: 12px;
+        padding-top: 25px;
         align-items: center;
     }
     
@@ -78,23 +82,37 @@ css_code = """
         font-size: 18px !important;
         font-weight: 600 !important;
         color: #2E7D32 !important;
-        background: transparent !important;
-        border: 1px solid transparent;
-        transition: 0.3s;
-        width: 100%;
         text-align: center;
+        width: 100%;
+        padding: 10px !important;
+        border-radius: 10px;
     }
 
-    /* 5. METRIC PILLS */
+    /* 3. MAIN CONTENT: BALANCED PILLS & CARDS */
+    .block-container {
+        padding: 4rem 4rem !important;
+    }
+
     div[data-testid="stMetric"] {
         background: white !important;
         border: 2px solid #4CAF50 !important;
-        border-radius: 35px !important;
+        border-radius: 30px !important;
         padding: 20px !important;
         text-align: center !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
     }
 
-    /* Dark Mode Support */
+    /* Image Rounding for the Plant Feed */
+    [data-testid="stImage"] img {
+        border-radius: 25px !important;
+    }
+    
+    .stAlert {
+        border-radius: 25px !important;
+        padding: 1.5rem !important;
+    }
+
+    /* DARK MODE OVERRIDES */
     @media (prefers-color-scheme: dark) {
         div[data-testid="stMetric"] { background: #1a1a1a !important; }
         [data-testid="stMetricValue"] { color: #81C784 !important; }
@@ -105,7 +123,7 @@ css_code = """
 
 st.markdown(css_code, unsafe_allow_html=True)
 
-# --- 3. DATA LOADING ---
+# --- 3. DATA & ASSETS ---
 @st.cache_resource
 def load_assets():
     try:
@@ -127,30 +145,28 @@ def get_data():
         return pd.DataFrame(sheet.get_all_records())
     except: return pd.DataFrame()
 
-# --- 4. SIDEBAR (LOGO + NAV) ---
+# --- 4. SIDEBAR ---
 with st.sidebar:
-    # Centered Logo aligned with Nav
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH)
     
     st.markdown("<h2 style='text-align: center; color: #2E7D32; margin-top: -10px;'>AgriBot-AI</h2>", unsafe_allow_html=True)
-    st.markdown("<div style='height: 2px; background-color: #4CAF50; margin: 10px 40px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 2px; background-color: #4CAF50; margin: 5px 60px;'></div>", unsafe_allow_html=True)
     
-    # Navigation list
-    page = st.radio("", ["📡 DASHBOARD", "📈 ANALYSIS", "📜 LOGS"], label_visibility="collapsed")
+    page = st.radio("", ["📡 LIVE DASHBOARD", "📈 ANALYSIS", "📜 SYSTEM LOGS"], label_visibility="collapsed")
     
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.success("🟢 SYSTEM: ONLINE")
 
-# --- 5. MAIN PAGE ---
+# --- 5. MAIN CONTENT ---
 model, scaler = load_assets()
 df = get_data()
 latest = df.iloc[-1] if not df.empty else {"Temperature (°C)": "--", "Humidity (%)": "--", "pH Level": "--", "Soil Moisture": "--"}
 
-if page == "📡 DASHBOARD":
+if page == "📡 LIVE DASHBOARD":
     st.title("Real-Time Monitoring")
     
-    # SENSOR PILLS
+    # ROW 1: SENSOR PILLS
     m1, m2, m3, m4 = st.columns(4)
     with m1: st.metric("TEMP", f"{latest.get('Temperature (°C)')}°C")
     with m2: st.metric("HUMIDITY", f"{latest.get('Humidity (%)')}%")
@@ -159,9 +175,10 @@ if page == "📡 DASHBOARD":
 
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # CONTENT GRID
-    col_l, col_r = st.columns([1.2, 1], gap="large")
-    with col_l:
+    # ROW 2: BALANCED SPLIT
+    col_left, col_right = st.columns([1.2, 1], gap="large")
+    
+    with col_left:
         st.subheader("📸 Plant Health Feed")
         mock_dir = "backend/mock_images"
         if os.path.exists(mock_dir):
@@ -169,17 +186,19 @@ if page == "📡 DASHBOARD":
             if files:
                 st.image(os.path.join(mock_dir, sorted(files)[-1]), use_container_width=True)
     
-    with col_r:
-        st.subheader("🤖 AI Health Status")
+    with col_right:
+        st.subheader("🤖 AI Analysis")
         if not df.empty and model and scaler:
             try:
                 features = np.array([[float(latest['Temperature (°C)']), float(latest['Humidity (%)']), float(latest['pH Level'])]])
                 pred = model.predict(scaler.transform(features))[0]
                 if pred == -1:
-                    st.error("### 🚨 ALERT\nAnomalies detected in crop environment.")
+                    st.error("### 🚨 ANOMALY\nAbnormal conditions detected. Checking water supply...")
                 else:
-                    st.success("### ✅ OPTIMAL\nGrowth conditions are stabilized.")
-            except: st.info("Syncing...")
+                    st.success("### ✅ HEALTHY\nCrop environment is optimal for growth.")
+            except: st.info("Analyzing data...")
+        else:
+            st.warning("Connecting to sensor database...")
 
 # --- 6. AUTO-REFRESH ---
 time.sleep(10)
