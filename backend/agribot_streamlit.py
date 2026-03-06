@@ -14,91 +14,86 @@ LOGO_PATH = "backend/agribotailogo.png"
 st.set_page_config(
     page_title="AgriBot-AI | Dashboard",
     page_icon=LOGO_PATH if os.path.exists(LOGO_PATH) else "🌱",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded" # Ensures it starts open
 )
 
-# --- 2. CSS: CIRCULAR LOGO & BALANCED GRID ---
+# --- 2. CSS: ALIGNED LOGO & SIDEBAR PERSISTENCE ---
 def get_base64(bin_file):
     with open(bin_file, 'rb') as f:
         return base64.b64encode(f.read()).decode()
 
 css_code = """
     <style>
+    /* Global Reset */
     header {visibility: hidden;}
     [data-testid="stDecoration"] { display: none; }
     
-    .block-container {
-        padding: 3rem 5rem !important;
-        max-width: 100% !important;
-    }
-
-    /* SIDEBAR STYLING */
+    /* 1. SIDEBAR ALIGNMENT & WIDTH */
     section[data-testid="stSidebar"] {
         width: 350px !important;
         background-color: rgba(46, 125, 50, 0.05) !important;
         border-right: 2px solid #4CAF50;
     }
 
-    /* THE CIRCULAR LOGO HACK */
-    /* Target the sidebar image specifically to make it a circle */
+    /* 2. CIRCULAR LOGO - Aligned to Nav Elements */
+    [data-testid="stSidebar"] [data-testid="stImage"] {
+        text-align: center;
+        padding-bottom: 0px !important;
+    }
+    
     [data-testid="stSidebar"] [data-testid="stImage"] img {
         border-radius: 50% !important;
         border: 4px solid #4CAF50 !important;
         object-fit: cover;
-        width: 200px !important;
-        height: 200px !important;
-        margin-left: auto;
-        margin-right: auto;
-        display: block;
+        width: 180px !important; /* Slightly smaller for better nav alignment */
+        height: 180px !important;
+        margin: 0 auto !important;
     }
-    
-    /* Nav Menu Spacing */
+
+    /* 3. NAVIGATION SYMMETRY */
     .stRadio > div {
-        gap: 25px;
-        padding-top: 30px;
+        gap: 15px;
+        padding-top: 20px;
+        align-items: center; /* Center nav items with the logo above */
     }
     
     .stRadio label {
-        font-size: 22px !important;
+        font-size: 20px !important;
         font-weight: 600 !important;
         color: #2E7D32 !important;
+        text-align: center;
+        width: 100%;
     }
 
-    /* METRIC PILLS */
+    /* 4. THE "BACK" BUTTON (Sidebar Toggle) Fix */
+    /* This ensures the arrow to bring the sidebar back is always visible and green */
+    button[kind="headerNoSpacing"] {
+        color: #4CAF50 !important;
+        background-color: white !important;
+        border-radius: 50% !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    /* 5. METRIC PILLS & CONTENT */
     div[data-testid="stMetric"] {
         background: #ffffff !important;
         border: 2px solid #4CAF50 !important;
-        padding: 25px !important;
+        padding: 20px !important;
         border-radius: 35px !important;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important;
         text-align: center !important;
     }
 
-    /* IMAGE & ALERT ROUNDING */
-    [data-testid="stImage"] img {
-        border-radius: 30px !important;
-    }
-    
-    .stAlert {
-        border-radius: 30px !important;
-    }
-
-    /* DARK MODE ADAPTIVE */
     @media (prefers-color-scheme: dark) {
         div[data-testid="stMetric"] { background: #1a1a1a !important; }
         [data-testid="stMetricValue"] { color: #81C784 !important; }
-        section[data-testid="stSidebar"] { background-color: #0E1117 !important; }
     }
     </style>
 """
 
-if os.path.exists(LOGO_PATH):
-    bin_str = get_base64(LOGO_PATH)
-    st.markdown(f'<link rel="icon" href="data:image/png;base64,{bin_str}">', unsafe_allow_html=True)
-
 st.markdown(css_code, unsafe_allow_html=True)
 
-# --- 3. BACKEND LOADING ---
+# --- 3. DATA & ASSETS ---
 @st.cache_resource
 def load_assets():
     try:
@@ -120,28 +115,30 @@ def get_data():
         return pd.DataFrame(sheet.get_all_records())
     except: return pd.DataFrame()
 
-# --- 4. SIDEBAR ---
+# --- 4. SIDEBAR (LOGO + NAV) ---
 with st.sidebar:
-    st.markdown("<br>", unsafe_allow_html=True)
+    # Logo positioned at top center to align with navigation below
     if os.path.exists(LOGO_PATH):
-        # Image will now be circular due to CSS above
         st.image(LOGO_PATH)
     
-    st.markdown("<h2 style='text-align: center; color: #2E7D32;'>AgriBot-AI</h2>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: #2E7D32; margin-top: -10px;'>AgriBot-AI</h3>", unsafe_allow_html=True)
     st.markdown("---")
-    page = st.radio("SELECT VIEW", ["📡 LIVE DASHBOARD", "📈 ANALYSIS", "📜 LOGS"], label_visibility="collapsed")
+    
+    # Navigation list is now visually centered under the logo
+    page = st.radio("", ["📡 LIVE MONITOR", "📈 GROWTH TRENDS", "📜 SYSTEM LOGS"], label_visibility="collapsed")
+    
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.success("🟢 SYSTEM ONLINE")
 
-# --- 5. MAIN PAGE ---
+# --- 5. MAIN CONTENT ---
 model, scaler = load_assets()
 df = get_data()
 latest = df.iloc[-1] if not df.empty else {"Temperature (°C)": "--", "Humidity (%)": "--", "pH Level": "--", "Soil Moisture": "--"}
 
-if page == "📡 LIVE DASHBOARD":
-    st.markdown("<h1 style='text-align: left;'>Real-Time Monitoring</h1>", unsafe_allow_html=True)
+if page == "📡 LIVE MONITOR":
+    st.title("Real-Time Monitoring")
     
-    # SENSOR ROW
+    # PILL SENSORS
     m1, m2, m3, m4 = st.columns(4)
     with m1: st.metric("TEMP", f"{latest.get('Temperature (°C)')}°C")
     with m2: st.metric("HUMIDITY", f"{latest.get('Humidity (%)')}%")
@@ -150,10 +147,9 @@ if page == "📡 LIVE DASHBOARD":
 
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # SPLIT CONTENT
-    col_left, col_right = st.columns([1.2, 1], gap="large")
-    
-    with col_left:
+    # SPLIT VIEW
+    col_l, col_r = st.columns([1.2, 1], gap="large")
+    with col_l:
         st.subheader("📸 Plant Health Feed")
         mock_dir = "backend/mock_images"
         if os.path.exists(mock_dir):
@@ -161,17 +157,17 @@ if page == "📡 LIVE DASHBOARD":
             if files:
                 st.image(os.path.join(mock_dir, sorted(files)[-1]), use_container_width=True)
     
-    with col_right:
-        st.subheader("🤖 AI Recommendation")
+    with col_r:
+        st.subheader("🤖 AI Analysis")
         if not df.empty and model and scaler:
             try:
                 features = np.array([[float(latest['Temperature (°C)']), float(latest['Humidity (%)']), float(latest['pH Level'])]])
                 pred = model.predict(scaler.transform(features))[0]
                 if pred == -1:
-                    st.error("### 🚨 ATTENTION\nConditions unstable. Adjusting irrigation and airflow.")
+                    st.error("### 🚨 ANOMALY\nUnusual sensor patterns detected. Checking irrigation valves...")
                 else:
-                    st.success("### ✅ OPTIMAL\nPlant environment is stable. Healthy growth in progress.")
-            except: st.info("Analyzing...")
+                    st.success("### ✅ HEALTHY\nConditions are optimal for lettuce growth.")
+            except: st.info("Syncing AI...")
 
 # --- 6. AUTO-REFRESH ---
 time.sleep(10)
