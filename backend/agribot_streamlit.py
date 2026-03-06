@@ -17,78 +17,77 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- 2. BALANCED GRID CSS (Mimicking your Drawing) ---
+# --- 2. CSS: CIRCULAR LOGO & BALANCED GRID ---
 def get_base64(bin_file):
     with open(bin_file, 'rb') as f:
         return base64.b64encode(f.read()).decode()
 
 css_code = """
     <style>
-    /* Global Reset */
     header {visibility: hidden;}
     [data-testid="stDecoration"] { display: none; }
     
-    /* Main Content Spacing - Balanced */
     .block-container {
         padding: 3rem 5rem !important;
         max-width: 100% !important;
     }
 
-    /* SIDEBAR - Unified with Logo as per sketch */
+    /* SIDEBAR STYLING */
     section[data-testid="stSidebar"] {
         width: 350px !important;
         background-color: rgba(46, 125, 50, 0.05) !important;
         border-right: 2px solid #4CAF50;
     }
+
+    /* THE CIRCULAR LOGO HACK */
+    /* Target the sidebar image specifically to make it a circle */
+    [data-testid="stSidebar"] [data-testid="stImage"] img {
+        border-radius: 50% !important;
+        border: 4px solid #4CAF50 !important;
+        object-fit: cover;
+        width: 200px !important;
+        height: 200px !important;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+    }
     
-    /* Navigation Menu Spacing (1/3 height logic) */
+    /* Nav Menu Spacing */
     .stRadio > div {
-        gap: 30px;
-        padding-top: 50px;
+        gap: 25px;
+        padding-top: 30px;
     }
     
     .stRadio label {
-        font-size: 24px !important;
+        font-size: 22px !important;
         font-weight: 600 !important;
         color: #2E7D32 !important;
-        padding: 15px !important;
-        border-radius: 12px;
     }
 
-    /* THE METRIC CARDS - Rounded Pills from Sketch */
+    /* METRIC PILLS */
     div[data-testid="stMetric"] {
         background: #ffffff !important;
         border: 2px solid #4CAF50 !important;
         padding: 25px !important;
-        border-radius: 30px !important; /* Rounded pill style from drawing */
+        border-radius: 35px !important;
         box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important;
         text-align: center !important;
     }
 
-    /* LARGE TITLES */
-    h1, h2, h3 {
-        color: #2E7D32 !important;
-        font-family: 'Inter', sans-serif;
-    }
-
-    /* CARD BALANCING: Plant Feed & AI Status */
-    .element-container img {
-        border-radius: 25px;
-        border: 2px solid #4CAF50;
+    /* IMAGE & ALERT ROUNDING */
+    [data-testid="stImage"] img {
+        border-radius: 30px !important;
     }
     
     .stAlert {
-        border-radius: 25px !important;
-        padding: 2rem !important;
+        border-radius: 30px !important;
     }
 
-    /* DARK/WHITE MODE ADAPTIVE TEXT */
+    /* DARK MODE ADAPTIVE */
     @media (prefers-color-scheme: dark) {
         div[data-testid="stMetric"] { background: #1a1a1a !important; }
         [data-testid="stMetricValue"] { color: #81C784 !important; }
-    }
-    @media (prefers-color-scheme: light) {
-        [data-testid="stMetricValue"] { color: #2E7D32 !important; }
+        section[data-testid="stSidebar"] { background-color: #0E1117 !important; }
     }
     </style>
 """
@@ -99,7 +98,7 @@ if os.path.exists(LOGO_PATH):
 
 st.markdown(css_code, unsafe_allow_html=True)
 
-# --- 3. ASSET LOADING ---
+# --- 3. BACKEND LOADING ---
 @st.cache_resource
 def load_assets():
     try:
@@ -121,33 +120,37 @@ def get_data():
         return pd.DataFrame(sheet.get_all_records())
     except: return pd.DataFrame()
 
-# --- 4. SIDEBAR (LOGO + NAV) ---
+# --- 4. SIDEBAR ---
 with st.sidebar:
+    st.markdown("<br>", unsafe_allow_html=True)
     if os.path.exists(LOGO_PATH):
-        st.image(LOGO_PATH, use_container_width=True)
+        # Image will now be circular due to CSS above
+        st.image(LOGO_PATH)
+    
+    st.markdown("<h2 style='text-align: center; color: #2E7D32;'>AgriBot-AI</h2>", unsafe_allow_html=True)
     st.markdown("---")
-    page = st.radio("MAIN MENU", ["📡 LIVE DASHBOARD", "📈 ANALYSIS", "📜 LOGS"], label_visibility="collapsed")
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
-    st.success("🟢 SYSTEM: ONLINE")
+    page = st.radio("SELECT VIEW", ["📡 LIVE DASHBOARD", "📈 ANALYSIS", "📜 LOGS"], label_visibility="collapsed")
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.success("🟢 SYSTEM ONLINE")
 
-# --- 5. CONTENT ---
+# --- 5. MAIN PAGE ---
 model, scaler = load_assets()
 df = get_data()
 latest = df.iloc[-1] if not df.empty else {"Temperature (°C)": "--", "Humidity (%)": "--", "pH Level": "--", "Soil Moisture": "--"}
 
 if page == "📡 LIVE DASHBOARD":
-    st.title("Real-Time Monitoring")
+    st.markdown("<h1 style='text-align: left;'>Real-Time Monitoring</h1>", unsafe_allow_html=True)
     
-    # ROW 1: SENSOR PILLS (Top of your sketch)
+    # SENSOR ROW
     m1, m2, m3, m4 = st.columns(4)
     with m1: st.metric("TEMP", f"{latest.get('Temperature (°C)')}°C")
     with m2: st.metric("HUMIDITY", f"{latest.get('Humidity (%)')}%")
     with m3: st.metric("PH", f"{latest.get('pH Level')}")
     with m4: st.metric("SOIL", f"{latest.get('Soil Moisture')}%")
 
-    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
     
-    # ROW 2: SPLIT VIEW (Plant Health vs AI Recommendations)
+    # SPLIT CONTENT
     col_left, col_right = st.columns([1.2, 1], gap="large")
     
     with col_left:
@@ -165,13 +168,11 @@ if page == "📡 LIVE DASHBOARD":
                 features = np.array([[float(latest['Temperature (°C)']), float(latest['Humidity (%)']), float(latest['pH Level'])]])
                 pred = model.predict(scaler.transform(features))[0]
                 if pred == -1:
-                    st.error("### 🚨 ATTENTION\nAbnormal conditions detected. Check pH and humidity levels.")
+                    st.error("### 🚨 ATTENTION\nConditions unstable. Adjusting irrigation and airflow.")
                 else:
-                    st.success("### ✅ OPTIMAL\nEnvironment is stabilized. No action required.")
-            except: st.info("Calibrating...")
-        else:
-            st.info("Awaiting sensor handshake...")
+                    st.success("### ✅ OPTIMAL\nPlant environment is stable. Healthy growth in progress.")
+            except: st.info("Analyzing...")
 
-# --- REFRESH ---
+# --- 6. AUTO-REFRESH ---
 time.sleep(10)
 st.rerun()
