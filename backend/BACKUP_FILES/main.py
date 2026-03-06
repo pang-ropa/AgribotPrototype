@@ -1,17 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import random
-import time
-import os
 import gspread
 import joblib
 import numpy as np
+import os
 from oauth2client.service_account import ServiceAccountCredentials
+from datetime import datetime
 
 app = FastAPI()
 
-# 1. SECURITY: ENABLE CORS
+# 1. ENABLE CORS (Required for your index.html to talk to this script)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,79 +18,66 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 2. LOAD LAWRENCE'S AI (Anomaly Detection Model)
-# These files must be in the same folder as main.py
+# 2. LOAD AI MODELS
 try:
     model = joblib.load('anomaly_model.pkl')
     scaler = joblib.load('anomaly_scaler.pkl')
-    print("✓ SUCCESS: Real ML Anomaly Model Loaded")
-except Exception as e:
-    print(f"⚠ WARNING: Model files not found. Using simulation mode. Error: {e}")
+    print("✓ AI Models Loaded")
+except:
     model, scaler = None, None
+    print("⚠ AI Models not found - running in sensor-only mode")
 
-# 3. GOOGLE SHEETS SETUP
-# Requires 'credentials.json' in the backend folder
-sheet = None
-try:
-    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
-    client = gspread.authorize(creds)
-    # Ensure the Sheet name matches exactly
-    spreadsheet = client.open("Agribot-AI-datasheet") 
-    sheet = spreadsheet.sheet1
-    print("✓ SUCCESS: Google Sheets Connected")
-except Exception as e:
-    print(f"⚠ WARNING: Google Sheets not connected. Check credentials.json. Error: {e}")
-
-# 4. STATIC FILES (For Lettuce Images)
+# 3. MOUNT IMAGES FOLDER (For your Live AI Analysis feed)
 if not os.path.exists("mock_images"):
     os.makedirs("mock_images")
 app.mount("/images", StaticFiles(directory="mock_images"), name="images")
 
-# 5. THE AI LOGIC (Integrated from Lawrence's anomaly_utility.py)
-def analyze_environment(temp, hum, ph):
-    if model and scaler:
-        # Prepare data for Lawrence's Isolation Forest model
-        X = np.array([[temp, hum, ph]])
-        X_normalized = scaler.transform(X)
-        prediction = model.predict(X_normalized)[0] 
-        
-        # 1 = Normal, -1 = Anomaly
-        if prediction == -1:
-            return "Anomaly Detected", "Warning: Environmental levels are abnormal!"
-        return "Normal", "System conditions are stable."
-    
-    # Fallback if no model is present
-    return "Simulating", "Add model files to enable real AI."
+# 4. GOOGLE SHEETS CONNECTION
+def get_latest_from_sheets():
+    try:
+        scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+        creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+        client = gspread.authorize(creds)
+        sheet = client.open("Agribot-AI-datasheet").sheet1
+        data = sheet.get_all_records()
+        return data[-1] if data else None
+    except Exception as e:
+        print(f"Error fetching from Sheets: {e}")
+        return None
 
+# 5. THE API ENDPOINT (Your index.html calls this every 3 seconds)
 @app.get("/system-data")
 async def get_system_data():
-    # Simulate current readings
-    temp = round(random.uniform(20.0, 35.0), 1)
-    hum = round(random.uniform(50.0, 90.0), 1)
-    ph = round(random.uniform(5.0, 8.0), 1)
+    row = get_latest_from_sheets()
     
-    # Run Real AI Analysis
-    status, advice = analyze_environment(temp, hum, ph)
+    # Default values if sheet is empty
+    temp = row.get('Temperature (°C)', 0) if row else 0
+    hum = row.get('Humidity (%)', 0) if row else 0
+    ph = row.get('pH Level', 0) if row else 0
     
-    # Pick a random lettuce image for the feed
-    images = os.listdir("mock_images")
-    selected_img = random.choice(images) if images else ""
-    
-    payload = {
-        "sensors": {"temp": temp, "ph": ph, "humidity": hum},
-        "ai_analysis": {"status": status, "image": selected_img, "advice": advice},
-        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-    }
+    # AI Inference
+    status = "Normal"
+    advice = "System conditions are stable."
+    if model and scaler:
+        features = np.array([[temp, hum, ph]])
+        prediction = model.predict(scaler.transform(features))[0]
+        if prediction == -1:
+            status = "Anomaly Detected"
+            advice = "Warning: Environmental levels are abnormal! Check pH and Ventilation."
 
-    # Upload to Google Sheets if connected
-    if sheet:
-        try:
-            sheet.append_row([payload["timestamp"], temp, hum, ph, status])
-        except Exception as e:
-            print(f"Upload failed: {e}")
-            
-    return payload
+    # Get the latest image from the folder
+    images = os.listdir("mock_images")
+    selected_img = images[-1] if images else "loading.jpg"
+
+    return {
+        "sensors": {"temp": temp, "humidity": hum, "ph": ph},
+        "ai_analysis": {
+            "status": status, 
+            "advice": advice,
+            "image": selected_img
+        },
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
 
 if __name__ == "__main__":
     import uvicorn
