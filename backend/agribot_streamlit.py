@@ -6,9 +6,9 @@ import numpy as np
 import os
 from oauth2client.service_account import ServiceAccountCredentials
 import time
+import base64
 
-# 1. PAGE CONFIG & FAVICON (Tab Logo)
-# MUST BE THE FIRST COMMAND
+# --- 1. SET PAGE CONFIG (MUST BE FIRST) ---
 LOGO_PATH = "backend/agribotailogo.png"
 
 st.set_page_config(
@@ -17,44 +17,60 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. THE "FORCE LOGO" & THEME FIX
-# This piece of code forces the browser to replace the Streamlit Crown with your logo
-if os.path.exists(LOGO_PATH):
-    import base64
-    def get_base64(bin_file):
-        with open(bin_file, 'rb') as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
-    
-    bin_str = get_base64(LOGO_PATH)
-    st.markdown(f"""
-        <link rel="icon" href="data:image/png;base64,{bin_str}">
-        <style>
-            /* HIDE THE RED LINE AT TOP */
-            [data-testid="stDecoration"] {{ display: none; }}
-            
-            /* PUSH EVERYTHING DOWN SO IT'S VISIBLE */
-            .block-container {{
-                padding-top: 5rem !important; 
-                max-width: 95% !important;
-            }}
+# --- 2. THE "FAVICON & HEADER" HACK ---
+# This forces the browser to show your logo in the tab and clears the red header line
+def get_base64(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
 
-            /* ADAPTIVE BOXES - FORCE VISIBILITY */
-            div[data-testid="stMetric"] {{
-                background-color: rgba(34, 197, 94, 0.1); 
-                border: 3px solid #22c55e;
-                padding: 25px !important;
-                border-radius: 15px;
-                text-align: center;
-            }}
-            
-            /* BIG TEXT FOR ELDERLY */
-            [data-testid="stMetricValue"] {{ font-size: 55px !important; font-weight: 900 !important; }}
-            [data-testid="stMetricLabel"] {{ font-size: 22px !important; font-weight: 700 !important; }}
-        </style>
+header_html = ""
+if os.path.exists(LOGO_PATH):
+    bin_str = get_base64(LOGO_PATH)
+    header_html = f'<link rel="icon" href="data:image/png;base64,{bin_str}">'
+
+st.markdown(header_html + """
+    <style>
+    /* 1. HIDE THE RED DECORATION LINE */
+    [data-testid="stDecoration"] { display: none; }
+    
+    /* 2. PUSH EVERYTHING DOWN (Fixes the "cut off" issue at the top) */
+    .block-container {
+        padding-top: 5.5rem !important; 
+        padding-bottom: 2rem !important;
+        max-width: 95% !important;
+    }
+
+    /* 3. BIG METRIC BOXES - ADAPTIVE COLORS */
+    div[data-testid="stMetric"] {
+        background-color: rgba(34, 197, 94, 0.1); 
+        border: 3px solid #22c55e;
+        padding: 25px !important;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* 4. MASSIVE TEXT FOR ELDERLY VISIBILITY */
+    [data-testid="stMetricValue"] { 
+        font-size: 65px !important; 
+        font-weight: 900 !important; 
+    }
+    
+    [data-testid="stMetricLabel"] { 
+        font-size: 24px !important; 
+        font-weight: 700 !important;
+        text-transform: uppercase;
+        color: #22c55e !important;
+    }
+
+    /* 5. SIDEBAR CLEANUP */
+    section[data-testid="stSidebar"] { padding-top: 0px; }
+    .stRadio > label { font-size: 22px !important; font-weight: bold !important; }
+    </style>
     """, unsafe_allow_html=True)
 
-# 3. DATA & AI LOADING
+# --- 3. DATA & AI LOADING ---
 @st.cache_resource
 def load_assets():
     try:
@@ -63,7 +79,7 @@ def load_assets():
         return model, scaler
     except: return None, None
 
-def get_data(sheet_name):
+def get_data():
     try:
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         if "gcp_service_account" in st.secrets:
@@ -72,11 +88,12 @@ def get_data(sheet_name):
         else:
             creds = ServiceAccountCredentials.from_json_keyfile_name('backend/credentials.json', scope)
         client = gspread.authorize(creds)
-        sheet = client.open(sheet_name).sheet1
+        # ONLY READS LIVE DATA FOR FARMERS
+        sheet = client.open("Agribot-Live-Data").sheet1
         return pd.DataFrame(sheet.get_all_records())
     except: return pd.DataFrame()
 
-# 4. SIDEBAR
+# --- 4. SIDEBAR ---
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH, use_container_width=True)
@@ -86,25 +103,24 @@ with st.sidebar:
     st.markdown("---")
     page = st.radio("GO TO:", ["📡 LIVE MONITOR", "📈 TRENDS", "📜 LOGS"], index=0)
     st.markdown("---")
-    st.info("System: Monitoring Active")
+    st.info("System: Active")
 
-# 5. DATA PROCESSING
+# --- 5. DATA PROCESSING ---
 model, scaler = load_assets()
-df_live = get_data("Agribot-Live-Data")
+df = get_data()
 
-# --- AUTO-APPEAR LOGIC ---
-# If the sheet is empty, we show "Empty" boxes so the user sees the design
-if df_live.empty:
+# PLACEHOLDER LOGIC: If sheet is empty, show "--" so boxes don't disappear
+if df.empty:
     latest = {"Temperature (°C)": "--", "Humidity (%)": "--", "pH Level": "--", "Soil Moisture": "--"}
-    st.warning("📡 WAITING FOR RASPBERRY PI... The boxes will update once the sensor starts.")
+    st.warning("📡 SEARCHING FOR PI... Boxes will update once data arrives.")
 else:
-    latest = df_live.iloc[-1]
+    latest = df.iloc[-1]
 
-# --- PAGE 1: LIVE MONITOR ---
+# --- 6. PAGE 1: LIVE MONITOR ---
 if page == "📡 LIVE MONITOR":
     st.header("GREENHOUSE REAL-TIME STATUS")
     
-    # THE BOXES ARE BACK (Static placeholders if no data, real numbers if data exists)
+    # THE 4 BIG BOXES
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("TEMP", f"{latest.get('Temperature (°C)')}°C")
     m2.metric("HUMIDITY", f"{latest.get('Humidity (%)')}%")
@@ -116,7 +132,7 @@ if page == "📡 LIVE MONITOR":
     col_cam, col_ai = st.columns([1.5, 1])
     
     with col_cam:
-        st.subheader("📸 LATEST PHOTO")
+        st.subheader("📸 LATEST PLANT PHOTO")
         mock_dir = "backend/mock_images"
         if os.path.exists(mock_dir):
             files = [f for f in os.listdir(mock_dir) if f.lower().endswith(('.png', '.jpg'))]
@@ -124,29 +140,42 @@ if page == "📡 LIVE MONITOR":
                 latest_file = sorted(files)[-1]
                 st.image(os.path.join(mock_dir, latest_file), use_container_width=True)
             else: st.info("No photos yet.")
+        else: st.info("Create folder: backend/mock_images")
     
     with col_ai:
-        st.subheader("🤖 AI ANALYSIS")
-        # Only try to predict if we actually have numbers (not "--")
-        if not df_live.empty and model and scaler:
-            features = np.array([[latest['Temperature (°C)'], latest['Humidity (%)'], latest['pH Level']]])
-            prediction = model.predict(scaler.transform(features))[0]
-            if prediction == -1: st.error("### 🚨 ALERT: ANOMALY")
-            else: st.success("### ✅ STATUS: NORMAL")
+        st.subheader("🤖 AI ADVICE")
+        if not df.empty and model and scaler:
+            try:
+                features = np.array([[float(latest['Temperature (°C)']), float(latest['Humidity (%)']), float(latest['pH Level'])]])
+                prediction = model.predict(scaler.transform(features))[0]
+                if prediction == -1:
+                    st.error("### 🚨 ALERT: ANOMALY\nCheck environment immediately!")
+                else:
+                    st.success("### ✅ STATUS: OPTIMAL\nPlants are doing great.")
+            except: st.info("AI warming up...")
         else:
-            st.info("AI waiting for sensor data...")
+            st.info("AI waiting for data...")
+        
+        st.markdown("---")
+        st.write("**MANUAL OVERRIDE:**")
+        st.toggle("WATER PUMP", value=False)
+        st.toggle("FANS", value=False)
 
-# --- OTHER PAGES ---
+# --- PAGE 2: TRENDS ---
 elif page == "📈 TRENDS":
     st.header("PERFORMANCE HISTORY")
-    if not df_live.empty:
-        st.line_chart(df_live[['Temperature (°C)', 'Humidity (%)']].tail(50))
-    else: st.write("No data to graph yet.")
+    if not df.empty:
+        st.subheader("Air Conditions")
+        st.line_chart(df[['Temperature (°C)', 'Humidity (%)']].tail(100))
+        st.subheader("pH Level")
+        st.area_chart(df['pH Level'].tail(100))
+    else: st.write("Waiting for data to graph...")
 
+# --- PAGE 3: LOGS ---
 elif page == "📜 LOGS":
     st.header("DATA RECORDS")
-    st.dataframe(df_live.sort_index(ascending=False), use_container_width=True)
+    st.dataframe(df.sort_index(ascending=False), use_container_width=True)
 
-# 6. REFRESH
+# --- 7. REFRESH ---
 time.sleep(10)
 st.rerun()
