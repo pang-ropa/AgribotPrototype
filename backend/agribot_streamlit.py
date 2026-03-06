@@ -8,51 +8,48 @@ from oauth2client.service_account import ServiceAccountCredentials
 import time
 
 # 1. PAGE CONFIG
-st.set_page_config(page_title="AgriBot-AI | Smart Management", layout="wide", page_icon="🌱")
+st.set_page_config(page_title="AgriBot-AI | Monitor", layout="wide")
 
-# 2. BALANCED UI & NAVIGATION STYLING
+# 2. ELDERLY-FRIENDLY UI STYLING (High Contrast, Big Text)
 st.markdown("""
     <style>
-    /* Main App Background */
-    .stApp { background-color: #0e1117; color: #ffffff; }
+    /* Dark background for high contrast */
+    .stApp { background-color: #050505; color: #ffffff; }
 
-    /* Sidebar Title Spacing */
-    .sidebar-title {
-        padding-top: 20px;
-        padding-bottom: 20px;
-        text-align: center;
-        font-size: 28px !important;
-        font-weight: 700;
-        color: #22c55e;
-    }
-
-    /* Making Navigation Radio Buttons Bigger */
-    div[data-testid="stSidebarNav"] { padding-top: 2rem; }
+    /* HUGE Sidebar Title and Navigation */
+    .sidebar-logo { text-align: center; margin-bottom: 10px; }
+    .st-emotion-cache-17l363p { font-size: 24px !important; font-weight: bold; } /* Sidebar labels */
     
-    /* Target the radio button labels specifically */
-    div[data-testid="stWidgetLabel"] p {
-        font-size: 18px !important;
-        font-weight: 600 !important;
-        margin-bottom: 10px !important;
-    }
-    
-    .st-bc { font-size: 18px !important; } /* Radio text size */
-
-    /* Balanced Container for Metrics */
+    /* BIG METRIC CARDS - No extra space */
     div[data-testid="stMetric"] {
-        background-color: #161b22;
-        border: 1px solid #22c55e;
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+        background-color: #111111;
+        border: 2px solid #22c55e;
+        padding: 15px !important;
+        border-radius: 10px;
+        text-align: center;
+    }
+    
+    /* Make the numbers MASSIVE for easy reading */
+    [data-testid="stMetricValue"] { 
+        font-size: 50px !important; 
+        font-weight: 800 !important; 
+        color: #22c55e !important;
+    }
+    [data-testid="stMetricLabel"] { 
+        font-size: 20px !important; 
+        color: #ffffff !important; 
+        text-transform: uppercase;
     }
 
-    /* Constrain main content width for better alignment */
+    /* Tighten the block spacing */
     .block-container {
-        max-width: 1300px;
-        padding-left: 5rem;
-        padding-right: 5rem;
+        padding-top: 1rem !important;
+        padding-bottom: 0rem !important;
+        max-width: 95% !important;
     }
+
+    /* Big Bold Buttons/Toggles */
+    .stHeader { font-size: 30px !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -78,85 +75,76 @@ def get_data(sheet_name):
         return pd.DataFrame(sheet.get_all_records())
     except: return pd.DataFrame()
 
-# 4. SIDEBAR - SPACED & BALANCED
+# 4. SIDEBAR - SIMPLE & BIG
 with st.sidebar:
-    st.markdown('<div class="sidebar-title">🌱 AgriBot-AI</div>', unsafe_allow_html=True)
-    st.markdown("---")
-    
-    # Selection for Database with better spacing
-    source_mode = st.radio("📁 DATABASE MODE", ["Live Data (Pi)", "Training Data"], index=0)
-    current_sheet = "Agribot-Live-Data" if source_mode == "Live Data (Pi)" else "Agribot-AI-Training-Data"
-    
-    st.markdown("<br><br>", unsafe_allow_html=True) # Extra space
-    
-    # Main Navigation with bigger font (handled by CSS above)
-    page = st.radio("📍 NAVIGATION", ["Live Dashboard", "Environmental Analysis", "System Logs"])
+    # --- LOGO SECTION ---
+    # Put your logo file in the 'backend' folder and name it 'logo.png'
+    if os.path.exists("backend/logo.png"):
+        st.image("backend/logo.png", use_container_width=True)
+    else:
+        st.markdown("<h1 style='text-align:center; color:#22c55e;'>🌱 AGRIBOT-AI</h1>", unsafe_allow_html=True)
     
     st.markdown("---")
-    st.caption("NCF-ATDC Greenhouse System v2.0")
+    page = st.radio("SELECT VIEW:", ["📡 LIVE MONITOR", "📈 TRENDS", "📜 HISTORY"], index=0)
+    st.markdown("---")
+    source = st.selectbox("DATA SOURCE:", ["Live Data (Pi)", "Training Data"])
+    current_sheet = "Agribot-Live-Data" if source == "Live Data (Pi)" else "Agribot-AI-Training-Data"
 
-# 5. DATA LOADING
+# 5. MAIN CONTENT
 model, scaler = load_assets()
 df = get_data(current_sheet)
 
-# 6. MAIN CONTENT PAGES
 if df.empty:
-    st.warning(f"📡 Waiting for connection to {current_sheet}...")
+    st.error("⚠️ NO DATA! Please check if the Raspberry Pi is turned ON.")
 else:
     latest = df.iloc[-1]
 
-    # --- PAGE 1: LIVE DASHBOARD ---
-    if page == "Live Dashboard":
-        st.title(f"🚀 {source_mode} Monitor")
-        st.write(f"**System Sync:** {latest.get('Timestamp', 'N/A')}")
+    if page == "📡 LIVE MONITOR":
+        st.header(f"CURRENT SYSTEM STATUS")
         
-        # Balanced Metric Row
-        m1, m2, m3, m4 = st.columns(4, gap="large")
-        with m1: st.metric("🌡️ TEMP", f"{latest.get('Temperature (°C)', 0)}°C")
-        with m2: st.metric("💧 HUMIDITY", f"{latest.get('Humidity (%)', 0)}%")
-        with m3: st.metric("🧪 pH LEVEL", f"{latest.get('pH Level', 0)}")
-        with m4: st.metric("🪴 SOIL", f"{latest.get('Soil Moisture', 0)}%")
+        # 4 BIG CARDS - NO GAP
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("TEMP", f"{latest.get('Temperature (°C)', 0)}°C")
+        m2.metric("HUMIDITY", f"{latest.get('Humidity (%)', 0)}%")
+        m3.metric("PH", f"{latest.get('pH Level', 0)}")
+        m4.metric("SOIL", f"{latest.get('Soil Moisture', 0)}%")
 
-        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("---")
         
-        # Visual Feed & AI Recommendation
-        col_img, col_ai = st.columns([1.6, 1], gap="large")
+        col_img, col_ai = st.columns([1.2, 1])
         
         with col_img:
-            st.subheader("📸 Live Plant Feed")
+            st.subheader("📸 LIVE PLANT VIEW")
             img_path = "backend/mock_images"
             if os.path.exists(img_path):
                 imgs = [f for f in os.listdir(img_path) if f.endswith(('.jpg', '.png'))]
                 if imgs: st.image(os.path.join(img_path, imgs[-1]), use_container_width=True)
-                else: st.info("Standby for visual data...")
-
+        
         with col_ai:
-            st.subheader("🤖 AI Health Report")
+            st.subheader("🤖 AI ADVICE")
             if model and scaler:
                 features = np.array([[latest['Temperature (°C)'], latest['Humidity (%)'], latest['pH Level']]])
                 prediction = model.predict(scaler.transform(features))[0]
                 
                 if prediction == -1:
-                    st.error("### 🚨 ANOMALY\nEnvironment unstable. Automated correction engaged.")
+                    st.error("🚨 PROBLEM DETECTED!\nCheck water and fans.")
                 else:
-                    st.success("### ✅ OPTIMAL\nHydroponic environment is stable.")
+                    st.success("✅ EVERYTHING OK\nNo action needed.")
             
             st.markdown("---")
-            st.write("**System Overrides:**")
-            st.toggle("Nutrient Dosing", value=(latest['pH Level'] > 6.5))
-            st.toggle("Cooling Fans", value=(latest['Temperature (°C)'] > 28))
+            st.write("**SYSTEM CONTROL:**")
+            st.toggle("WATER PUMP", value=(latest['pH Level'] > 6.5))
+            st.toggle("FANS", value=(latest['Temperature (°C)'] > 28))
 
-    # --- PAGE 2: ANALYSIS ---
-    elif page == "Environmental Analysis":
-        st.title("📈 Environmental Analysis")
-        st.line_chart(df[['Temperature (°C)', 'Humidity (%)']].tail(100))
-        st.area_chart(df['pH Level'].tail(100))
+    elif page == "📈 TRENDS":
+        st.header("PAST 24 HOURS")
+        st.line_chart(df[['Temperature (°C)', 'Humidity (%)']].tail(50))
+        st.area_chart(df['pH Level'].tail(50))
 
-    # --- PAGE 3: LOGS ---
-    elif page == "System Logs":
-        st.title("📋 System Logs")
+    elif page == "📜 HISTORY":
+        st.header("DATA LOGS")
         st.dataframe(df.sort_index(ascending=False), use_container_width=True)
 
-# 7. REFRESH
+# 6. REFRESH
 time.sleep(10)
 st.rerun()
