@@ -8,52 +8,49 @@ from oauth2client.service_account import ServiceAccountCredentials
 import time
 
 # 1. PAGE CONFIG
-st.set_page_config(page_title="AgriBot-AI | Monitor", layout="wide")
+st.set_page_config(page_title="AgriBot-AI | Live Monitor", layout="wide")
 
-# 2. ELDERLY-FRIENDLY UI STYLING (High Contrast, Big Text)
+# 2. FARMER-READY CSS (Massive Text, No Red Headers, Clean Alignment)
 st.markdown("""
     <style>
-    /* Dark background for high contrast */
-    .stApp { background-color: #050505; color: #ffffff; }
-
-    /* HUGE Sidebar Title and Navigation */
-    .sidebar-logo { text-align: center; margin-bottom: 10px; }
-    .st-emotion-cache-17l363p { font-size: 24px !important; font-weight: bold; } /* Sidebar labels */
+    /* Hide the red/orange Streamlit decoration line at the top */
+    [data-testid="stDecoration"] { display: none; }
     
-    /* BIG METRIC CARDS - No extra space */
+    /* Background and High Contrast */
+    .stApp { background-color: #050505; color: #ffffff; }
+    
+    /* Massive Metric Cards */
     div[data-testid="stMetric"] {
         background-color: #111111;
-        border: 2px solid #22c55e;
-        padding: 15px !important;
-        border-radius: 10px;
+        border: 3px solid #22c55e;
+        padding: 20px !important;
+        border-radius: 15px;
         text-align: center;
     }
     
-    /* Make the numbers MASSIVE for easy reading */
+    /* Huge Sensor Numbers */
     [data-testid="stMetricValue"] { 
-        font-size: 50px !important; 
-        font-weight: 800 !important; 
+        font-size: 60px !important; 
+        font-weight: 900 !important; 
         color: #22c55e !important;
     }
+    
+    /* Clear Sensor Labels */
     [data-testid="stMetricLabel"] { 
-        font-size: 20px !important; 
+        font-size: 22px !important; 
         color: #ffffff !important; 
-        text-transform: uppercase;
+        letter-spacing: 2px;
     }
 
-    /* Tighten the block spacing */
-    .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 0rem !important;
-        max-width: 95% !important;
-    }
-
-    /* Big Bold Buttons/Toggles */
-    .stHeader { font-size: 30px !important; }
+    /* Sidebar Clean-up */
+    .stSidebar { background-color: #000000; border-right: 2px solid #22c55e; }
+    
+    /* Remove unnecessary padding */
+    .block-container { padding-top: 2rem !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. CORE FUNCTIONS
+# 3. DATA & AI LOADING (Background Only)
 @st.cache_resource
 def load_assets():
     try:
@@ -75,75 +72,82 @@ def get_data(sheet_name):
         return pd.DataFrame(sheet.get_all_records())
     except: return pd.DataFrame()
 
-# 4. SIDEBAR - SIMPLE & BIG
+# 4. SIDEBAR (Logo + Simple Navigation)
 with st.sidebar:
-    # --- LOGO SECTION ---
-    # Put your logo file in the 'backend' folder and name it 'logo.png'
-    if os.path.exists("backend/logo.png"):
-        st.image("backend/logo.png", use_container_width=True)
+    # Logo placement
+    logo_path = "backend/agribotailogo.png"
+    if os.path.exists(logo_path):
+        st.image(logo_path, use_container_width=True)
     else:
-        st.markdown("<h1 style='text-align:center; color:#22c55e;'>🌱 AGRIBOT-AI</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align:center; color:#22c55e;'>🌱 AGRIBOT</h1>", unsafe_allow_html=True)
     
     st.markdown("---")
-    page = st.radio("SELECT VIEW:", ["📡 LIVE MONITOR", "📈 TRENDS", "📜 HISTORY"], index=0)
+    # Farmers only see these simple options
+    page = st.radio("GO TO:", ["📡 LIVE MONITOR", "📈 TRENDS", "📜 LOGS"], index=0)
     st.markdown("---")
-    source = st.selectbox("DATA SOURCE:", ["Live Data (Pi)", "Training Data"])
-    current_sheet = "Agribot-Live-Data" if source == "Live Data (Pi)" else "Agribot-AI-Training-Data"
+    st.success("System: ONLINE")
 
-# 5. MAIN CONTENT
+# 5. DATA PROCESSING
 model, scaler = load_assets()
-df = get_data(current_sheet)
+# System reads live data for display
+df_live = get_data("Agribot-Live-Data")
 
-if df.empty:
-    st.error("⚠️ NO DATA! Please check if the Raspberry Pi is turned ON.")
+if df_live.empty:
+    st.error("⚠️ SEARCHING FOR SENSOR DATA... Please check if the Raspberry Pi is plugged in.")
 else:
-    latest = df.iloc[-1]
+    latest = df_live.iloc[-1]
 
+    # --- PAGE 1: LIVE MONITOR ---
     if page == "📡 LIVE MONITOR":
-        st.header(f"CURRENT SYSTEM STATUS")
+        st.header("CURRENT GREENHOUSE STATUS")
         
-        # 4 BIG CARDS - NO GAP
+        # Row 1: The Big Numbers
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("TEMP", f"{latest.get('Temperature (°C)', 0)}°C")
         m2.metric("HUMIDITY", f"{latest.get('Humidity (%)', 0)}%")
-        m3.metric("PH", f"{latest.get('pH Level', 0)}")
+        m3.metric("PH LEVEL", f"{latest.get('pH Level', 0)}")
         m4.metric("SOIL", f"{latest.get('Soil Moisture', 0)}%")
 
-        st.markdown("---")
+        st.markdown("<br>", unsafe_allow_html=True)
         
-        col_img, col_ai = st.columns([1.2, 1])
+        # Row 2: Camera and AI
+        col_cam, col_ai = st.columns([1.5, 1])
         
-        with col_img:
-            st.subheader("📸 LIVE PLANT VIEW")
+        with col_cam:
+            st.subheader("📸 LIVE VIEW")
             img_path = "backend/mock_images"
             if os.path.exists(img_path):
                 imgs = [f for f in os.listdir(img_path) if f.endswith(('.jpg', '.png'))]
                 if imgs: st.image(os.path.join(img_path, imgs[-1]), use_container_width=True)
         
         with col_ai:
-            st.subheader("🤖 AI ADVICE")
+            st.subheader("🤖 AI STATUS")
             if model and scaler:
                 features = np.array([[latest['Temperature (°C)'], latest['Humidity (%)'], latest['pH Level']]])
                 prediction = model.predict(scaler.transform(features))[0]
                 
                 if prediction == -1:
-                    st.error("🚨 PROBLEM DETECTED!\nCheck water and fans.")
+                    st.error("🚨 ALERT: PROBLEM DETECTED!\nCheck water and air flow.")
                 else:
-                    st.success("✅ EVERYTHING OK\nNo action needed.")
+                    st.success("✅ ALL GOOD: Plants are healthy.")
             
             st.markdown("---")
-            st.write("**SYSTEM CONTROL:**")
+            st.write("**AUTO CONTROLS:**")
             st.toggle("WATER PUMP", value=(latest['pH Level'] > 6.5))
             st.toggle("FANS", value=(latest['Temperature (°C)'] > 28))
 
+    # --- PAGE 2: TRENDS ---
     elif page == "📈 TRENDS":
-        st.header("PAST 24 HOURS")
-        st.line_chart(df[['Temperature (°C)', 'Humidity (%)']].tail(50))
-        st.area_chart(df['pH Level'].tail(50))
+        st.header("HISTORY (LAST 24 HOURS)")
+        st.subheader("Temperature & Humidity")
+        st.line_chart(df_live[['Temperature (°C)', 'Humidity (%)']].tail(100))
+        st.subheader("pH Stability")
+        st.area_chart(df_live['pH Level'].tail(100))
 
-    elif page == "📜 HISTORY":
-        st.header("DATA LOGS")
-        st.dataframe(df.sort_index(ascending=False), use_container_width=True)
+    # --- PAGE 3: LOGS ---
+    elif page == "📜 LOGS":
+        st.header("PAST READINGS")
+        st.dataframe(df_live.sort_index(ascending=False), use_container_width=True)
 
 # 6. REFRESH
 time.sleep(10)
