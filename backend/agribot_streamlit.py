@@ -7,50 +7,54 @@ import os
 from oauth2client.service_account import ServiceAccountCredentials
 import time
 
-# 1. PAGE CONFIG
-st.set_page_config(page_title="AgriBot-AI | Live Monitor", layout="wide")
+# 1. PAGE CONFIG - Sets the Logo on the Website Tab
+LOGO_PATH = "backend/agribotailogo.png"
 
-# 2. FARMER-READY CSS (Massive Text, No Red Headers, Clean Alignment)
-st.markdown("""
+st.set_page_config(
+    page_title="AgriBot-AI | Monitor",
+    page_icon=LOGO_PATH if os.path.exists(LOGO_PATH) else "🌱",
+    layout="wide"
+)
+
+# 2. ADAPTIVE CSS (Works for both Light and Dark themes)
+st.markdown(f"""
     <style>
-    /* Hide the red/orange Streamlit decoration line at the top */
-    [data-testid="stDecoration"] { display: none; }
+    /* Hide the red decoration line */
+    [data-testid="stDecoration"] {{ display: none; }}
     
-    /* Background and High Contrast */
-    .stApp { background-color: #050505; color: #ffffff; }
-    
-    /* Massive Metric Cards */
-    div[data-testid="stMetric"] {
-        background-color: #111111;
-        border: 3px solid #22c55e;
+    /* Adaptable Metric Cards */
+    div[data-testid="stMetric"] {{
+        background-color: rgba(34, 197, 94, 0.1); /* Subtle green tint */
+        border: 2px solid #22c55e;
         padding: 20px !important;
         border-radius: 15px;
         text-align: center;
-    }
+    }}
     
-    /* Huge Sensor Numbers */
-    [data-testid="stMetricValue"] { 
-        font-size: 60px !important; 
+    /* Huge Adaptive Sensor Numbers */
+    [data-testid="stMetricValue"] {{ 
+        font-size: 55px !important; 
         font-weight: 900 !important; 
-        color: #22c55e !important;
-    }
+    }}
     
     /* Clear Sensor Labels */
-    [data-testid="stMetricLabel"] { 
-        font-size: 22px !important; 
-        color: #ffffff !important; 
-        letter-spacing: 2px;
-    }
+    [data-testid="stMetricLabel"] {{ 
+        font-size: 20px !important; 
+        letter-spacing: 1px;
+    }}
 
-    /* Sidebar Clean-up */
-    .stSidebar { background-color: #000000; border-right: 2px solid #22c55e; }
+    /* Sidebar Logo Centering */
+    .sidebar-img {{
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }}
     
-    /* Remove unnecessary padding */
-    .block-container { padding-top: 2rem !important; }
+    .block-container {{ padding-top: 2rem !important; }}
     </style>
     """, unsafe_allow_html=True)
 
-# 3. DATA & AI LOADING (Background Only)
+# 3. DATA & AI LOADING
 @st.cache_resource
 def load_assets():
     try:
@@ -72,83 +76,85 @@ def get_data(sheet_name):
         return pd.DataFrame(sheet.get_all_records())
     except: return pd.DataFrame()
 
-# 4. SIDEBAR (Logo + Simple Navigation)
+# 4. SIDEBAR
 with st.sidebar:
-    # Logo placement
-    logo_path = "backend/agribotailogo.png"
-    if os.path.exists(logo_path):
-        st.image(logo_path, use_container_width=True)
+    if os.path.exists(LOGO_PATH):
+        st.image(LOGO_PATH, use_container_width=True)
     else:
-        st.markdown("<h1 style='text-align:center; color:#22c55e;'>🌱 AGRIBOT</h1>", unsafe_allow_html=True)
+        st.title("🌱 AGRIBOT")
     
     st.markdown("---")
-    # Farmers only see these simple options
-    page = st.radio("GO TO:", ["📡 LIVE MONITOR", "📈 TRENDS", "📜 LOGS"], index=0)
+    page = st.radio("MAIN MENU", ["📡 LIVE MONITOR", "📈 TRENDS", "📜 LOGS"], index=0)
     st.markdown("---")
-    st.success("System: ONLINE")
+    st.info("Status: System Active")
 
 # 5. DATA PROCESSING
 model, scaler = load_assets()
-# System reads live data for display
 df_live = get_data("Agribot-Live-Data")
 
 if df_live.empty:
-    st.error("⚠️ SEARCHING FOR SENSOR DATA... Please check if the Raspberry Pi is plugged in.")
+    st.warning("⚠️ CONNECTING TO SENSORS... Please ensure the Raspberry Pi is active.")
 else:
     latest = df_live.iloc[-1]
 
     # --- PAGE 1: LIVE MONITOR ---
     if page == "📡 LIVE MONITOR":
-        st.header("CURRENT GREENHOUSE STATUS")
+        st.header("GREENHOUSE REAL-TIME STATUS")
         
-        # Row 1: The Big Numbers
+        # 4 Big Cards
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("TEMP", f"{latest.get('Temperature (°C)', 0)}°C")
         m2.metric("HUMIDITY", f"{latest.get('Humidity (%)', 0)}%")
         m3.metric("PH LEVEL", f"{latest.get('pH Level', 0)}")
         m4.metric("SOIL", f"{latest.get('Soil Moisture', 0)}%")
 
-        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("---")
         
-        # Row 2: Camera and AI
         col_cam, col_ai = st.columns([1.5, 1])
         
         with col_cam:
-            st.subheader("📸 LIVE VIEW")
-            img_path = "backend/mock_images"
-            if os.path.exists(img_path):
-                imgs = [f for f in os.listdir(img_path) if f.endswith(('.jpg', '.png'))]
-                if imgs: st.image(os.path.join(img_path, imgs[-1]), use_container_width=True)
+            st.subheader("📸 PLANT PHOTO")
+            # MOCK IMAGE LOGIC
+            mock_path = "backend/mock_images"
+            if os.path.exists(mock_path):
+                imgs = [f for f in os.listdir(mock_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+                if imgs:
+                    # Show the most recent photo
+                    latest_img = sorted(imgs)[-1]
+                    st.image(os.path.join(mock_path, latest_img), caption="Latest Capture", use_container_width=True)
+                else:
+                    st.info("No images found in backend/mock_images/")
+            else:
+                st.info("Missing 'backend/mock_images' folder.")
         
         with col_ai:
-            st.subheader("🤖 AI STATUS")
+            st.subheader("🤖 AI ANALYSIS")
             if model and scaler:
+                # Features: Temp, Hum, pH
                 features = np.array([[latest['Temperature (°C)'], latest['Humidity (%)'], latest['pH Level']]])
                 prediction = model.predict(scaler.transform(features))[0]
                 
                 if prediction == -1:
-                    st.error("🚨 ALERT: PROBLEM DETECTED!\nCheck water and air flow.")
+                    st.error("### 🚨 ALERT: ANOMALY\nAction: Check cooling and pH.")
                 else:
-                    st.success("✅ ALL GOOD: Plants are healthy.")
+                    st.success("### ✅ HEALTHY\nAction: No intervention needed.")
             
             st.markdown("---")
-            st.write("**AUTO CONTROLS:**")
+            st.write("**MANUAL OVERRIDE:**")
             st.toggle("WATER PUMP", value=(latest['pH Level'] > 6.5))
-            st.toggle("FANS", value=(latest['Temperature (°C)'] > 28))
+            st.toggle("EXHAUST FANS", value=(latest['Temperature (°C)'] > 28))
 
     # --- PAGE 2: TRENDS ---
     elif page == "📈 TRENDS":
-        st.header("HISTORY (LAST 24 HOURS)")
-        st.subheader("Temperature & Humidity")
-        st.line_chart(df_live[['Temperature (°C)', 'Humidity (%)']].tail(100))
-        st.subheader("pH Stability")
-        st.area_chart(df_live['pH Level'].tail(100))
+        st.header("PAST PERFORMANCE")
+        st.line_chart(df_live[['Temperature (°C)', 'Humidity (%)']].tail(50))
+        st.area_chart(df_live['pH Level'].tail(50))
 
     # --- PAGE 3: LOGS ---
     elif page == "📜 LOGS":
-        st.header("PAST READINGS")
+        st.header("DATA RECORDS")
         st.dataframe(df_live.sort_index(ascending=False), use_container_width=True)
 
-# 6. REFRESH
+# 6. AUTO-REFRESH
 time.sleep(10)
 st.rerun()
