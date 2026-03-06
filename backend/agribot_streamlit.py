@@ -7,7 +7,8 @@ import os
 from oauth2client.service_account import ServiceAccountCredentials
 import time
 
-# 1. PAGE CONFIG - Sets the Logo on the Website Tab (Favicon)
+# 1. PAGE CONFIG & FAVICON (Tab Logo)
+# MUST BE THE FIRST COMMAND
 LOGO_PATH = "backend/agribotailogo.png"
 
 st.set_page_config(
@@ -16,46 +17,41 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. ADAPTIVE CSS (Fixes the "Red Part" and Alignment)
-st.markdown(f"""
-    <style>
-    /* 1. HIDE THE RED DECORATION LINE COMPLETELY */
-    [data-testid="stDecoration"] {{ display: none; }}
+# 2. THE "FORCE LOGO" & THEME FIX
+# This piece of code forces the browser to replace the Streamlit Crown with your logo
+if os.path.exists(LOGO_PATH):
+    import base64
+    def get_base64(bin_file):
+        with open(bin_file, 'rb') as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
     
-    /* 2. PUSH CONTENT DOWN (Fixes the "cut off" issue at the top) */
-    .block-container {{
-        padding-top: 4rem !important; 
-        padding-bottom: 2rem !important;
-        max-width: 95% !important;
-    }}
+    bin_str = get_base64(LOGO_PATH)
+    st.markdown(f"""
+        <link rel="icon" href="data:image/png;base64,{bin_str}">
+        <style>
+            /* HIDE THE RED LINE AT TOP */
+            [data-testid="stDecoration"] {{ display: none; }}
+            
+            /* PUSH EVERYTHING DOWN SO IT'S VISIBLE */
+            .block-container {{
+                padding-top: 5rem !important; 
+                max-width: 95% !important;
+            }}
 
-    /* 3. ADAPTABLE METRIC CARDS */
-    div[data-testid="stMetric"] {{
-        background-color: rgba(34, 197, 94, 0.1); 
-        border: 2px solid #22c55e;
-        padding: 25px !important;
-        border-radius: 15px;
-        text-align: center;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }}
-    
-    /* 4. HUGE TEXT FOR ELDERLY VISIBILITY */
-    [data-testid="stMetricValue"] {{ 
-        font-size: 50px !important; 
-        font-weight: 900 !important; 
-    }}
-    
-    [data-testid="stMetricLabel"] {{ 
-        font-size: 20px !important; 
-        font-weight: 700 !important;
-        text-transform: uppercase;
-    }}
-
-    /* 5. SIDEBAR STYLING */
-    section[data-testid="stSidebar"] {{
-        padding-top: 20px;
-    }}
-    </style>
+            /* ADAPTIVE BOXES - FORCE VISIBILITY */
+            div[data-testid="stMetric"] {{
+                background-color: rgba(34, 197, 94, 0.1); 
+                border: 3px solid #22c55e;
+                padding: 25px !important;
+                border-radius: 15px;
+                text-align: center;
+            }}
+            
+            /* BIG TEXT FOR ELDERLY */
+            [data-testid="stMetricValue"] {{ font-size: 55px !important; font-weight: 900 !important; }}
+            [data-testid="stMetricLabel"] {{ font-size: 22px !important; font-weight: 700 !important; }}
+        </style>
     """, unsafe_allow_html=True)
 
 # 3. DATA & AI LOADING
@@ -80,7 +76,7 @@ def get_data(sheet_name):
         return pd.DataFrame(sheet.get_all_records())
     except: return pd.DataFrame()
 
-# 4. SIDEBAR (Navigation & Logo)
+# 4. SIDEBAR
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH, use_container_width=True)
@@ -88,80 +84,69 @@ with st.sidebar:
         st.title("🌱 AGRIBOT")
     
     st.markdown("---")
-    # Simple navigation for personnel
     page = st.radio("GO TO:", ["📡 LIVE MONITOR", "📈 TRENDS", "📜 LOGS"], index=0)
     st.markdown("---")
-    st.info("System: Active")
+    st.info("System: Monitoring Active")
 
 # 5. DATA PROCESSING
 model, scaler = load_assets()
 df_live = get_data("Agribot-Live-Data")
 
+# --- AUTO-APPEAR LOGIC ---
+# If the sheet is empty, we show "Empty" boxes so the user sees the design
 if df_live.empty:
-    st.warning("⚠️ CONNECTING... Ensure the Raspberry Pi is sending data to 'Agribot-Live-Data'.")
+    latest = {"Temperature (°C)": "--", "Humidity (%)": "--", "pH Level": "--", "Soil Moisture": "--"}
+    st.warning("📡 WAITING FOR RASPBERRY PI... The boxes will update once the sensor starts.")
 else:
     latest = df_live.iloc[-1]
 
-    # --- PAGE 1: LIVE MONITOR ---
-    if page == "📡 LIVE MONITOR":
-        st.header("GREENHOUSE REAL-TIME STATUS")
-        
-        # Big Metric Cards
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("TEMP", f"{latest.get('Temperature (°C)', 0)}°C")
-        m2.metric("HUMIDITY", f"{latest.get('Humidity (%)', 0)}%")
-        m3.metric("PH LEVEL", f"{latest.get('pH Level', 0)}")
-        m4.metric("SOIL", f"{latest.get('Soil Moisture', 0)}%")
+# --- PAGE 1: LIVE MONITOR ---
+if page == "📡 LIVE MONITOR":
+    st.header("GREENHOUSE REAL-TIME STATUS")
+    
+    # THE BOXES ARE BACK (Static placeholders if no data, real numbers if data exists)
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("TEMP", f"{latest.get('Temperature (°C)')}°C")
+    m2.metric("HUMIDITY", f"{latest.get('Humidity (%)')}%")
+    m3.metric("PH LEVEL", f"{latest.get('pH Level')}")
+    m4.metric("SOIL", f"{latest.get('Soil Moisture')}%")
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        col_cam, col_ai = st.columns([1.5, 1])
-        
-        with col_cam:
-            st.subheader("📸 LATEST PLANT PHOTO")
-            # MOCK IMAGE LOGIC: Looks inside backend/mock_images/
-            mock_dir = "backend/mock_images"
-            if os.path.exists(mock_dir):
-                files = [f for f in os.listdir(mock_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
-                if files:
-                    # Sort by name/time and show the newest
-                    latest_file = sorted(files)[-1]
-                    st.image(os.path.join(mock_dir, latest_file), use_container_width=True)
-                else:
-                    st.info("No photos found in backend/mock_images")
-            else:
-                st.info("Please create a 'backend/mock_images' folder.")
-        
-        with col_ai:
-            st.subheader("🤖 AI ANALYSIS")
-            if model and scaler:
-                # Features for model: Temperature, Humidity, pH
-                features = np.array([[latest['Temperature (°C)'], latest['Humidity (%)'], latest['pH Level']]])
-                prediction = model.predict(scaler.transform(features))[0]
-                
-                if prediction == -1:
-                    st.error("### 🚨 ALERT: ANOMALY\nCheck environment immediately!")
-                else:
-                    st.success("### ✅ STATUS: OPTIMAL\nNo intervention needed.")
-            
-            st.markdown("---")
-            st.write("**SYSTEM OVERRIDES:**")
-            st.toggle("WATER PUMP", value=(latest['pH Level'] > 6.5))
-            st.toggle("FANS", value=(latest['Temperature (°C)'] > 28))
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    col_cam, col_ai = st.columns([1.5, 1])
+    
+    with col_cam:
+        st.subheader("📸 LATEST PHOTO")
+        mock_dir = "backend/mock_images"
+        if os.path.exists(mock_dir):
+            files = [f for f in os.listdir(mock_dir) if f.lower().endswith(('.png', '.jpg'))]
+            if files:
+                latest_file = sorted(files)[-1]
+                st.image(os.path.join(mock_dir, latest_file), use_container_width=True)
+            else: st.info("No photos yet.")
+    
+    with col_ai:
+        st.subheader("🤖 AI ANALYSIS")
+        # Only try to predict if we actually have numbers (not "--")
+        if not df_live.empty and model and scaler:
+            features = np.array([[latest['Temperature (°C)'], latest['Humidity (%)'], latest['pH Level']]])
+            prediction = model.predict(scaler.transform(features))[0]
+            if prediction == -1: st.error("### 🚨 ALERT: ANOMALY")
+            else: st.success("### ✅ STATUS: NORMAL")
+        else:
+            st.info("AI waiting for sensor data...")
 
-    # --- PAGE 2: TRENDS ---
-    elif page == "📈 TRENDS":
-        st.header("PERFORMANCE HISTORY")
-        st.subheader("Air Conditions")
+# --- OTHER PAGES ---
+elif page == "📈 TRENDS":
+    st.header("PERFORMANCE HISTORY")
+    if not df_live.empty:
         st.line_chart(df_live[['Temperature (°C)', 'Humidity (%)']].tail(50))
-        st.subheader("Water Quality (pH)")
-        st.area_chart(df_live['pH Level'].tail(50))
+    else: st.write("No data to graph yet.")
 
-    # --- PAGE 3: LOGS ---
-    elif page == "📜 LOGS":
-        st.header("DATA RECORDS")
-        st.dataframe(df_live.sort_index(ascending=False), use_container_width=True)
+elif page == "📜 LOGS":
+    st.header("DATA RECORDS")
+    st.dataframe(df_live.sort_index(ascending=False), use_container_width=True)
 
-# 6. AUTO-REFRESH (Every 10 seconds)
+# 6. REFRESH
 time.sleep(10)
 st.rerun()
