@@ -7,38 +7,56 @@ import os
 from oauth2client.service_account import ServiceAccountCredentials
 import time
 
-# 1. PAGE CONFIG & THEME (Dark Mode IoT Aesthetic)
+# 1. PAGE CONFIG
 st.set_page_config(page_title="AgriBot-AI | Smart Management", layout="wide", page_icon="🌱")
 
-# CUSTOM CSS FOR ALIGNMENT AND SPACING
+# 2. BALANCED UI & NAVIGATION STYLING
 st.markdown("""
     <style>
-    /* Overall page margin and background */
+    /* Main App Background */
     .stApp { background-color: #0e1117; color: #ffffff; }
+
+    /* Sidebar Title Spacing */
+    .sidebar-title {
+        padding-top: 20px;
+        padding-bottom: 20px;
+        text-align: center;
+        font-size: 28px !important;
+        font-weight: 700;
+        color: #22c55e;
+    }
+
+    /* Making Navigation Radio Buttons Bigger */
+    div[data-testid="stSidebarNav"] { padding-top: 2rem; }
     
-    /* Metric Card Spacing and Alignment */
+    /* Target the radio button labels specifically */
+    div[data-testid="stWidgetLabel"] p {
+        font-size: 18px !important;
+        font-weight: 600 !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .st-bc { font-size: 18px !important; } /* Radio text size */
+
+    /* Balanced Container for Metrics */
     div[data-testid="stMetric"] {
         background-color: #161b22;
         border: 1px solid #22c55e;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        text-align: center;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.6);
     }
 
-    /* Centering Metric Content */
-    [data-testid="stMetricValue"] { font-size: 32px !important; }
-    [data-testid="stMetricLabel"] { font-size: 16px !important; color: #8899a6 !important; }
-
-    /* Container for spacing between elements */
-    .block-container { padding-top: 2rem; padding-bottom: 2rem; }
-    
-    /* Sidebar styling */
-    .stSidebar { background-color: #010409; border-right: 1px solid #30363d; }
+    /* Constrain main content width for better alignment */
+    .block-container {
+        max-width: 1300px;
+        padding-left: 5rem;
+        padding-right: 5rem;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. DATA UTILITIES
+# 3. CORE FUNCTIONS
 @st.cache_resource
 def load_assets():
     try:
@@ -60,45 +78,52 @@ def get_data(sheet_name):
         return pd.DataFrame(sheet.get_all_records())
     except: return pd.DataFrame()
 
-# 3. SIDEBAR NAVIGATION
-st.sidebar.title("🌱 AgriBot-AI")
-st.sidebar.caption("NCF-ATDC Greenhouse System")
-st.sidebar.markdown("---")
+# 4. SIDEBAR - SPACED & BALANCED
+with st.sidebar:
+    st.markdown('<div class="sidebar-title">🌱 AgriBot-AI</div>', unsafe_allow_html=True)
+    st.markdown("---")
+    
+    # Selection for Database with better spacing
+    source_mode = st.radio("📁 DATABASE MODE", ["Live Data (Pi)", "Training Data"], index=0)
+    current_sheet = "Agribot-Live-Data" if source_mode == "Live Data (Pi)" else "Agribot-AI-Training-Data"
+    
+    st.markdown("<br><br>", unsafe_allow_html=True) # Extra space
+    
+    # Main Navigation with bigger font (handled by CSS above)
+    page = st.radio("📍 NAVIGATION", ["Live Dashboard", "Environmental Analysis", "System Logs"])
+    
+    st.markdown("---")
+    st.caption("NCF-ATDC Greenhouse System v2.0")
 
-source_mode = st.sidebar.radio("📁 Database Mode:", ["Live Data (Pi)", "Training Data (Static)"])
-current_sheet = "Agribot-Live-Data" if source_mode == "Live Data (Pi)" else "Agribot-AI-Training-Data"
-
-st.sidebar.markdown("---")
-page = st.sidebar.selectbox("📍 Navigate To:", ["Live Dashboard", "Environmental Analysis", "System Logs"])
-
+# 5. DATA LOADING
 model, scaler = load_assets()
 df = get_data(current_sheet)
 
-# 4. PAGE LOGIC
+# 6. MAIN CONTENT PAGES
 if df.empty:
-    st.warning(f"📡 Waiting for data in '{current_sheet}'...")
+    st.warning(f"📡 Waiting for connection to {current_sheet}...")
 else:
     latest = df.iloc[-1]
 
     # --- PAGE 1: LIVE DASHBOARD ---
     if page == "Live Dashboard":
-        st.title(f"🚀 {source_mode} Dashboard")
-        st.write(f"**Last Sync:** {latest.get('Timestamp', 'N/A')}")
+        st.title(f"🚀 {source_mode} Monitor")
+        st.write(f"**System Sync:** {latest.get('Timestamp', 'N/A')}")
         
-        # SENSOR METRICS WITH ALIGNED SPACING
-        m1, m2, m3, m4 = st.columns(4, gap="medium")
-        with m1: st.metric("🌡️ Temp", f"{latest.get('Temperature (°C)', 0)}°C")
-        with m2: st.metric("💧 Humidity", f"{latest.get('Humidity (%)', 0)}%")
-        with m3: st.metric("🧪 pH Level", f"{latest.get('pH Level', 0)}")
-        with m4: st.metric("🪴 Soil Moist.", f"{latest.get('Soil Moisture', 0)}%")
+        # Balanced Metric Row
+        m1, m2, m3, m4 = st.columns(4, gap="large")
+        with m1: st.metric("🌡️ TEMP", f"{latest.get('Temperature (°C)', 0)}°C")
+        with m2: st.metric("💧 HUMIDITY", f"{latest.get('Humidity (%)', 0)}%")
+        with m3: st.metric("🧪 pH LEVEL", f"{latest.get('pH Level', 0)}")
+        with m4: st.metric("🪴 SOIL", f"{latest.get('Soil Moisture', 0)}%")
 
-        st.markdown("---")
+        st.markdown("<br>", unsafe_allow_html=True)
         
-        # ALIGNED CONTENT AREA
-        col_img, col_ai = st.columns([1.5, 1], gap="large")
+        # Visual Feed & AI Recommendation
+        col_img, col_ai = st.columns([1.6, 1], gap="large")
         
         with col_img:
-            st.subheader("📸 Plant Monitoring Feed")
+            st.subheader("📸 Live Plant Feed")
             img_path = "backend/mock_images"
             if os.path.exists(img_path):
                 imgs = [f for f in os.listdir(img_path) if f.endswith(('.jpg', '.png'))]
@@ -106,44 +131,32 @@ else:
                 else: st.info("Standby for visual data...")
 
         with col_ai:
-            st.subheader("🤖 AI Health Recommendation")
-            with st.container():
-                if model and scaler:
-                    # Input features must match training order
-                    features = np.array([[latest['Temperature (°C)'], latest['Humidity (%)'], latest['pH Level']]])
-                    prediction = model.predict(scaler.transform(features))[0]
-                    
-                    if prediction == -1:
-                        st.error("### 🚨 ANOMALY DETECTED\n\nConditions are currently unstable. Automated correction engaged.")
-                    else:
-                        st.success("### ✅ SYSTEM OPTIMAL\n\nHydroponic environment is within healthy growth parameters.")
+            st.subheader("🤖 AI Health Report")
+            if model and scaler:
+                features = np.array([[latest['Temperature (°C)'], latest['Humidity (%)'], latest['pH Level']]])
+                prediction = model.predict(scaler.transform(features))[0]
                 
-                st.write("---")
-                st.write("**Automated Management:**")
-                st.toggle("Nutrient Pump", value=(latest['pH Level'] > 6.5))
-                st.toggle("Ventilation", value=(latest['Temperature (°C)'] > 28))
+                if prediction == -1:
+                    st.error("### 🚨 ANOMALY\nEnvironment unstable. Automated correction engaged.")
+                else:
+                    st.success("### ✅ OPTIMAL\nHydroponic environment is stable.")
+            
+            st.markdown("---")
+            st.write("**System Overrides:**")
+            st.toggle("Nutrient Dosing", value=(latest['pH Level'] > 6.5))
+            st.toggle("Cooling Fans", value=(latest['Temperature (°C)'] > 28))
 
-    # --- PAGE 2: ANALYSIS (GRAPHS) ---
+    # --- PAGE 2: ANALYSIS ---
     elif page == "Environmental Analysis":
-        st.title("📈 Historical Trend Analysis")
-        st.markdown(f"Displaying trends from **{current_sheet}**")
-        
-        # Spaced containers for graphs
-        with st.container():
-            st.subheader("Atmospheric Trends (Temp vs Humidity)")
-            st.line_chart(df[['Temperature (°C)', 'Humidity (%)']].tail(100))
-        
-        st.write("---")
-        
-        with st.container():
-            st.subheader("Water Quality (pH Level Stability)")
-            st.area_chart(df['pH Level'].tail(100))
+        st.title("📈 Environmental Analysis")
+        st.line_chart(df[['Temperature (°C)', 'Humidity (%)']].tail(100))
+        st.area_chart(df['pH Level'].tail(100))
 
     # --- PAGE 3: LOGS ---
     elif page == "System Logs":
-        st.title("📋 Recorded System Logs")
+        st.title("📋 System Logs")
         st.dataframe(df.sort_index(ascending=False), use_container_width=True)
 
-# 5. REFRESH LOGIC
+# 7. REFRESH
 time.sleep(10)
 st.rerun()
