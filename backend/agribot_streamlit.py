@@ -7,50 +7,54 @@ import os
 from oauth2client.service_account import ServiceAccountCredentials
 import time
 
-# 1. PAGE CONFIG - Sets the Logo on the Website Tab
+# 1. PAGE CONFIG - Sets the Logo on the Website Tab (Favicon)
 LOGO_PATH = "backend/agribotailogo.png"
 
 st.set_page_config(
-    page_title="AgriBot-AI | Monitor",
+    page_title="AgriBot-AI | Live Monitor",
     page_icon=LOGO_PATH if os.path.exists(LOGO_PATH) else "🌱",
     layout="wide"
 )
 
-# 2. ADAPTIVE CSS (Works for both Light and Dark themes)
+# 2. ADAPTIVE CSS (Fixes the "Red Part" and Alignment)
 st.markdown(f"""
     <style>
-    /* Hide the red decoration line */
+    /* 1. HIDE THE RED DECORATION LINE COMPLETELY */
     [data-testid="stDecoration"] {{ display: none; }}
     
-    /* Adaptable Metric Cards */
+    /* 2. PUSH CONTENT DOWN (Fixes the "cut off" issue at the top) */
+    .block-container {{
+        padding-top: 4rem !important; 
+        padding-bottom: 2rem !important;
+        max-width: 95% !important;
+    }}
+
+    /* 3. ADAPTABLE METRIC CARDS */
     div[data-testid="stMetric"] {{
-        background-color: rgba(34, 197, 94, 0.1); /* Subtle green tint */
+        background-color: rgba(34, 197, 94, 0.1); 
         border: 2px solid #22c55e;
-        padding: 20px !important;
+        padding: 25px !important;
         border-radius: 15px;
         text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }}
     
-    /* Huge Adaptive Sensor Numbers */
+    /* 4. HUGE TEXT FOR ELDERLY VISIBILITY */
     [data-testid="stMetricValue"] {{ 
-        font-size: 55px !important; 
+        font-size: 50px !important; 
         font-weight: 900 !important; 
     }}
     
-    /* Clear Sensor Labels */
     [data-testid="stMetricLabel"] {{ 
         font-size: 20px !important; 
-        letter-spacing: 1px;
+        font-weight: 700 !important;
+        text-transform: uppercase;
     }}
 
-    /* Sidebar Logo Centering */
-    .sidebar-img {{
-        display: flex;
-        justify-content: center;
-        margin-bottom: 20px;
+    /* 5. SIDEBAR STYLING */
+    section[data-testid="stSidebar"] {{
+        padding-top: 20px;
     }}
-    
-    .block-container {{ padding-top: 2rem !important; }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -76,7 +80,7 @@ def get_data(sheet_name):
         return pd.DataFrame(sheet.get_all_records())
     except: return pd.DataFrame()
 
-# 4. SIDEBAR
+# 4. SIDEBAR (Navigation & Logo)
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH, use_container_width=True)
@@ -84,16 +88,17 @@ with st.sidebar:
         st.title("🌱 AGRIBOT")
     
     st.markdown("---")
-    page = st.radio("MAIN MENU", ["📡 LIVE MONITOR", "📈 TRENDS", "📜 LOGS"], index=0)
+    # Simple navigation for personnel
+    page = st.radio("GO TO:", ["📡 LIVE MONITOR", "📈 TRENDS", "📜 LOGS"], index=0)
     st.markdown("---")
-    st.info("Status: System Active")
+    st.info("System: Active")
 
 # 5. DATA PROCESSING
 model, scaler = load_assets()
 df_live = get_data("Agribot-Live-Data")
 
 if df_live.empty:
-    st.warning("⚠️ CONNECTING TO SENSORS... Please ensure the Raspberry Pi is active.")
+    st.warning("⚠️ CONNECTING... Ensure the Raspberry Pi is sending data to 'Agribot-Live-Data'.")
 else:
     latest = df_live.iloc[-1]
 
@@ -101,53 +106,55 @@ else:
     if page == "📡 LIVE MONITOR":
         st.header("GREENHOUSE REAL-TIME STATUS")
         
-        # 4 Big Cards
+        # Big Metric Cards
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("TEMP", f"{latest.get('Temperature (°C)', 0)}°C")
         m2.metric("HUMIDITY", f"{latest.get('Humidity (%)', 0)}%")
         m3.metric("PH LEVEL", f"{latest.get('pH Level', 0)}")
         m4.metric("SOIL", f"{latest.get('Soil Moisture', 0)}%")
 
-        st.markdown("---")
+        st.markdown("<br>", unsafe_allow_html=True)
         
         col_cam, col_ai = st.columns([1.5, 1])
         
         with col_cam:
-            st.subheader("📸 PLANT PHOTO")
-            # MOCK IMAGE LOGIC
-            mock_path = "backend/mock_images"
-            if os.path.exists(mock_path):
-                imgs = [f for f in os.listdir(mock_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
-                if imgs:
-                    # Show the most recent photo
-                    latest_img = sorted(imgs)[-1]
-                    st.image(os.path.join(mock_path, latest_img), caption="Latest Capture", use_container_width=True)
+            st.subheader("📸 LATEST PLANT PHOTO")
+            # MOCK IMAGE LOGIC: Looks inside backend/mock_images/
+            mock_dir = "backend/mock_images"
+            if os.path.exists(mock_dir):
+                files = [f for f in os.listdir(mock_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+                if files:
+                    # Sort by name/time and show the newest
+                    latest_file = sorted(files)[-1]
+                    st.image(os.path.join(mock_dir, latest_file), use_container_width=True)
                 else:
-                    st.info("No images found in backend/mock_images/")
+                    st.info("No photos found in backend/mock_images")
             else:
-                st.info("Missing 'backend/mock_images' folder.")
+                st.info("Please create a 'backend/mock_images' folder.")
         
         with col_ai:
             st.subheader("🤖 AI ANALYSIS")
             if model and scaler:
-                # Features: Temp, Hum, pH
+                # Features for model: Temperature, Humidity, pH
                 features = np.array([[latest['Temperature (°C)'], latest['Humidity (%)'], latest['pH Level']]])
                 prediction = model.predict(scaler.transform(features))[0]
                 
                 if prediction == -1:
-                    st.error("### 🚨 ALERT: ANOMALY\nAction: Check cooling and pH.")
+                    st.error("### 🚨 ALERT: ANOMALY\nCheck environment immediately!")
                 else:
-                    st.success("### ✅ HEALTHY\nAction: No intervention needed.")
+                    st.success("### ✅ STATUS: OPTIMAL\nNo intervention needed.")
             
             st.markdown("---")
-            st.write("**MANUAL OVERRIDE:**")
+            st.write("**SYSTEM OVERRIDES:**")
             st.toggle("WATER PUMP", value=(latest['pH Level'] > 6.5))
-            st.toggle("EXHAUST FANS", value=(latest['Temperature (°C)'] > 28))
+            st.toggle("FANS", value=(latest['Temperature (°C)'] > 28))
 
     # --- PAGE 2: TRENDS ---
     elif page == "📈 TRENDS":
-        st.header("PAST PERFORMANCE")
+        st.header("PERFORMANCE HISTORY")
+        st.subheader("Air Conditions")
         st.line_chart(df_live[['Temperature (°C)', 'Humidity (%)']].tail(50))
+        st.subheader("Water Quality (pH)")
         st.area_chart(df_live['pH Level'].tail(50))
 
     # --- PAGE 3: LOGS ---
@@ -155,6 +162,6 @@ else:
         st.header("DATA RECORDS")
         st.dataframe(df_live.sort_index(ascending=False), use_container_width=True)
 
-# 6. AUTO-REFRESH
+# 6. AUTO-REFRESH (Every 10 seconds)
 time.sleep(10)
 st.rerun()
