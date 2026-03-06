@@ -15,10 +15,10 @@ st.set_page_config(
     page_title="AgriBot-AI | Dashboard",
     page_icon=LOGO_PATH if os.path.exists(LOGO_PATH) else "🌱",
     layout="wide",
-    initial_sidebar_state="expanded" # Ensures it starts open
+    initial_sidebar_state="expanded" 
 )
 
-# --- 2. CSS: ALIGNED LOGO & SIDEBAR PERSISTENCE ---
+# --- 2. CSS: PERSISTENT SIDEBAR & ALIGNMENT ---
 def get_base64(bin_file):
     with open(bin_file, 'rb') as f:
         return base64.b64encode(f.read()).decode()
@@ -29,71 +29,83 @@ css_code = """
     header {visibility: hidden;}
     [data-testid="stDecoration"] { display: none; }
     
-    /* 1. SIDEBAR ALIGNMENT & WIDTH */
+    /* 1. SIDEBAR BASE */
     section[data-testid="stSidebar"] {
         width: 350px !important;
         background-color: rgba(46, 125, 50, 0.05) !important;
         border-right: 2px solid #4CAF50;
     }
 
-    /* 2. CIRCULAR LOGO - Aligned to Nav Elements */
+    /* 2. PERSISTENT RETRIEVAL BUTTON (The "Where is it?" Fix) */
+    /* This styles the standard Streamlit 'open' button so it's always visible and green */
+    button[kind="headerNoSpacing"] {
+        display: flex !important;
+        visibility: visible !important;
+        left: 10px !important;
+        top: 10px !important;
+        color: #2E7D32 !important;
+        background-color: #ffffff !important;
+        border: 2px solid #4CAF50 !important;
+        border-radius: 10px !important;
+        z-index: 999999;
+    }
+
+    /* 3. ALIGNED CIRCULAR LOGO */
     [data-testid="stSidebar"] [data-testid="stImage"] {
-        text-align: center;
-        padding-bottom: 0px !important;
+        display: flex;
+        justify-content: center;
+        padding-top: 20px;
     }
     
     [data-testid="stSidebar"] [data-testid="stImage"] img {
         border-radius: 50% !important;
         border: 4px solid #4CAF50 !important;
+        width: 160px !important;
+        height: 160px !important;
         object-fit: cover;
-        width: 180px !important; /* Slightly smaller for better nav alignment */
-        height: 180px !important;
-        margin: 0 auto !important;
     }
 
-    /* 3. NAVIGATION SYMMETRY */
+    /* 4. NAVIGATION ALIGNMENT (Vertical Stack) */
     .stRadio > div {
-        gap: 15px;
-        padding-top: 20px;
-        align-items: center; /* Center nav items with the logo above */
+        gap: 10px;
+        padding: 20px 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
     
     .stRadio label {
-        font-size: 20px !important;
+        font-size: 18px !important;
         font-weight: 600 !important;
         color: #2E7D32 !important;
-        text-align: center;
+        background: transparent !important;
+        border: 1px solid transparent;
+        transition: 0.3s;
         width: 100%;
+        text-align: center;
     }
 
-    /* 4. THE "BACK" BUTTON (Sidebar Toggle) Fix */
-    /* This ensures the arrow to bring the sidebar back is always visible and green */
-    button[kind="headerNoSpacing"] {
-        color: #4CAF50 !important;
-        background-color: white !important;
-        border-radius: 50% !important;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-
-    /* 5. METRIC PILLS & CONTENT */
+    /* 5. METRIC PILLS */
     div[data-testid="stMetric"] {
-        background: #ffffff !important;
+        background: white !important;
         border: 2px solid #4CAF50 !important;
-        padding: 20px !important;
         border-radius: 35px !important;
+        padding: 20px !important;
         text-align: center !important;
     }
 
+    /* Dark Mode Support */
     @media (prefers-color-scheme: dark) {
         div[data-testid="stMetric"] { background: #1a1a1a !important; }
         [data-testid="stMetricValue"] { color: #81C784 !important; }
+        section[data-testid="stSidebar"] { background-color: #0E1117 !important; }
     }
     </style>
 """
 
 st.markdown(css_code, unsafe_allow_html=True)
 
-# --- 3. DATA & ASSETS ---
+# --- 3. DATA LOADING ---
 @st.cache_resource
 def load_assets():
     try:
@@ -117,28 +129,28 @@ def get_data():
 
 # --- 4. SIDEBAR (LOGO + NAV) ---
 with st.sidebar:
-    # Logo positioned at top center to align with navigation below
+    # Centered Logo aligned with Nav
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH)
     
-    st.markdown("<h3 style='text-align: center; color: #2E7D32; margin-top: -10px;'>AgriBot-AI</h3>", unsafe_allow_html=True)
-    st.markdown("---")
+    st.markdown("<h2 style='text-align: center; color: #2E7D32; margin-top: -10px;'>AgriBot-AI</h2>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 2px; background-color: #4CAF50; margin: 10px 40px;'></div>", unsafe_allow_html=True)
     
-    # Navigation list is now visually centered under the logo
-    page = st.radio("", ["📡 LIVE MONITOR", "📈 GROWTH TRENDS", "📜 SYSTEM LOGS"], label_visibility="collapsed")
+    # Navigation list
+    page = st.radio("", ["📡 DASHBOARD", "📈 ANALYSIS", "📜 LOGS"], label_visibility="collapsed")
     
     st.markdown("<br><br>", unsafe_allow_html=True)
-    st.success("🟢 SYSTEM ONLINE")
+    st.success("🟢 SYSTEM: ONLINE")
 
-# --- 5. MAIN CONTENT ---
+# --- 5. MAIN PAGE ---
 model, scaler = load_assets()
 df = get_data()
 latest = df.iloc[-1] if not df.empty else {"Temperature (°C)": "--", "Humidity (%)": "--", "pH Level": "--", "Soil Moisture": "--"}
 
-if page == "📡 LIVE MONITOR":
+if page == "📡 DASHBOARD":
     st.title("Real-Time Monitoring")
     
-    # PILL SENSORS
+    # SENSOR PILLS
     m1, m2, m3, m4 = st.columns(4)
     with m1: st.metric("TEMP", f"{latest.get('Temperature (°C)')}°C")
     with m2: st.metric("HUMIDITY", f"{latest.get('Humidity (%)')}%")
@@ -147,7 +159,7 @@ if page == "📡 LIVE MONITOR":
 
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # SPLIT VIEW
+    # CONTENT GRID
     col_l, col_r = st.columns([1.2, 1], gap="large")
     with col_l:
         st.subheader("📸 Plant Health Feed")
@@ -158,16 +170,16 @@ if page == "📡 LIVE MONITOR":
                 st.image(os.path.join(mock_dir, sorted(files)[-1]), use_container_width=True)
     
     with col_r:
-        st.subheader("🤖 AI Analysis")
+        st.subheader("🤖 AI Health Status")
         if not df.empty and model and scaler:
             try:
                 features = np.array([[float(latest['Temperature (°C)']), float(latest['Humidity (%)']), float(latest['pH Level'])]])
                 pred = model.predict(scaler.transform(features))[0]
                 if pred == -1:
-                    st.error("### 🚨 ANOMALY\nUnusual sensor patterns detected. Checking irrigation valves...")
+                    st.error("### 🚨 ALERT\nAnomalies detected in crop environment.")
                 else:
-                    st.success("### ✅ HEALTHY\nConditions are optimal for lettuce growth.")
-            except: st.info("Syncing AI...")
+                    st.success("### ✅ OPTIMAL\nGrowth conditions are stabilized.")
+            except: st.info("Syncing...")
 
 # --- 6. AUTO-REFRESH ---
 time.sleep(10)
