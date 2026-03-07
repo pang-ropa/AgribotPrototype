@@ -6,6 +6,7 @@ import numpy as np
 import os
 from oauth2client.service_account import ServiceAccountCredentials
 import time
+import base64
 
 # --- 1. PAGE CONFIG ---
 LOGO_PATH = "backend/agribotailogo.png"
@@ -17,61 +18,76 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. THE FINAL UI FIX (BLOCKING FULLSCREEN & CENTERING LOGO) ---
+# --- 2. THE ULTIMATE UI CSS (NO-INTERACTION LOGO & CENTERED TITLE) ---
 css_code = """
     <style>
-    /* 1. REMOVE FULLSCREEN/ENLARGE BUTTONS & INTERACTION */
-    button[title="View fullscreen"], 
-    .st-emotion-cache-15zrgzn, 
-    .st-emotion-cache-zq5wms {
-        display: none !important;
+    /* 1. SIDEBAR RETRIEVAL FIX */
+    [data-testid="stHeader"] {
+        background-color: transparent !important;
     }
     
-    [data-testid="stSidebar"] [data-testid="stImage"] {
-        pointer-events: none !important; /* Disables click and zoom */
-        display: flex !important;
-        justify-content: center !important; /* Centering the container */
-        align-items: center !important;
-        width: 100% !important;
+    button[kind="headerNoSpacing"] {
+        visibility: visible !important;
+        background-color: #2E7D32 !important;
+        color: white !important;
+        border-radius: 12px !important;
+        padding: 10px 15px !important;
+        top: 15px !important;
+        left: 15px !important;
+        z-index: 999999 !important;
     }
 
-    /* 2. LOGO ALIGNMENT: FORCE CENTERED CIRCLE */
+    /* 2. LOGO ALIGNMENT & "FULLSCREEN" REMOVAL */
     section[data-testid="stSidebar"] {
         width: 350px !important;
         background-color: #0E1117 !important;
         border-right: 2px solid #4CAF50;
     }
 
+    /* Target the container to remove the "Fullscreen" and zoom buttons */
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] > div:first-child {
+        pointer-events: none !important;
+    }
+
+    /* Ensure image is perfectly centered and circular */
+    [data-testid="stSidebar"] [data-testid="stImage"] {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding-top: 40px !important;
+        margin-bottom: 0px !important;
+    }
+    
     [data-testid="stSidebar"] [data-testid="stImage"] img {
         border-radius: 50% !important;
         border: 4px solid #4CAF50 !important;
         width: 170px !important;
         height: 170px !important;
         object-fit: cover !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
     }
 
-    /* 3. CENTERED TITLE & HR LINE */
+    /* 3. CENTERED AGRIBOT-AI TITLE */
     .sidebar-title {
         text-align: center !important;
         color: #4CAF50 !important;
         font-size: 26px !important;
         font-weight: 800 !important;
         margin-top: 5px !important;
+        margin-bottom: 5px !important;
         width: 100% !important;
         display: block !important;
     }
 
+    /* Center the decorative line */
     .sidebar-hr {
         height: 3px;
         background-color: #4CAF50;
         width: 60%;
-        margin: 5px auto 20px auto !important;
+        margin: 0 auto 20px auto !important;
         border-radius: 5px;
     }
 
-    /* 4. NAVIGATION & METRIC STYLING */
+    /* 4. NAVIGATION STYLING */
     .stRadio > div {
         gap: 10px;
         align-items: center;
@@ -84,8 +100,10 @@ css_code = """
         color: #4CAF50 !important;
         text-align: center;
         width: 100%;
+        cursor: pointer;
     }
 
+    /* MAIN CONTENT PILLS */
     div[data-testid="stMetric"] {
         background: rgba(46, 125, 50, 0.15) !important;
         border: 1px solid #4CAF50 !important;
@@ -125,11 +143,11 @@ def get_data():
 
 # --- 4. SIDEBAR ---
 with st.sidebar:
-    # Logo: Center forced via CSS above
+    # Logo: No click, No Fullscreen
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH)
     
-    # Title: Center forced via CSS class
+    # Perfectly Centered Title
     st.markdown('<div class="sidebar-title">AgriBot-AI</div>', unsafe_allow_html=True)
     st.markdown('<div class="sidebar-hr"></div>', unsafe_allow_html=True)
     
@@ -142,7 +160,11 @@ with st.sidebar:
 model, scaler = load_assets()
 df = get_data()
 
-latest = df.iloc[-1] if not df.empty else {"Temperature (°C)": 0, "Humidity (%)": 0, "pH Level": 0, "Soil Moisture": 0}
+# Data Handling
+if not df.empty:
+    latest = df.iloc[-1]
+else:
+    latest = {"Temperature (°C)": 0, "Humidity (%)": 0, "pH Level": 0, "Soil Moisture": 0}
 
 if page == "📡 LIVE DASHBOARD":
     st.title("Real-Time Monitoring")
@@ -172,7 +194,7 @@ if page == "📡 LIVE DASHBOARD":
                 features = np.array([[float(latest['Temperature (°C)']), float(latest['Humidity (%)']), float(latest['pH Level'])]])
                 pred = model.predict(scaler.transform(features))[0]
                 if pred == -1:
-                    st.error("### 🚨 ALERT\nAnomalous conditions detected.")
+                    st.error("### 🚨 ALERT\nAnomalous conditions detected. Adjusting irrigation...")
                 else:
                     st.success("### ✅ HEALTHY\nCrop environment is optimal.")
             except: st.info("Syncing AI model...")
