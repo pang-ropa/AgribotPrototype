@@ -18,14 +18,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. THE ULTIMATE UI CSS (FIXED ALIGNMENT & RETRIEVAL) ---
-def get_base64(bin_file):
-    with open(bin_file, 'rb') as f:
-        return base64.b64encode(f.read()).decode()
-
+# --- 2. THE ULTIMATE UI CSS (FIXED LOGO & PERSISTENT TOGGLE) ---
 css_code = """
     <style>
-    /* 1. SIDEBAR RETRIEVAL FIX: This button stays visible even when UI is 'hidden' */
+    /* 1. SIDEBAR RETRIEVAL FIX: Keep the 'Open' button visible and green */
     [data-testid="stHeader"] {
         background-color: transparent !important;
     }
@@ -42,18 +38,20 @@ css_code = """
         z-index: 999999 !important;
     }
 
-    /* 2. SIDEBAR STYLING & PERFECT LOGO CENTERING */
+    /* 2. SIDEBAR LOGO: DEAD CENTER & NO ENLARGE BUTTONS */
     section[data-testid="stSidebar"] {
         width: 350px !important;
         background-color: #0E1117 !important;
         border-right: 2px solid #4CAF50;
     }
 
-    /* Target the image container to force absolute center */
+    /* Target the image block to remove zoom/enlarge icons */
     [data-testid="stSidebar"] [data-testid="stImage"] {
         display: flex !important;
         justify-content: center !important;
-        padding-top: 40px !important;
+        align-items: center !important;
+        padding-top: 50px !important;
+        pointer-events: none !important; /* Disables enlarge/click-to-zoom */
     }
     
     [data-testid="stSidebar"] [data-testid="stImage"] img {
@@ -62,28 +60,27 @@ css_code = """
         width: 180px !important;
         height: 180px !important;
         object-fit: cover !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
+        margin: 0 auto !important; /* Force browser to center */
     }
 
-    /* 3. NAVIGATION ALIGNMENT */
+    /* 3. NAVIGATION ALIGNMENT (Vertical Stack) */
     .stRadio > div {
-        gap: 12px;
-        padding-top: 25px;
+        gap: 15px;
+        padding-top: 30px;
         align-items: center;
         justify-content: center;
     }
     
     .stRadio label {
-        font-size: 18px !important;
+        font-size: 19px !important;
         font-weight: 600 !important;
-        color: #2E7D32 !important;
+        color: #4CAF50 !important;
         text-align: center;
         width: 100%;
-        cursor: pointer;
+        background-color: transparent !important;
     }
 
-    /* 4. MAIN CONTENT CARDS */
+    /* 4. MAIN DASHBOARD CONTENT */
     .block-container {
         padding: 3rem 5rem !important;
     }
@@ -91,29 +88,27 @@ css_code = """
     div[data-testid="stMetric"] {
         background: rgba(46, 125, 50, 0.1) !important;
         border: 2px solid #4CAF50 !important;
-        border-radius: 25px !important;
+        border-radius: 20px !important;
         padding: 20px !important;
         text-align: center !important;
     }
 
-    /* Hide standard Streamlit garbage */
+    /* HIDE STREAMLIT BRANDING */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     [data-testid="stDecoration"] {display: none;}
     </style>
 """
-
 st.markdown(css_code, unsafe_allow_html=True)
 
-# --- 3. DATA & ASSETS (RE-RESTORED FULL LOGIC) ---
+# --- 3. DATA & ASSETS LOGIC ---
 @st.cache_resource
 def load_assets():
     try:
         model = joblib.load('backend/anomaly_model.pkl')
         scaler = joblib.load('backend/anomaly_scaler.pkl')
         return model, scaler
-    except Exception as e:
-        return None, None
+    except: return None, None
 
 def get_data():
     try:
@@ -125,97 +120,78 @@ def get_data():
             creds = ServiceAccountCredentials.from_json_keyfile_name('backend/credentials.json', scope)
         client = gspread.authorize(creds)
         sheet = client.open("Agribot-Live-Data").sheet1
-        data = pd.DataFrame(sheet.get_all_records())
-        return data
-    except Exception as e:
-        return pd.DataFrame()
+        return pd.DataFrame(sheet.get_all_records())
+    except: return pd.DataFrame()
 
-# --- 4. SIDEBAR NAVIGATION ---
+# --- 4. SIDEBAR ---
 with st.sidebar:
-    # Centered Logo
     if os.path.exists(LOGO_PATH):
+        # We use a container to ensure centering logic is respected
         st.image(LOGO_PATH)
     
-    st.markdown("<h2 style='text-align: center; color: #4CAF50; margin-top: -10px;'>AgriBot-AI</h2>", unsafe_allow_html=True)
-    st.markdown("<div style='height: 2px; background-color: #4CAF50; margin: 5px 60px;'></div>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #4CAF50; margin-top: -15px;'>AgriBot-AI</h2>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 2px; background-color: #4CAF50; margin: 0px 70px;'></div>", unsafe_allow_html=True)
     
-    # Navigation Buttons
     page = st.radio("", ["📡 LIVE DASHBOARD", "📈 ANALYSIS", "📜 SYSTEM LOGS"], label_visibility="collapsed")
     
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.success("🟢 SYSTEM: ONLINE")
 
-# --- 5. MAIN PAGE LOGIC ---
+# --- 5. MAIN CONTENT ---
 model, scaler = load_assets()
 df = get_data()
 
-# Robust check for latest data
+# Ensure variables exist even if data fails
 if not df.empty:
     latest = df.iloc[-1]
 else:
-    latest = {
-        "Temperature (°C)": 0, 
-        "Humidity (%)": 0, 
-        "pH Level": 0, 
-        "Soil Moisture": 0,
-        "Nitrogen (mg/L)": 0,
-        "Phosphorus (mg/L)": 0,
-        "Potassium (mg/L)": 0
-    }
+    latest = {"Temperature (°C)": 0, "Humidity (%)": 0, "pH Level": 0, "Soil Moisture": 0}
 
 if page == "📡 LIVE DASHBOARD":
     st.title("Real-Time Monitoring")
     
-    # METRIC ROW
+    # SENSOR ROW
     m1, m2, m3, m4 = st.columns(4)
-    with m1: st.metric("TEMP", f"{latest.get('Temperature (°C)', '--')}°C")
-    with m2: st.metric("HUMIDITY", f"{latest.get('Humidity (%)', '--')}%")
-    with m3: st.metric("PH LEVEL", f"{latest.get('pH Level', '--')}")
-    with m4: st.metric("SOIL MOISTURE", f"{latest.get('Soil Moisture', '--')}%")
+    with m1: st.metric("TEMP", f"{latest.get('Temperature (°C)', '0')}°C")
+    with m2: st.metric("HUMIDITY", f"{latest.get('Humidity (%)', '0')}%")
+    with m3: st.metric("PH", f"{latest.get('pH Level', '0')}")
+    with m4: st.metric("SOIL", f"{latest.get('Soil Moisture', '0')}%")
 
     st.markdown("---")
     
-    # CONTENT GRID
-    col_left, col_right = st.columns([1.2, 1], gap="large")
-    
-    with col_left:
+    col_l, col_r = st.columns([1.3, 1], gap="large")
+    with col_l:
         st.subheader("📸 Plant Health Feed")
         mock_dir = "backend/mock_images"
         if os.path.exists(mock_dir):
             files = [f for f in os.listdir(mock_dir) if f.lower().endswith(('.png', '.jpg'))]
             if files:
                 st.image(os.path.join(mock_dir, sorted(files)[-1]), use_container_width=True)
-            else:
-                st.warning("No camera feed detected.")
     
-    with col_right:
-        st.subheader("🤖 AI Analysis")
+    with col_r:
+        st.subheader("🤖 AI Health Analysis")
         if not df.empty and model and scaler:
             try:
-                # Prediction logic using model/scaler
                 features = np.array([[float(latest['Temperature (°C)']), float(latest['Humidity (%)']), float(latest['pH Level'])]])
                 pred = model.predict(scaler.transform(features))[0]
                 if pred == -1:
-                    st.error("### 🚨 ANOMALY DETECTED\nConditions outside optimal range.")
+                    st.error("### 🚨 ALERT\nAnomalous growth conditions detected.")
                 else:
-                    st.success("### ✅ HEALTHY\nGrowth conditions are stable.")
-            except:
-                st.info("AI Model synchronizing...")
+                    st.success("### ✅ HEALTHY\nGrowth parameters are optimal.")
+            except: st.info("Synchronizing with sensor array...")
         else:
-            st.warning("Waiting for sensor/model data...")
+            st.warning("Waiting for Raspberry Pi data...")
 
 elif page == "📈 ANALYSIS":
-    st.title("Environmental Analysis")
+    st.title("Historical Trends")
     if not df.empty:
         st.line_chart(df[['Temperature (°C)', 'Humidity (%)', 'Soil Moisture']])
-        st.subheader("NPK Levels")
-        st.bar_chart(df[['Nitrogen (mg/L)', 'Phosphorus (mg/L)', 'Potassium (mg/L)']].tail(10))
 
 elif page == "📜 SYSTEM LOGS":
-    st.title("System Logs & Alerts")
+    st.title("System Event Logs")
     if not df.empty:
-        st.table(df.tail(20))
+        st.table(df.tail(15))
 
-# --- 6. AUTO-REFRESH ---
+# --- 6. REFRESH ---
 time.sleep(10)
 st.rerun()
