@@ -18,7 +18,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. THE ULTIMATE UI CSS (NO-INTERACTION LOGO & CENTERED TITLE) ---
+# --- 2. THE ULTIMATE UI CSS (GROUPED & CENTERED LOGO/TITLE) ---
 css_code = """
     <style>
     /* 1. SIDEBAR RETRIEVAL FIX */
@@ -37,25 +37,35 @@ css_code = """
         z-index: 999999 !important;
     }
 
-    /* 2. LOGO ALIGNMENT & "FULLSCREEN" REMOVAL */
+    /* 2. SIDEBAR STRUCTURE */
     section[data-testid="stSidebar"] {
         width: 350px !important;
         background-color: #0E1117 !important;
         border-right: 2px solid #4CAF50;
     }
 
-    /* Target the container to remove the "Fullscreen" and zoom buttons */
-    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] > div:first-child {
-        pointer-events: none !important;
+    /* 3. GROUPED LOGO & TITLE CENTERING */
+    /* This targets the vertical block in the sidebar to center all children */
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
     }
 
-    /* Ensure image is perfectly centered and circular */
+    /* Remove interaction/fullscreen/toolbar from the logo */
     [data-testid="stSidebar"] [data-testid="stImage"] {
+        pointer-events: none !important;
+        user-select: none !important;
         display: flex !important;
         justify-content: center !important;
-        align-items: center !important;
         padding-top: 40px !important;
         margin-bottom: 0px !important;
+    }
+
+    /* Hide the specific Streamlit toolbar that shows 'Fullscreen' buttons */
+    [data-testid="stSidebar"] [data-testid="stElementToolbar"] {
+        display: none !important;
     }
     
     [data-testid="stSidebar"] [data-testid="stImage"] img {
@@ -66,32 +76,32 @@ css_code = """
         object-fit: cover !important;
     }
 
-    /* 3. CENTERED AGRIBOT-AI TITLE */
+    /* Centered Title Styles */
     .sidebar-title {
         text-align: center !important;
         color: #4CAF50 !important;
         font-size: 26px !important;
         font-weight: 800 !important;
-        margin-top: 5px !important;
+        margin-top: 15px !important;
         margin-bottom: 5px !important;
         width: 100% !important;
         display: block !important;
     }
 
-    /* Center the decorative line */
     .sidebar-hr {
         height: 3px;
         background-color: #4CAF50;
         width: 60%;
-        margin: 0 auto 20px auto !important;
+        margin: 5px auto 25px auto !important;
         border-radius: 5px;
     }
 
-    /* 4. NAVIGATION STYLING */
+    /* 4. NAVIGATION & CONTENT STYLING */
     .stRadio > div {
         gap: 10px;
         align-items: center;
         justify-content: center;
+        width: 100% !important;
     }
     
     .stRadio label {
@@ -103,7 +113,6 @@ css_code = """
         cursor: pointer;
     }
 
-    /* MAIN CONTENT PILLS */
     div[data-testid="stMetric"] {
         background: rgba(46, 125, 50, 0.15) !important;
         border: 1px solid #4CAF50 !important;
@@ -111,7 +120,6 @@ css_code = """
         text-align: center !important;
     }
 
-    /* HIDE GLOBAL UI */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     [data-testid="stDecoration"] {display: none;}
@@ -143,11 +151,10 @@ def get_data():
 
 # --- 4. SIDEBAR ---
 with st.sidebar:
-    # Logo: No click, No Fullscreen
+    # Logo and Title are grouped at the top of the sidebar vertical block
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH)
     
-    # Perfectly Centered Title
     st.markdown('<div class="sidebar-title">AgriBot-AI</div>', unsafe_allow_html=True)
     st.markdown('<div class="sidebar-hr"></div>', unsafe_allow_html=True)
     
@@ -160,7 +167,6 @@ with st.sidebar:
 model, scaler = load_assets()
 df = get_data()
 
-# Data Handling
 if not df.empty:
     latest = df.iloc[-1]
 else:
@@ -169,7 +175,6 @@ else:
 if page == "📡 LIVE DASHBOARD":
     st.title("Real-Time Monitoring")
     
-    # SENSOR ROW
     m1, m2, m3, m4 = st.columns(4)
     with m1: st.metric("TEMP", f"{latest.get('Temperature (°C)', '0')}°C")
     with m2: st.metric("HUMIDITY", f"{latest.get('Humidity (%)', '0')}%")
