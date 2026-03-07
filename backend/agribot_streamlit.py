@@ -20,21 +20,22 @@ st.set_page_config(
 # --- 2. THE FINAL UI FIX (BLOCKING FULLSCREEN & CENTERING LOGO) ---
 css_code = """
     <style>
-    /* 1. REMOVE FULLSCREEN/ENLARGE BUTTONS ON ALL IMAGES */
+    /* 1. REMOVE FULLSCREEN/ENLARGE BUTTONS & INTERACTION */
     button[title="View fullscreen"], 
     .st-emotion-cache-15zrgzn, 
     .st-emotion-cache-zq5wms {
         display: none !important;
     }
     
-    /* Completely disable interaction with sidebar images (no hover effects) */
     [data-testid="stSidebar"] [data-testid="stImage"] {
-        pointer-events: none !important;
+        pointer-events: none !important; /* Disables click and zoom */
         display: flex !important;
-        justify-content: center !important;
+        justify-content: center !important; /* Centering the container */
+        align-items: center !important;
+        width: 100% !important;
     }
 
-    /* 2. CENTER THE LOGO AND TITLE IN SIDEBAR */
+    /* 2. LOGO ALIGNMENT: FORCE CENTERED CIRCLE */
     section[data-testid="stSidebar"] {
         width: 350px !important;
         background-color: #0E1117 !important;
@@ -44,46 +45,63 @@ css_code = """
     [data-testid="stSidebar"] [data-testid="stImage"] img {
         border-radius: 50% !important;
         border: 4px solid #4CAF50 !important;
-        width: 160px !important;
-        height: 160px !important;
+        width: 170px !important;
+        height: 170px !important;
         object-fit: cover !important;
         margin-left: auto !important;
         margin-right: auto !important;
     }
 
+    /* 3. CENTERED TITLE & HR LINE */
     .sidebar-title {
         text-align: center !important;
         color: #4CAF50 !important;
-        font-size: 24px !important;
+        font-size: 26px !important;
         font-weight: 800 !important;
-        margin-top: 10px !important;
+        margin-top: 5px !important;
         width: 100% !important;
+        display: block !important;
     }
 
     .sidebar-hr {
-        height: 2px;
+        height: 3px;
         background-color: #4CAF50;
-        width: 50%;
+        width: 60%;
         margin: 5px auto 20px auto !important;
+        border-radius: 5px;
     }
 
-    /* 3. FIX SENSOR METRIC BOXES (GREEN GLOW) */
+    /* 4. NAVIGATION & METRIC STYLING */
+    .stRadio > div {
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .stRadio label {
+        font-size: 18px !important;
+        font-weight: 600 !important;
+        color: #4CAF50 !important;
+        text-align: center;
+        width: 100%;
+    }
+
     div[data-testid="stMetric"] {
-        background: rgba(46, 125, 50, 0.1) !important;
+        background: rgba(46, 125, 50, 0.15) !important;
         border: 1px solid #4CAF50 !important;
         border-radius: 15px !important;
-        padding: 15px !important;
         text-align: center !important;
     }
 
-    /* HIDE STREAMLIT BRANDING */
+    /* HIDE GLOBAL UI */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
+    [data-testid="stDecoration"] {display: none;}
     </style>
 """
 st.markdown(css_code, unsafe_allow_html=True)
 
-# --- 3. DATA LOGIC ---
+# --- 3. DATA & ASSETS LOGIC ---
 @st.cache_resource
 def load_assets():
     try:
@@ -107,10 +125,11 @@ def get_data():
 
 # --- 4. SIDEBAR ---
 with st.sidebar:
-    st.markdown("<br>", unsafe_allow_html=True)
+    # Logo: Center forced via CSS above
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH)
     
+    # Title: Center forced via CSS class
     st.markdown('<div class="sidebar-title">AgriBot-AI</div>', unsafe_allow_html=True)
     st.markdown('<div class="sidebar-hr"></div>', unsafe_allow_html=True)
     
@@ -137,7 +156,7 @@ if page == "📡 LIVE DASHBOARD":
 
     st.markdown("---")
     
-    col_l, col_r = st.columns([1.5, 1], gap="large")
+    col_l, col_r = st.columns([1.3, 1], gap="large")
     with col_l:
         st.subheader("📸 Plant Health Feed")
         mock_dir = "backend/mock_images"
@@ -147,19 +166,29 @@ if page == "📡 LIVE DASHBOARD":
                 st.image(os.path.join(mock_dir, sorted(files)[-1]), use_container_width=True)
     
     with col_r:
-        st.subheader("🤖 AI Health Status")
+        st.subheader("🤖 AI Health Recommendation")
         if not df.empty and model and scaler:
             try:
                 features = np.array([[float(latest['Temperature (°C)']), float(latest['Humidity (%)']), float(latest['pH Level'])]])
                 pred = model.predict(scaler.transform(features))[0]
                 if pred == -1:
-                    st.error("### 🚨 ANOMALY\nEnvironment unstable.")
+                    st.error("### 🚨 ALERT\nAnomalous conditions detected.")
                 else:
-                    st.success("### ✅ OPTIMAL\nCrop is healthy.")
-            except: st.info("Analyzing data...")
+                    st.success("### ✅ HEALTHY\nCrop environment is optimal.")
+            except: st.info("Syncing AI model...")
         else:
-            st.warning("Awaiting Raspberry Pi data...")
+            st.warning("Awaiting sensor database connection...")
 
-# Refresh every 10 seconds
+elif page == "📈 ANALYSIS":
+    st.title("Historical Trends")
+    if not df.empty:
+        st.line_chart(df[['Temperature (°C)', 'Humidity (%)', 'Soil Moisture']])
+
+elif page == "📜 SYSTEM LOGS":
+    st.title("System Activity Logs")
+    if not df.empty:
+        st.table(df.tail(20))
+
+# --- 6. AUTO-REFRESH ---
 time.sleep(10)
 st.rerun()
