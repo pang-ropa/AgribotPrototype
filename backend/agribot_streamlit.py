@@ -18,7 +18,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. THE ULTIMATE UI CSS (GROUPED & CENTERED LOGO/TITLE) ---
+# --- 2. THE ULTIMATE UI CSS ---
 css_code = """
     <style>
     /* 1. SIDEBAR RETRIEVAL FIX */
@@ -44,8 +44,6 @@ css_code = """
         border-right: 2px solid #4CAF50;
     }
 
-    /* 3. GROUPED LOGO & TITLE CENTERING */
-    /* This targets the vertical block in the sidebar to center all children */
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
         display: flex !important;
         flex-direction: column !important;
@@ -63,7 +61,6 @@ css_code = """
         margin-bottom: 0px !important;
     }
 
-    /* Hide the specific Streamlit toolbar that shows 'Fullscreen' buttons */
     [data-testid="stSidebar"] [data-testid="stElementToolbar"] {
         display: none !important;
     }
@@ -76,7 +73,6 @@ css_code = """
         object-fit: cover !important;
     }
 
-    /* Centered Title Styles */
     .sidebar-title {
         text-align: center !important;
         color: #4CAF50 !important;
@@ -96,7 +92,7 @@ css_code = """
         border-radius: 5px;
     }
 
-    /* 4. NAVIGATION & CONTENT STYLING */
+    /* 4. NAVIGATION & METRIC STYLING */
     .stRadio > div {
         gap: 10px;
         align-items: center;
@@ -113,11 +109,27 @@ css_code = """
         cursor: pointer;
     }
 
+    /* --- METRIC BOX IMPROVEMENTS --- */
     div[data-testid="stMetric"] {
         background: rgba(46, 125, 50, 0.15) !important;
         border: 1px solid #4CAF50 !important;
         border-radius: 15px !important;
+        padding: 15px !important; /* Added padding to box */
         text-align: center !important;
+    }
+
+    /* Move 'TEMP', 'HUMIDITY', etc. labels away from the top border */
+    div[data-testid="stMetricLabel"] {
+        margin-top: 10px !important; 
+        font-weight: bold !important;
+        color: #A5D6A7 !important;
+        justify-content: center !important;
+    }
+
+    /* Bring the value (numbers) closer to the labels */
+    div[data-testid="stMetricValue"] {
+        margin-top: -5px !important;
+        font-size: 32px !important;
     }
 
     #MainMenu {visibility: hidden;}
@@ -151,7 +163,6 @@ def get_data():
 
 # --- 4. SIDEBAR ---
 with st.sidebar:
-    # Logo and Title are grouped at the top of the sidebar vertical block
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH)
     
