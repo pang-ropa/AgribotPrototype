@@ -18,10 +18,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. THE ULTIMATE UI CSS (FORCED ALIGNMENT & NO-CLICK LOGO) ---
+# --- 2. THE ULTIMATE UI CSS (NO-INTERACTION LOGO & CENTERED TITLE) ---
 css_code = """
     <style>
-    /* 1. SIDEBAR RETRIEVAL FIX: Persistent Green Toggle */
+    /* 1. SIDEBAR RETRIEVAL FIX */
     [data-testid="stHeader"] {
         background-color: transparent !important;
     }
@@ -37,69 +37,81 @@ css_code = """
         z-index: 999999 !important;
     }
 
-    /* 2. SIDEBAR LOGO: DEAD CENTER ALIGNMENT & INTERACTION DISABLE */
+    /* 2. LOGO ALIGNMENT & "FULLSCREEN" REMOVAL */
     section[data-testid="stSidebar"] {
         width: 350px !important;
         background-color: #0E1117 !important;
         border-right: 2px solid #4CAF50;
     }
 
-    /* Target the image container to prevent any click/enlarge/hover actions */
+    /* Target the container to remove the "Fullscreen" and zoom buttons */
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] > div:first-child {
+        pointer-events: none !important;
+    }
+
+    /* Ensure image is perfectly centered and circular */
     [data-testid="stSidebar"] [data-testid="stImage"] {
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        padding-top: 50px !important;
-        pointer-events: none !important; /* CRITICAL: Disables click and hover tools */
-        user-select: none !important;
+        padding-top: 40px !important;
+        margin-bottom: 0px !important;
     }
     
     [data-testid="stSidebar"] [data-testid="stImage"] img {
         border-radius: 50% !important;
         border: 4px solid #4CAF50 !important;
-        width: 180px !important;
-        height: 180px !important;
+        width: 170px !important;
+        height: 170px !important;
         object-fit: cover !important;
-        /* Forced centering regardless of sidebar width */
-        margin-left: auto !important;
-        margin-right: auto !important;
     }
 
-    /* 3. NAVIGATION & TITLE ALIGNMENT */
+    /* 3. CENTERED AGRIBOT-AI TITLE */
     .sidebar-title {
         text-align: center !important;
         color: #4CAF50 !important;
-        font-size: 24px !important;
-        font-weight: 700 !important;
-        margin-top: -10px !important;
+        font-size: 26px !important;
+        font-weight: 800 !important;
+        margin-top: 5px !important;
+        margin-bottom: 5px !important;
         width: 100% !important;
+        display: block !important;
     }
 
+    /* Center the decorative line */
+    .sidebar-hr {
+        height: 3px;
+        background-color: #4CAF50;
+        width: 60%;
+        margin: 0 auto 20px auto !important;
+        border-radius: 5px;
+    }
+
+    /* 4. NAVIGATION STYLING */
     .stRadio > div {
-        gap: 15px;
-        padding-top: 30px;
+        gap: 10px;
         align-items: center;
         justify-content: center;
     }
     
     .stRadio label {
-        font-size: 19px !important;
+        font-size: 18px !important;
         font-weight: 600 !important;
         color: #4CAF50 !important;
         text-align: center;
         width: 100%;
+        cursor: pointer;
     }
 
-    /* 4. MAIN CONTENT STYLING */
+    /* MAIN CONTENT PILLS */
     div[data-testid="stMetric"] {
-        background: rgba(46, 125, 50, 0.1) !important;
-        border: 2px solid #4CAF50 !important;
-        border-radius: 20px !important;
-        padding: 20px !important;
+        background: rgba(46, 125, 50, 0.15) !important;
+        border: 1px solid #4CAF50 !important;
+        border-radius: 15px !important;
         text-align: center !important;
     }
 
-    /* HIDE STREAMLIT BRANDING */
+    /* HIDE GLOBAL UI */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     [data-testid="stDecoration"] {display: none;}
@@ -131,13 +143,13 @@ def get_data():
 
 # --- 4. SIDEBAR ---
 with st.sidebar:
-    # Logo placement with forced centering
+    # Logo: No click, No Fullscreen
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH)
     
-    # Title aligned with logo center
+    # Perfectly Centered Title
     st.markdown('<div class="sidebar-title">AgriBot-AI</div>', unsafe_allow_html=True)
-    st.markdown("<div style='height: 2px; background-color: #4CAF50; margin: 0px 70px;'></div>", unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-hr"></div>', unsafe_allow_html=True)
     
     page = st.radio("", ["📡 LIVE DASHBOARD", "📈 ANALYSIS", "📜 SYSTEM LOGS"], label_visibility="collapsed")
     
@@ -148,7 +160,11 @@ with st.sidebar:
 model, scaler = load_assets()
 df = get_data()
 
-latest = df.iloc[-1] if not df.empty else {"Temperature (°C)": 0, "Humidity (%)": 0, "pH Level": 0, "Soil Moisture": 0}
+# Data Handling
+if not df.empty:
+    latest = df.iloc[-1]
+else:
+    latest = {"Temperature (°C)": 0, "Humidity (%)": 0, "pH Level": 0, "Soil Moisture": 0}
 
 if page == "📡 LIVE DASHBOARD":
     st.title("Real-Time Monitoring")
@@ -172,16 +188,18 @@ if page == "📡 LIVE DASHBOARD":
                 st.image(os.path.join(mock_dir, sorted(files)[-1]), use_container_width=True)
     
     with col_r:
-        st.subheader("🤖 AI Analysis")
+        st.subheader("🤖 AI Health Recommendation")
         if not df.empty and model and scaler:
             try:
                 features = np.array([[float(latest['Temperature (°C)']), float(latest['Humidity (%)']), float(latest['pH Level'])]])
                 pred = model.predict(scaler.transform(features))[0]
-                status = "🚨 ALERT: Anomalous Conditions" if pred == -1 else "✅ HEALTHY: Optimal Conditions"
-                st.info(status)
-            except: st.info("Analyzing sensor streams...")
+                if pred == -1:
+                    st.error("### 🚨 ALERT\nAnomalous conditions detected. Adjusting irrigation...")
+                else:
+                    st.success("### ✅ HEALTHY\nCrop environment is optimal.")
+            except: st.info("Syncing AI model...")
         else:
-            st.warning("Waiting for Raspberry Pi data...")
+            st.warning("Awaiting sensor database connection...")
 
 elif page == "📈 ANALYSIS":
     st.title("Historical Trends")
@@ -189,9 +207,9 @@ elif page == "📈 ANALYSIS":
         st.line_chart(df[['Temperature (°C)', 'Humidity (%)', 'Soil Moisture']])
 
 elif page == "📜 SYSTEM LOGS":
-    st.title("System Logs")
+    st.title("System Activity Logs")
     if not df.empty:
-        st.table(df.tail(15))
+        st.table(df.tail(20))
 
 # --- 6. AUTO-REFRESH ---
 time.sleep(10)
