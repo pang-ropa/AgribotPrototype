@@ -114,11 +114,10 @@ css_code = """
         background: rgba(46, 125, 50, 0.15) !important;
         border: 1px solid #4CAF50 !important;
         border-radius: 15px !important;
-        padding: 15px !important; /* Added padding to box */
+        padding: 15px !important;
         text-align: center !important;
     }
 
-    /* Move 'TEMP', 'HUMIDITY', etc. labels away from the top border */
     div[data-testid="stMetricLabel"] {
         margin-top: 10px !important; 
         font-weight: bold !important;
@@ -126,7 +125,6 @@ css_code = """
         justify-content: center !important;
     }
 
-    /* Bring the value (numbers) closer to the labels */
     div[data-testid="stMetricValue"] {
         margin-top: -5px !important;
         font-size: 32px !important;
@@ -158,8 +156,10 @@ def get_data():
             creds = ServiceAccountCredentials.from_json_keyfile_name('backend/credentials.json', scope)
         client = gspread.authorize(creds)
         sheet = client.open("Agribot-Live-Data").sheet1
-        return pd.DataFrame(sheet.get_all_records())
-    except: return pd.DataFrame()
+        data = sheet.get_all_records()
+        return pd.DataFrame(data)
+    except Exception as e:
+        return pd.DataFrame()
 
 # --- 4. SIDEBAR ---
 with st.sidebar:
@@ -178,11 +178,10 @@ with st.sidebar:
 model, scaler = load_assets()
 df = get_data()
 
-# UPDATED: Mapping keys to match the Pi's new format (No special degree symbols)
+# UPDATED: Key mapping to match the fixed Raspberry Pi headers (No special symbols)
 if not df.empty:
     latest = df.iloc[-1]
-    # We extract variables safely for AI use later
-    val_temp = latest.get('Temperature (C)', 0)
+    val_temp = latest.get('Temperature (C)', 0) # Changed from 'Temperature (°C)'
     val_hum  = latest.get('Humidity (%)', 0)
     val_ph   = latest.get('pH Level', 0)
     val_soil = latest.get('Soil Moisture', 0)
@@ -193,7 +192,6 @@ if page == "📡 LIVE DASHBOARD":
     st.title("Real-Time Monitoring")
     
     m1, m2, m3, m4 = st.columns(4)
-    # UPDATED: Fetching metrics using the simplified keys
     with m1: st.metric("TEMP", f"{val_temp}°C")
     with m2: st.metric("HUMIDITY", f"{val_hum}%")
     with m3: st.metric("PH", f"{val_ph}")
@@ -214,7 +212,6 @@ if page == "📡 LIVE DASHBOARD":
         st.subheader("🤖 AI Health Recommendation")
         if not df.empty and model and scaler:
             try:
-                # UPDATED: Using the simplified variables for AI features
                 features = np.array([[float(val_temp), float(val_hum), float(val_ph)]])
                 pred = model.predict(scaler.transform(features))[0]
                 if pred == -1:
@@ -228,7 +225,7 @@ if page == "📡 LIVE DASHBOARD":
 elif page == "📈 ANALYSIS":
     st.title("Historical Trends")
     if not df.empty:
-        # UPDATED: Column names match the Pi's output to prevent KeyError
+        # Match the exact column names in your Google Sheet
         st.line_chart(df[['Temperature (C)', 'Humidity (%)', 'Soil Moisture']])
 
 elif page == "📜 SYSTEM LOGS":
