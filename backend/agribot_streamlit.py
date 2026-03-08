@@ -1,115 +1,250 @@
-# -*- coding: utf-8 -*-
-import time
-from datetime import datetime
-import RPi.GPIO as GPIO
-import smbus
+import streamlit as st
+import pandas as pd
+import joblib
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+import numpy as np
 import os
+from oauth2client.service_account import ServiceAccountCredentials
+import time
+import base64
 
-# --- 1. SYSTEM SYNC (Prevents Connection Errors) ---
-os.system("sudo timedatectl set-ntp True")
+# --- 1. PAGE CONFIG ---
+LOGO_PATH = "backend/agribotailogo.png"
 
-# --- 2. HARDWARE SETUP ---
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
+st.set_page_config(
+    page_title="AgriBot-AI | Dashboard",
+    page_icon=LOGO_PATH if os.path.exists(LOGO_PATH) else "🌱",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# I2C for ADS1115 (PH and Soil Moisture)
-i2c_bus = smbus.SMBus(1)
-ADS1115_ADDRESS = 0x48
+# --- 2. THE ULTIMATE UI CSS ---
+css_code = """
+    <style>
+    [data-testid="stHeader"] {
+        background-color: transparent !important;
+    }
+    
+    button[kind="headerNoSpacing"] {
+        visibility: visible !important;
+        background-color: #2E7D32 !important;
+        color: white !important;
+        border-radius: 12px !important;
+        padding: 10px 15px !important;
+        top: 15px !important;
+        left: 15px !important;
+        z-index: 999999 !important;
+    }
 
-# DHT22 Setup
-try:
-    import board
-    import adafruit_dht
-    dht_device = adafruit_dht.DHT22(board.D4, use_pulseio=False)
-except ImportError:
-    print("❌ Library missing. Run: pip install adafruit-circuitpython-dht gpiod")
+    section[data-testid="stSidebar"] {
+        width: 350px !important;
+        background-color: #0E1117 !important;
+        border-right: 2px solid #4CAF50;
+    }
 
-# --- 3. GOOGLE SHEETS SETUP ---
-CREDENTIALS_FILE = 'credentials.json'
-scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+    }
 
-def get_sheet_connection():
+    [data-testid="stSidebar"] [data-testid="stImage"] {
+        pointer-events: none !important;
+        user-select: none !important;
+        display: flex !important;
+        justify-content: center !important;
+        padding-top: 40px !important;
+        margin-bottom: 0px !important;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stElementToolbar"] {
+        display: none !important;
+    }
+    
+    [data-testid="stSidebar"] [data-testid="stImage"] img {
+        border-radius: 50% !important;
+        border: 4px solid #4CAF50 !important;
+        width: 170px !important;
+        height: 170px !important;
+        object-fit: cover !important;
+    }
+
+    .sidebar-title {
+        text-align: center !important;
+        color: #4CAF50 !important;
+        font-size: 26px !important;
+        font-weight: 800 !important;
+        margin-top: 15px !important;
+        margin-bottom: 5px !important;
+        width: 100% !important;
+        display: block !important;
+    }
+
+    .sidebar-hr {
+        height: 3px;
+        background-color: #4CAF50;
+        width: 60%;
+        margin: 5px auto 25px auto !important;
+        border-radius: 5px;
+    }
+
+    .stRadio > div {
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+        width: 100% !important;
+    }
+    
+    .stRadio label {
+        font-size: 18px !important;
+        font-weight: 600 !important;
+        color: #4CAF50 !important;
+        text-align: center;
+        width: 100%;
+        cursor: pointer;
+    }
+
+    div[data-testid="stMetric"] {
+        background: rgba(46, 125, 50, 0.15) !important;
+        border: 1px solid #4CAF50 !important;
+        border-radius: 15px !important;
+        padding: 15px !important;
+        text-align: center !important;
+    }
+
+    div[data-testid="stMetricLabel"] {
+        margin-top: 10px !important; 
+        font-weight: bold !important;
+        color: #A5D6A7 !important;
+        justify-content: center !important;
+    }
+
+    div[data-testid="stMetricValue"] {
+        margin-top: -5px !important;
+        font-size: 32px !important;
+    }
+
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    [data-testid="stDecoration"] {display: none;}
+    </style>
+"""
+st.markdown(css_code, unsafe_allow_html=True)
+
+# --- 3. DATA & ASSETS LOGIC ---
+@st.cache_resource
+def load_assets():
     try:
-        creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE, scope)
-        client = gspread.authorize(creds)
-        return client.open("Agribot-Live-Data").sheet1
-    except Exception as e:
-        print(f"❌ Connection Error: {e}")
-        return None
+        model = joblib.load('backend/anomaly_model.pkl')
+        scaler = joblib.load('backend/anomaly_scaler.pkl')
+        return model, scaler
+    except:
+        return None, None
 
-sheet = get_sheet_connection()
-
-# --- 4. SENSOR FUNCTIONS ---
-def read_adc_channel(channel):
-    """Read raw voltage from ADS1115."""
+def get_data():
     try:
-        config = 0xC383 | (channel << 12)
-        config_bytes = [(config >> 8) & 0xFF, config & 0xFF]
-        i2c_bus.write_i2c_block_data(ADS1115_ADDRESS, 0x01, config_bytes)
-        time.sleep(0.01)
-        data = i2c_bus.read_i2c_block_data(ADS1115_ADDRESS, 0x00, 2)
-        raw_adc = (data[0] << 8) | data[1]
-        if raw_adc > 32767: raw_adc -= 65536
-        return round((raw_adc / 32767.0) * 4.096, 4)
-    except: return 0.0
-
-def get_ph(voltage):
-    """Calibrated for PH-4502C."""
-    offset = -2.0 
-    ph_value = 3.5 * voltage + offset
-    return round(ph_value, 2)
-
-def get_soil_moisture(voltage):
-    """Calibrated for HW-080 (Dry 3.0V, Wet 1.1V)."""
-    try:
-        percentage = ((3.0 - voltage) / (3.0 - 1.1)) * 100
-        return round(max(0, min(100, percentage)), 2)
-    except: return 0.0
-
-# --- 5. MAIN LOOP ---
-print("🌱 AgriBot-AI Pi System: ONLINE")
-
-while True:
-    try:
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-        # Read DHT22
-        try:
-            temp_air = dht_device.temperature
-            hum_air = dht_device.humidity
-            if temp_air is None or hum_air is None:
-                raise RuntimeError("Sensor returned None")
-        except RuntimeError:
-            time.sleep(2)
-            continue
-
-        # Read Analog Sensors
-        ph_volt = read_adc_channel(0)
-        soil_volt = read_adc_channel(1)
+        scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         
-        ph_level = get_ph(ph_volt)
-        soil_moisture = get_soil_moisture(soil_volt)
-        temp_f = round((temp_air * 9 / 5) + 32, 2)
-
-        # --- 6. DATA SYNC ---
-        if sheet:
-            # Column order must match sheet headers:
-            # Timestamp, Temperature (C), Humidity (%), Temperature (F), Soil Moisture, pH Level
-            row = [timestamp, temp_air, hum_air, temp_f, soil_moisture, ph_level]
-            sheet.append_row(row)
-            print(f"✅ Uploaded: {temp_air}°C | {hum_air}% | pH {ph_level}")
+        # --- NEW INTEGRATED AUTH LOGIC ---
+        # 1. Check if secrets.toml (TOML) is available
+        if "gcp_service_account" in st.secrets:
+            creds_dict = dict(st.secrets["gcp_service_account"])
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+        # 2. Fallback to local JSON if TOML isn't set up
+        elif os.path.exists('backend/secrets.toml'):
+            creds = ServiceAccountCredentials.from_json_keyfile_name('backend/secrets.toml', scope)
         else:
-            # Try to reconnect if connection was lost
-            sheet = get_sheet_connection()
-        
-        time.sleep(10)
+            st.error("Authentication Error: secrets.toml or credentials.json missing.")
+            return pd.DataFrame()
 
-    except KeyboardInterrupt:
-        print("\n⏹️ System Stopped.")
-        GPIO.cleanup()
-        break
+        client = gspread.authorize(creds)
+        sheet = client.open("Agribot-Live-Data").sheet1
+        data = sheet.get_all_records()
+        return pd.DataFrame(data)
     except Exception as e:
-        print(f"❌ Error: {e}")
-        time.sleep(5)
+        st.error(f"Database Connection Error: {e}")
+        return pd.DataFrame()
+
+# --- 4. SIDEBAR ---
+with st.sidebar:
+    if os.path.exists(LOGO_PATH):
+        st.image(LOGO_PATH)
+    
+    st.markdown('<div class="sidebar-title">AgriBot-AI</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-hr"></div>', unsafe_allow_html=True)
+    
+    page = st.radio("", ["📡 LIVE DASHBOARD", "📈 ANALYSIS", "📜 SYSTEM LOGS"], label_visibility="collapsed")
+    
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.success("🟢 SYSTEM: ONLINE")
+
+# --- 5. MAIN CONTENT ---
+model, scaler = load_assets()
+df = get_data()
+
+# Logic to map headers correctly
+if not df.empty:
+    latest = df.iloc[-1]
+    val_temp = latest.get('Temperature (C)', 0) 
+    val_hum  = latest.get('Humidity (%)', 0)
+    val_ph   = latest.get('pH Level', 0)
+    val_soil = latest.get('Soil Moisture', 0)
+else:
+    val_temp, val_hum, val_ph, val_soil = 0, 0, 0, 0
+
+if page == "📡 LIVE DASHBOARD":
+    st.title("Real-Time Monitoring")
+    
+    m1, m2, m3, m4 = st.columns(4)
+    with m1: st.metric("TEMP", f"{val_temp}°C")
+    with m2: st.metric("HUMIDITY", f"{val_hum}%")
+    with m3: st.metric("PH", f"{val_ph}")
+    with m4: st.metric("SOIL", f"{val_soil}%")
+
+    st.markdown("---")
+    
+    col_l, col_r = st.columns([1.3, 1], gap="large")
+    with col_l:
+        st.subheader("📸 Plant Health Feed")
+        mock_dir = "backend/mock_images"
+        if os.path.exists(mock_dir):
+            files = [f for f in os.listdir(mock_dir) if f.lower().endswith(('.png', '.jpg'))]
+            if files:
+                st.image(os.path.join(mock_dir, sorted(files)[-1]), use_container_width=True)
+        else:
+            st.info("Searching for health feed images...")
+    
+    with col_r:
+        st.subheader("🤖 AI Health Recommendation")
+        if not df.empty and model and scaler:
+            try:
+                features = np.array([[float(val_temp), float(val_hum), float(val_ph)]])
+                pred = model.predict(scaler.transform(features))[0]
+                if pred == -1:
+                    st.error("### 🚨 ALERT\nAnomalous conditions detected. Adjusting irrigation...")
+                else:
+                    st.success("### ✅ HEALTHY\nCrop environment is optimal.")
+            except:
+                st.info("Processing sensor data with AI model...")
+        else:
+            st.warning("Awaiting sensor database connection...")
+
+elif page == "📈 ANALYSIS":
+    st.title("Historical Trends")
+    if not df.empty:
+        # Columns must match the headers your Pi is sending
+        st.line_chart(df[['Temperature (C)', 'Humidity (%)', 'Soil Moisture']])
+    else:
+        st.warning("No historical data available yet.")
+
+elif page == "📜 SYSTEM LOGS":
+    st.title("System Activity Logs")
+    if not df.empty:
+        st.table(df.tail(20))
+    else:
+        st.warning("No system logs found.")
+
+# --- 6. AUTO-REFRESH ---
+time.sleep(10)
+st.rerun()
