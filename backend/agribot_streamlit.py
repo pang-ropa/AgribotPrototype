@@ -145,16 +145,25 @@ def load_assets():
 def get_data():
     try:
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+        
+        # --- NEW INTEGRATED AUTH LOGIC ---
+        # 1. Check if secrets.toml (TOML) is available
         if "gcp_service_account" in st.secrets:
             creds_dict = dict(st.secrets["gcp_service_account"])
             creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-        else:
+        # 2. Fallback to local JSON if TOML isn't set up
+        elif os.path.exists('backend/credentials.json'):
             creds = ServiceAccountCredentials.from_json_keyfile_name('backend/credentials.json', scope)
+        else:
+            st.error("Authentication Error: secrets.toml or credentials.json missing.")
+            return pd.DataFrame()
+
         client = gspread.authorize(creds)
         sheet = client.open("Agribot-Live-Data").sheet1
         data = sheet.get_all_records()
         return pd.DataFrame(data)
     except Exception as e:
+        st.error(f"Database Connection Error: {e}")
         return pd.DataFrame()
 
 # --- 4. SIDEBAR ---
