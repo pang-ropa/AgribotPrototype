@@ -6,7 +6,6 @@ import numpy as np
 import os
 from oauth2client.service_account import ServiceAccountCredentials
 import time
-import base64
 
 # --- 1. PAGE CONFIG ---
 LOGO_PATH = "backend/agribotailogo.png"
@@ -18,13 +17,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. THE ULTIMATE UI CSS ---
+# --- 2. UI CSS (unchanged) ---
 css_code = """
     <style>
-    [data-testid="stHeader"] {
-        background-color: transparent !important;
-    }
-    
+    [data-testid="stHeader"] { background-color: transparent !important; }
     button[kind="headerNoSpacing"] {
         visibility: visible !important;
         background-color: #2E7D32 !important;
@@ -35,20 +31,17 @@ css_code = """
         left: 15px !important;
         z-index: 999999 !important;
     }
-
     section[data-testid="stSidebar"] {
         width: 350px !important;
         background-color: #0E1117 !important;
         border-right: 2px solid #4CAF50;
     }
-
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: flex-start !important;
     }
-
     [data-testid="stSidebar"] [data-testid="stImage"] {
         pointer-events: none !important;
         user-select: none !important;
@@ -57,11 +50,7 @@ css_code = """
         padding-top: 40px !important;
         margin-bottom: 0px !important;
     }
-
-    [data-testid="stSidebar"] [data-testid="stElementToolbar"] {
-        display: none !important;
-    }
-    
+    [data-testid="stSidebar"] [data-testid="stElementToolbar"] { display: none !important; }
     [data-testid="stSidebar"] [data-testid="stImage"] img {
         border-radius: 50% !important;
         border: 4px solid #4CAF50 !important;
@@ -69,7 +58,6 @@ css_code = """
         height: 170px !important;
         object-fit: cover !important;
     }
-
     .sidebar-title {
         text-align: center !important;
         color: #4CAF50 !important;
@@ -80,7 +68,6 @@ css_code = """
         width: 100% !important;
         display: block !important;
     }
-
     .sidebar-hr {
         height: 3px;
         background-color: #4CAF50;
@@ -88,14 +75,12 @@ css_code = """
         margin: 5px auto 25px auto !important;
         border-radius: 5px;
     }
-
     .stRadio > div {
         gap: 10px;
         align-items: center;
         justify-content: center;
         width: 100% !important;
     }
-    
     .stRadio label {
         font-size: 18px !important;
         font-weight: 600 !important;
@@ -104,7 +89,6 @@ css_code = """
         width: 100%;
         cursor: pointer;
     }
-
     div[data-testid="stMetric"] {
         background: rgba(46, 125, 50, 0.15) !important;
         border: 1px solid #4CAF50 !important;
@@ -112,19 +96,16 @@ css_code = """
         padding: 15px !important;
         text-align: center !important;
     }
-
     div[data-testid="stMetricLabel"] {
         margin-top: 10px !important; 
         font-weight: bold !important;
         color: #A5D6A7 !important;
         justify-content: center !important;
     }
-
     div[data-testid="stMetricValue"] {
         margin-top: -5px !important;
         font-size: 32px !important;
     }
-
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     [data-testid="stDecoration"] {display: none;}
@@ -146,7 +127,6 @@ def get_data():
     try:
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         
-        # --- INTEGRATED AUTH LOGIC ---
         if "gcp_service_account" in st.secrets:
             creds_dict = dict(st.secrets["gcp_service_account"])
             creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
@@ -164,14 +144,8 @@ def get_data():
         st.error(f"Database Connection Error: {e}")
         return pd.DataFrame()
 
-# --- 4. HELPER FUNCTION TO FIND COLUMNS (CASE-INSENSITIVE, FLEXIBLE) ---
+# --- 4. HELPER: FIND COLUMN (case‑insensitive, flexible) ---
 def find_column(df, possible_names, must_contain=None, exclude=None):
-    """
-    Find a column in df that matches any of the possible_names (case-insensitive).
-    Optionally require that the column name contains a substring (must_contain)
-    and/or does not contain a substring (exclude).
-    Returns the first matching column name or None.
-    """
     for name in possible_names:
         for col in df.columns:
             col_lower = col.lower()
@@ -200,51 +174,51 @@ with st.sidebar:
 model, scaler = load_assets()
 df = get_data()
 
-# --- 7. ROBUST DATA EXTRACTION (with temperature priority) ---
+# --- 7. ROBUST COLUMN MAPPING (including timestamp) ---
 if not df.empty:
-    # DEBUG: Show actual columns (remove this expander after fixing)
-    with st.expander("🔍 Debug: Sheet Columns (check temperature column name)"):
+    # Debug expander (optional – you can remove after verifying)
+    with st.expander("🔍 Debug: Sheet Columns"):
         st.write("**Columns found:**", list(df.columns))
-        st.write("**First row of data:**", df.iloc[0].to_dict())
-        st.write("**Last row of data (latest):**", df.iloc[-1].to_dict())
+        st.write("**First row:**", df.iloc[0].to_dict())
+        st.write("**Last row:**", df.iloc[-1].to_dict())
 
-    # --- Temperature: prefer Celsius, exclude Fahrenheit ---
-    temp_col = find_column(
-        df, 
-        possible_names=['temperature', 'temp', 't'], 
-        must_contain='c',          # must have 'c' (case-insensitive)
-        exclude='f'                 # but not contain 'f' (to avoid Fahrenheit)
-    )
-    # If no column with 'c' found, fallback to any temperature-like column (but warn)
+    # Find timestamp column (for time series x‑axis)
+    timestamp_col = find_column(df, possible_names=['timestamp', 'time', 'datetime'])
+    if timestamp_col:
+        # Convert to datetime and set as index
+        try:
+            df[timestamp_col] = pd.to_datetime(df[timestamp_col])
+            df = df.set_index(timestamp_col).sort_index()
+        except Exception as e:
+            st.warning(f"Could not parse timestamp column '{timestamp_col}': {e}")
+            # If fails, we keep original index (row numbers)
+    else:
+        st.info("No timestamp column found – charts will use row numbers as x‑axis.")
+
+    # Find sensor columns
+    temp_col = find_column(df, possible_names=['temperature', 'temp', 't'], must_contain='c', exclude='f')
     if temp_col is None:
         temp_col = find_column(df, possible_names=['temperature', 'temp', 't'])
         if temp_col:
             st.warning(f"⚠️ Using '{temp_col}' for temperature – make sure it's Celsius.")
 
-    # --- Humidity ---
     hum_col = find_column(df, possible_names=['humidity', 'humid'])
-    # --- pH Level ---
     ph_col = find_column(df, possible_names=['ph', 'ph level', 'ph value'])
-    # --- Soil Moisture ---
     soil_col = find_column(df, possible_names=['soil moisture', 'moisture', 'soil'])
 
-    # Extract latest values (last row)
+    # Extract latest values for live dashboard
     val_temp = df[temp_col].iloc[-1] if temp_col else 0
     val_hum  = df[hum_col].iloc[-1]  if hum_col else 0
     val_ph   = df[ph_col].iloc[-1]   if ph_col else 0
     val_soil = df[soil_col].iloc[-1] if soil_col else 0
 
-    # Optional warnings if any sensor is missing
-    if not temp_col:
-        st.warning("⚠️ Temperature column not found. Check sheet headers.")
-    if not hum_col:
-        st.warning("⚠️ Humidity column not found.")
-    if not ph_col:
-        st.warning("⚠️ pH column not found.")
-    if not soil_col:
-        st.warning("⚠️ Soil moisture column not found.")
+    # Optional warnings
+    if not temp_col: st.warning("⚠️ Temperature column not found.")
+    if not hum_col:  st.warning("⚠️ Humidity column not found.")
+    if not ph_col:   st.warning("⚠️ pH column not found.")
+    if not soil_col: st.warning("⚠️ Soil moisture column not found.")
 else:
-    val_temp, val_hum, val_ph, val_soil = 0, 0, 0, 0
+    val_temp = val_hum = val_ph = val_soil = 0
 
 # --- 8. PAGE RENDERING ---
 if page == "📡 LIVE DASHBOARD":
@@ -273,7 +247,6 @@ if page == "📡 LIVE DASHBOARD":
         st.subheader("🤖 AI Health Recommendation")
         if not df.empty and model and scaler and temp_col and hum_col and ph_col:
             try:
-                # Use the latest values (already extracted)
                 features = np.array([[float(val_temp), float(val_hum), float(val_ph)]])
                 pred = model.predict(scaler.transform(features))[0]
                 if pred == -1:
@@ -286,23 +259,38 @@ if page == "📡 LIVE DASHBOARD":
             st.warning("Awaiting sensor database connection or missing columns...")
 
 elif page == "📈 ANALYSIS":
-    st.title("Historical Trends")
+    st.title("Historical Trends – Individual Sensors")
+
     if not df.empty:
-        # Select only the numeric columns we have
-        plot_cols = []
-        if temp_col: plot_cols.append(temp_col)
-        if hum_col: plot_cols.append(hum_col)
-        if soil_col: plot_cols.append(soil_col)
-        if plot_cols:
-            st.line_chart(df[plot_cols])
-        else:
-            st.warning("No numeric columns available for plotting.")
+        # Helper to plot a single variable if column exists
+        def plot_variable(col, title, unit=""):
+            if col:
+                st.subheader(f"{title}")
+                chart_data = df[[col]].copy()
+                # Ensure numeric
+                chart_data[col] = pd.to_numeric(chart_data[col], errors='coerce')
+                chart_data = chart_data.dropna()
+                if not chart_data.empty:
+                    st.line_chart(chart_data, use_container_width=True)
+                    if unit:
+                        st.caption(f"*Values in {unit}*")
+                else:
+                    st.info(f"No valid numeric data for {title}.")
+            else:
+                st.info(f"ℹ️ {title} data not available.")
+
+        # Plot each sensor in its own section
+        plot_variable(temp_col, "🌡️ Temperature", "°C")
+        plot_variable(hum_col,  "💧 Humidity", "%")
+        plot_variable(ph_col,   "🧪 pH Level")
+        plot_variable(soil_col, "🪴 Soil Moisture", "%")
     else:
         st.warning("No historical data available yet.")
 
 elif page == "📜 SYSTEM LOGS":
     st.title("System Activity Logs")
     if not df.empty:
+        # Show the last 20 rows (with timestamp if available)
         st.table(df.tail(20))
     else:
         st.warning("No system logs found.")
