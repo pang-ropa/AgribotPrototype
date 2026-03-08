@@ -146,14 +146,12 @@ def get_data():
     try:
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         
-        # --- NEW INTEGRATED AUTH LOGIC ---
-        # 1. Check if secrets.toml (TOML) is available
+        # --- INTEGRATED AUTH LOGIC ---
         if "gcp_service_account" in st.secrets:
             creds_dict = dict(st.secrets["gcp_service_account"])
             creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-        # 2. Fallback to local JSON if TOML isn't set up
-        elif os.path.exists('backend/secrets.toml'):
-            creds = ServiceAccountCredentials.from_json_keyfile_name('backend/secrets.toml', scope)
+        elif os.path.exists('backend/credentials.json'):
+            creds = ServiceAccountCredentials.from_json_keyfile_name('backend/credentials.json', scope)
         else:
             st.error("Authentication Error: secrets.toml or credentials.json missing.")
             return pd.DataFrame()
@@ -166,7 +164,26 @@ def get_data():
         st.error(f"Database Connection Error: {e}")
         return pd.DataFrame()
 
-# --- 4. SIDEBAR ---
+# --- 4. HELPER FUNCTION TO FIND COLUMNS (CASE-INSENSITIVE, FLEXIBLE) ---
+def find_column(df, possible_names, must_contain=None, exclude=None):
+    """
+    Find a column in df that matches any of the possible_names (case-insensitive).
+    Optionally require that the column name contains a substring (must_contain)
+    and/or does not contain a substring (exclude).
+    Returns the first matching column name or None.
+    """
+    for name in possible_names:
+        for col in df.columns:
+            col_lower = col.lower()
+            if name.lower() in col_lower:
+                if must_contain and must_contain.lower() not in col_lower:
+                    continue
+                if exclude and exclude.lower() in col_lower:
+                    continue
+                return col
+    return None
+
+# --- 5. SIDEBAR ---
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH)
@@ -179,20 +196,57 @@ with st.sidebar:
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.success("🟢 SYSTEM: ONLINE")
 
-# --- 5. MAIN CONTENT ---
+# --- 6. MAIN CONTENT ---
 model, scaler = load_assets()
 df = get_data()
 
-# Logic to map headers correctly
+# --- 7. ROBUST DATA EXTRACTION (with temperature priority) ---
 if not df.empty:
-    latest = df.iloc[-1]
-    val_temp = latest.get('Temperature (C)', 0) 
-    val_hum  = latest.get('Humidity (%)', 0)
-    val_ph   = latest.get('pH Level', 0)
-    val_soil = latest.get('Soil Moisture', 0)
+    # DEBUG: Show actual columns (remove this expander after fixing)
+    with st.expander("🔍 Debug: Sheet Columns (check temperature column name)"):
+        st.write("**Columns found:**", list(df.columns))
+        st.write("**First row of data:**", df.iloc[0].to_dict())
+        st.write("**Last row of data (latest):**", df.iloc[-1].to_dict())
+
+    # --- Temperature: prefer Celsius, exclude Fahrenheit ---
+    temp_col = find_column(
+        df, 
+        possible_names=['temperature', 'temp', 't'], 
+        must_contain='c',          # must have 'c' (case-insensitive)
+        exclude='f'                 # but not contain 'f' (to avoid Fahrenheit)
+    )
+    # If no column with 'c' found, fallback to any temperature-like column (but warn)
+    if temp_col is None:
+        temp_col = find_column(df, possible_names=['temperature', 'temp', 't'])
+        if temp_col:
+            st.warning(f"⚠️ Using '{temp_col}' for temperature – make sure it's Celsius.")
+
+    # --- Humidity ---
+    hum_col = find_column(df, possible_names=['humidity', 'humid'])
+    # --- pH Level ---
+    ph_col = find_column(df, possible_names=['ph', 'ph level', 'ph value'])
+    # --- Soil Moisture ---
+    soil_col = find_column(df, possible_names=['soil moisture', 'moisture', 'soil'])
+
+    # Extract latest values (last row)
+    val_temp = df[temp_col].iloc[-1] if temp_col else 0
+    val_hum  = df[hum_col].iloc[-1]  if hum_col else 0
+    val_ph   = df[ph_col].iloc[-1]   if ph_col else 0
+    val_soil = df[soil_col].iloc[-1] if soil_col else 0
+
+    # Optional warnings if any sensor is missing
+    if not temp_col:
+        st.warning("⚠️ Temperature column not found. Check sheet headers.")
+    if not hum_col:
+        st.warning("⚠️ Humidity column not found.")
+    if not ph_col:
+        st.warning("⚠️ pH column not found.")
+    if not soil_col:
+        st.warning("⚠️ Soil moisture column not found.")
 else:
     val_temp, val_hum, val_ph, val_soil = 0, 0, 0, 0
 
+# --- 8. PAGE RENDERING ---
 if page == "📡 LIVE DASHBOARD":
     st.title("Real-Time Monitoring")
     
@@ -217,24 +271,32 @@ if page == "📡 LIVE DASHBOARD":
     
     with col_r:
         st.subheader("🤖 AI Health Recommendation")
-        if not df.empty and model and scaler:
+        if not df.empty and model and scaler and temp_col and hum_col and ph_col:
             try:
+                # Use the latest values (already extracted)
                 features = np.array([[float(val_temp), float(val_hum), float(val_ph)]])
                 pred = model.predict(scaler.transform(features))[0]
                 if pred == -1:
                     st.error("### 🚨 ALERT\nAnomalous conditions detected. Adjusting irrigation...")
                 else:
                     st.success("### ✅ HEALTHY\nCrop environment is optimal.")
-            except:
-                st.info("Processing sensor data with AI model...")
+            except Exception as e:
+                st.info(f"Processing sensor data with AI model... (error: {e})")
         else:
-            st.warning("Awaiting sensor database connection...")
+            st.warning("Awaiting sensor database connection or missing columns...")
 
 elif page == "📈 ANALYSIS":
     st.title("Historical Trends")
     if not df.empty:
-        # Columns must match the headers your Pi is sending
-        st.line_chart(df[['Temperature (C)', 'Humidity (%)', 'Soil Moisture']])
+        # Select only the numeric columns we have
+        plot_cols = []
+        if temp_col: plot_cols.append(temp_col)
+        if hum_col: plot_cols.append(hum_col)
+        if soil_col: plot_cols.append(soil_col)
+        if plot_cols:
+            st.line_chart(df[plot_cols])
+        else:
+            st.warning("No numeric columns available for plotting.")
     else:
         st.warning("No historical data available yet.")
 
@@ -245,6 +307,6 @@ elif page == "📜 SYSTEM LOGS":
     else:
         st.warning("No system logs found.")
 
-# --- 6. AUTO-REFRESH ---
+# --- 9. AUTO-REFRESH ---
 time.sleep(10)
 st.rerun()
