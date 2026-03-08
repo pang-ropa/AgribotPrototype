@@ -152,8 +152,8 @@ def get_data():
             creds_dict = dict(st.secrets["gcp_service_account"])
             creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
         # 2. Fallback to local JSON if TOML isn't set up
-        elif os.path.exists('backend/credentials.json'):
-            creds = ServiceAccountCredentials.from_json_keyfile_name('backend/credentials.json', scope)
+        elif os.path.exists('backend/secrets.toml'):
+            creds = ServiceAccountCredentials.from_json_keyfile_name('backend/secrets.toml', scope)
         else:
             st.error("Authentication Error: secrets.toml or credentials.json missing.")
             return pd.DataFrame()
