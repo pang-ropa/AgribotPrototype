@@ -18,10 +18,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. THE ULTIMATE UI CSS (UNTOUCHED) ---
+# --- 2. THE ULTIMATE UI CSS ---
 css_code = """
     <style>
-    /* 1. SIDEBAR RETRIEVAL FIX */
     [data-testid="stHeader"] {
         background-color: transparent !important;
     }
@@ -37,7 +36,6 @@ css_code = """
         z-index: 999999 !important;
     }
 
-    /* 2. SIDEBAR STRUCTURE */
     section[data-testid="stSidebar"] {
         width: 350px !important;
         background-color: #0E1117 !important;
@@ -51,7 +49,6 @@ css_code = """
         justify-content: flex-start !important;
     }
 
-    /* Remove interaction/fullscreen/toolbar from the logo */
     [data-testid="stSidebar"] [data-testid="stImage"] {
         pointer-events: none !important;
         user-select: none !important;
@@ -92,7 +89,6 @@ css_code = """
         border-radius: 5px;
     }
 
-    /* 4. NAVIGATION & METRIC STYLING */
     .stRadio > div {
         gap: 10px;
         align-items: center;
@@ -109,7 +105,6 @@ css_code = """
         cursor: pointer;
     }
 
-    /* --- METRIC BOX IMPROVEMENTS --- */
     div[data-testid="stMetric"] {
         background: rgba(46, 125, 50, 0.15) !important;
         border: 1px solid #4CAF50 !important;
@@ -144,7 +139,8 @@ def load_assets():
         model = joblib.load('backend/anomaly_model.pkl')
         scaler = joblib.load('backend/anomaly_scaler.pkl')
         return model, scaler
-    except: return None, None
+    except:
+        return None, None
 
 def get_data():
     try:
@@ -178,10 +174,10 @@ with st.sidebar:
 model, scaler = load_assets()
 df = get_data()
 
-# UPDATED: Key mapping to match the fixed Raspberry Pi headers (No special symbols)
+# Logic to map headers correctly
 if not df.empty:
     latest = df.iloc[-1]
-    val_temp = latest.get('Temperature (C)', 0) # Changed from 'Temperature (°C)'
+    val_temp = latest.get('Temperature (C)', 0) 
     val_hum  = latest.get('Humidity (%)', 0)
     val_ph   = latest.get('pH Level', 0)
     val_soil = latest.get('Soil Moisture', 0)
@@ -207,6 +203,8 @@ if page == "📡 LIVE DASHBOARD":
             files = [f for f in os.listdir(mock_dir) if f.lower().endswith(('.png', '.jpg'))]
             if files:
                 st.image(os.path.join(mock_dir, sorted(files)[-1]), use_container_width=True)
+        else:
+            st.info("Searching for health feed images...")
     
     with col_r:
         st.subheader("🤖 AI Health Recommendation")
@@ -218,20 +216,25 @@ if page == "📡 LIVE DASHBOARD":
                     st.error("### 🚨 ALERT\nAnomalous conditions detected. Adjusting irrigation...")
                 else:
                     st.success("### ✅ HEALTHY\nCrop environment is optimal.")
-            except: st.info("Syncing AI model...")
+            except:
+                st.info("Processing sensor data with AI model...")
         else:
             st.warning("Awaiting sensor database connection...")
 
 elif page == "📈 ANALYSIS":
     st.title("Historical Trends")
     if not df.empty:
-        # Match the exact column names in your Google Sheet
+        # Columns must match the headers your Pi is sending
         st.line_chart(df[['Temperature (C)', 'Humidity (%)', 'Soil Moisture']])
+    else:
+        st.warning("No historical data available yet.")
 
 elif page == "📜 SYSTEM LOGS":
     st.title("System Activity Logs")
     if not df.empty:
         st.table(df.tail(20))
+    else:
+        st.warning("No system logs found.")
 
 # --- 6. AUTO-REFRESH ---
 time.sleep(10)
