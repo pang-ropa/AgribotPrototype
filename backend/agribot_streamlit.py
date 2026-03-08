@@ -18,7 +18,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. THE ULTIMATE UI CSS ---
+# --- 2. THE ULTIMATE UI CSS (UNTOUCHED) ---
 css_code = """
     <style>
     /* 1. SIDEBAR RETRIEVAL FIX */
@@ -178,19 +178,26 @@ with st.sidebar:
 model, scaler = load_assets()
 df = get_data()
 
+# UPDATED: Mapping keys to match the Pi's new format (No special degree symbols)
 if not df.empty:
     latest = df.iloc[-1]
+    # We extract variables safely for AI use later
+    val_temp = latest.get('Temperature (C)', 0)
+    val_hum  = latest.get('Humidity (%)', 0)
+    val_ph   = latest.get('pH Level', 0)
+    val_soil = latest.get('Soil Moisture', 0)
 else:
-    latest = {"Temperature (°C)": 0, "Humidity (%)": 0, "pH Level": 0, "Soil Moisture": 0}
+    val_temp, val_hum, val_ph, val_soil = 0, 0, 0, 0
 
 if page == "📡 LIVE DASHBOARD":
     st.title("Real-Time Monitoring")
     
     m1, m2, m3, m4 = st.columns(4)
-    with m1: st.metric("TEMP", f"{latest.get('Temperature (°C)', '0')}°C")
-    with m2: st.metric("HUMIDITY", f"{latest.get('Humidity (%)', '0')}%")
-    with m3: st.metric("PH", f"{latest.get('pH Level', '0')}")
-    with m4: st.metric("SOIL", f"{latest.get('Soil Moisture', '0')}%")
+    # UPDATED: Fetching metrics using the simplified keys
+    with m1: st.metric("TEMP", f"{val_temp}°C")
+    with m2: st.metric("HUMIDITY", f"{val_hum}%")
+    with m3: st.metric("PH", f"{val_ph}")
+    with m4: st.metric("SOIL", f"{val_soil}%")
 
     st.markdown("---")
     
@@ -207,7 +214,8 @@ if page == "📡 LIVE DASHBOARD":
         st.subheader("🤖 AI Health Recommendation")
         if not df.empty and model and scaler:
             try:
-                features = np.array([[float(latest['Temperature (°C)']), float(latest['Humidity (%)']), float(latest['pH Level'])]])
+                # UPDATED: Using the simplified variables for AI features
+                features = np.array([[float(val_temp), float(val_hum), float(val_ph)]])
                 pred = model.predict(scaler.transform(features))[0]
                 if pred == -1:
                     st.error("### 🚨 ALERT\nAnomalous conditions detected. Adjusting irrigation...")
@@ -220,7 +228,8 @@ if page == "📡 LIVE DASHBOARD":
 elif page == "📈 ANALYSIS":
     st.title("Historical Trends")
     if not df.empty:
-        st.line_chart(df[['Temperature (°C)', 'Humidity (%)', 'Soil Moisture']])
+        # UPDATED: Column names match the Pi's output to prevent KeyError
+        st.line_chart(df[['Temperature (C)', 'Humidity (%)', 'Soil Moisture']])
 
 elif page == "📜 SYSTEM LOGS":
     st.title("System Activity Logs")
