@@ -8,7 +8,6 @@ from oauth2client.service_account import ServiceAccountCredentials
 import time
 
 # --- PAGE CONFIG ---
-# Place your logo file at: backend/agribotailogo.png (relative to this script)
 LOGO_PATH = "backend/agribotailogo.png"
 
 st.set_page_config(
@@ -229,12 +228,6 @@ model, scaler = load_assets()
 df = get_data()
 
 if not df.empty:
-    # Optional debug expander (remove after verification)
-    with st.expander("🔍 Debug: Sheet Columns"):
-        st.write("**Columns found:**", list(df.columns))
-        st.write("**First row:**", df.iloc[0].to_dict())
-        st.write("**Last row:**", df.iloc[-1].to_dict())
-
     # Timestamp handling
     timestamp_col = find_column(df, possible_names=['timestamp', 'time', 'datetime'])
     if timestamp_col:
@@ -293,7 +286,6 @@ if page == "📡 LIVE DASHBOARD":
         if os.path.exists(mock_dir):
             files = [f for f in os.listdir(mock_dir) if f.lower().endswith(('.png', '.jpg'))]
             if files:
-                # Show the most recent image (sorted by name)
                 st.image(os.path.join(mock_dir, sorted(files)[-1]), use_container_width=True)
             else:
                 st.info("No images found. Please capture and upload images to the mock_images folder.")
