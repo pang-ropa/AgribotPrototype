@@ -299,7 +299,7 @@ if page == "📡 LIVE DASHBOARD":
                 features = np.array([[float(val_temp), float(val_hum), float(val_ph)]])
                 pred = model.predict(scaler.transform(features))[0]
                 if pred == -1:
-                    st.error("### 🚨 ALERT\nAnomalous conditions detected. Adjusting irrigation...")
+                    st.error("### 🚨 ALERT\nAnomalous conditions detected. Adjust the irrigation...")
                 else:
                     st.success("### ✅ HEALTHY\nCrop environment is optimal.")
             except Exception as e:
