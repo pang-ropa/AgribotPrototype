@@ -7,17 +7,48 @@ import os
 from oauth2client.service_account import ServiceAccountCredentials
 import time
 
-# --- 1. PAGE CONFIG ---
+# --- PAGE CONFIG ---
 LOGO_PATH = "backend/agribotailogo.png"
 
 st.set_page_config(
     page_title="AgriBot-AI | Dashboard",
-    page_icon=LOGO_PATH if os.path.exists(LOGO_PATH) else "🌱",
+    page_icon="🌱",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- 2. UI CSS (unchanged) ---
+# ============================================
+# LOGIN SYSTEM
+# ============================================
+users = {
+    "admin": {"password": "admin123", "role": "admin"},
+    "user":  {"password": "user123",  "role": "user"}
+}
+
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+    st.session_state.role = None
+
+def login():
+    st.title("🔐 AgriBot-AI Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        if username in users and users[username]["password"] == password:
+            st.session_state.logged_in = True
+            st.session_state.role = users[username]["role"]
+            st.success("Login Successful")
+            st.rerun()
+        else:
+            st.error("Invalid credentials")
+
+if not st.session_state.logged_in:
+    login()
+    st.stop()
+
+# ============================================
+# CUSTOM CSS (modern styling)
+# ============================================
 css_code = """
     <style>
     [data-testid="stHeader"] { background-color: transparent !important; }
@@ -113,7 +144,9 @@ css_code = """
 """
 st.markdown(css_code, unsafe_allow_html=True)
 
-# --- 3. DATA & ASSETS LOGIC ---
+# ============================================
+# DATA LOADING & ASSETS
+# ============================================
 @st.cache_resource
 def load_assets():
     try:
@@ -144,7 +177,7 @@ def get_data():
         st.error(f"Database Connection Error: {e}")
         return pd.DataFrame()
 
-# --- 4. HELPER: FIND COLUMN (case‑insensitive, flexible) ---
+# --- COLUMN FINDER (flexible) ---
 def find_column(df, possible_names, must_contain=None, exclude=None):
     for name in possible_names:
         for col in df.columns:
@@ -157,62 +190,78 @@ def find_column(df, possible_names, must_contain=None, exclude=None):
                 return col
     return None
 
-# --- 5. SIDEBAR ---
+# ============================================
+# SIDEBAR (with role‑based pages)
+# ============================================
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH)
-    
+
     st.markdown('<div class="sidebar-title">AgriBot-AI</div>', unsafe_allow_html=True)
     st.markdown('<div class="sidebar-hr"></div>', unsafe_allow_html=True)
-    
-    page = st.radio("", ["📡 LIVE DASHBOARD", "📈 ANALYSIS", "📜 SYSTEM LOGS"], label_visibility="collapsed")
-    
-    st.markdown("<br><br>", unsafe_allow_html=True)
+
+    # Role‑based page options
+    if st.session_state.role == "admin":
+        page = st.radio(
+            "",
+            ["📡 LIVE DASHBOARD", "📈 ANALYSIS", "📜 SYSTEM LOGS", "👥 USER MANAGEMENT"],
+            label_visibility="collapsed"
+        )
+    else:
+        page = st.radio(
+            "",
+            ["📡 LIVE DASHBOARD", "📈 ANALYSIS"],
+            label_visibility="collapsed"
+        )
+
     st.success("🟢 SYSTEM: ONLINE")
 
-# --- 6. MAIN CONTENT ---
+    if st.button("Logout"):
+        st.session_state.logged_in = False
+        st.session_state.role = None
+        st.rerun()
+
+# ============================================
+# LOAD DATA & MAP COLUMNS
+# ============================================
 model, scaler = load_assets()
 df = get_data()
 
-# --- 7. ROBUST COLUMN MAPPING (including timestamp) ---
 if not df.empty:
-    # Debug expander (optional – you can remove after verifying)
+    # Optional debug expander (remove after verification)
     with st.expander("🔍 Debug: Sheet Columns"):
         st.write("**Columns found:**", list(df.columns))
         st.write("**First row:**", df.iloc[0].to_dict())
         st.write("**Last row:**", df.iloc[-1].to_dict())
 
-    # Find timestamp column (for time series x‑axis)
+    # Timestamp handling
     timestamp_col = find_column(df, possible_names=['timestamp', 'time', 'datetime'])
     if timestamp_col:
-        # Convert to datetime and set as index
         try:
             df[timestamp_col] = pd.to_datetime(df[timestamp_col])
             df = df.set_index(timestamp_col).sort_index()
         except Exception as e:
             st.warning(f"Could not parse timestamp column '{timestamp_col}': {e}")
-            # If fails, we keep original index (row numbers)
     else:
-        st.info("No timestamp column found – charts will use row numbers as x‑axis.")
+        st.info("No timestamp column – charts will use row numbers.")
 
-    # Find sensor columns
+    # Sensor columns (temperature prefers Celsius)
     temp_col = find_column(df, possible_names=['temperature', 'temp', 't'], must_contain='c', exclude='f')
     if temp_col is None:
         temp_col = find_column(df, possible_names=['temperature', 'temp', 't'])
         if temp_col:
-            st.warning(f"⚠️ Using '{temp_col}' for temperature – make sure it's Celsius.")
+            st.warning(f"⚠️ Using '{temp_col}' for temperature – verify it's Celsius.")
 
-    hum_col = find_column(df, possible_names=['humidity', 'humid'])
-    ph_col = find_column(df, possible_names=['ph', 'ph level', 'ph value'])
+    hum_col  = find_column(df, possible_names=['humidity', 'humid'])
+    ph_col   = find_column(df, possible_names=['ph', 'ph level', 'ph value'])
     soil_col = find_column(df, possible_names=['soil moisture', 'moisture', 'soil'])
 
-    # Extract latest values for live dashboard
+    # Latest values
     val_temp = df[temp_col].iloc[-1] if temp_col else 0
     val_hum  = df[hum_col].iloc[-1]  if hum_col else 0
     val_ph   = df[ph_col].iloc[-1]   if ph_col else 0
     val_soil = df[soil_col].iloc[-1] if soil_col else 0
 
-    # Optional warnings
     if not temp_col: st.warning("⚠️ Temperature column not found.")
     if not hum_col:  st.warning("⚠️ Humidity column not found.")
     if not ph_col:   st.warning("⚠️ pH column not found.")
@@ -220,10 +269,14 @@ if not df.empty:
 else:
     val_temp = val_hum = val_ph = val_soil = 0
 
-# --- 8. PAGE RENDERING ---
+# ============================================
+# PAGE RENDERING
+# ============================================
+
+# --- LIVE DASHBOARD ---
 if page == "📡 LIVE DASHBOARD":
     st.title("Real-Time Monitoring")
-    
+
     m1, m2, m3, m4 = st.columns(4)
     with m1: st.metric("TEMP", f"{val_temp}°C")
     with m2: st.metric("HUMIDITY", f"{val_hum}%")
@@ -231,7 +284,7 @@ if page == "📡 LIVE DASHBOARD":
     with m4: st.metric("SOIL", f"{val_soil}%")
 
     st.markdown("---")
-    
+
     col_l, col_r = st.columns([1.3, 1], gap="large")
     with col_l:
         st.subheader("📸 Plant Health Feed")
@@ -239,10 +292,13 @@ if page == "📡 LIVE DASHBOARD":
         if os.path.exists(mock_dir):
             files = [f for f in os.listdir(mock_dir) if f.lower().endswith(('.png', '.jpg'))]
             if files:
+                # Show the most recent image (sorted by name)
                 st.image(os.path.join(mock_dir, sorted(files)[-1]), use_container_width=True)
+            else:
+                st.info("No images found. Please capture and upload images to the mock_images folder.")
         else:
-            st.info("Searching for health feed images...")
-    
+            st.info("Camera feed not available. Create a folder 'backend/mock_images' and add images to simulate.")
+
     with col_r:
         st.subheader("🤖 AI Health Recommendation")
         if not df.empty and model and scaler and temp_col and hum_col and ph_col:
@@ -256,18 +312,17 @@ if page == "📡 LIVE DASHBOARD":
             except Exception as e:
                 st.info(f"Processing sensor data with AI model... (error: {e})")
         else:
-            st.warning("Awaiting sensor database connection or missing columns...")
+            st.warning("Awaiting sensor data or AI model...")
 
+# --- ANALYSIS PAGE ---
 elif page == "📈 ANALYSIS":
     st.title("Historical Trends – Individual Sensors")
 
     if not df.empty:
-        # Helper to plot a single variable if column exists
         def plot_variable(col, title, unit=""):
             if col:
                 st.subheader(f"{title}")
                 chart_data = df[[col]].copy()
-                # Ensure numeric
                 chart_data[col] = pd.to_numeric(chart_data[col], errors='coerce')
                 chart_data = chart_data.dropna()
                 if not chart_data.empty:
@@ -279,7 +334,6 @@ elif page == "📈 ANALYSIS":
             else:
                 st.info(f"ℹ️ {title} data not available.")
 
-        # Plot each sensor in its own section
         plot_variable(temp_col, "🌡️ Temperature", "°C")
         plot_variable(hum_col,  "💧 Humidity", "%")
         plot_variable(ph_col,   "🧪 pH Level")
@@ -287,14 +341,27 @@ elif page == "📈 ANALYSIS":
     else:
         st.warning("No historical data available yet.")
 
+# --- SYSTEM LOGS ---
 elif page == "📜 SYSTEM LOGS":
     st.title("System Activity Logs")
     if not df.empty:
-        # Show the last 20 rows (with timestamp if available)
         st.table(df.tail(20))
     else:
-        st.warning("No system logs found.")
+        st.warning("No logs available.")
 
-# --- 9. AUTO-REFRESH ---
+# --- USER MANAGEMENT (Admin only) ---
+elif page == "👥 USER MANAGEMENT":
+    st.title("Admin Control Panel")
+    st.subheader("Registered Users")
+    user_data = pd.DataFrame({
+        "Username": ["admin", "user"],
+        "Role": ["Administrator", "Standard User"]
+    })
+    st.table(user_data)
+    st.info("Future feature: add / remove users via database")
+
+# ============================================
+# AUTO‑REFRESH
+# ============================================
 time.sleep(10)
 st.rerun()
