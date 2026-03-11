@@ -8,8 +8,8 @@ from oauth2client.service_account import ServiceAccountCredentials
 import time
 
 # --- PAGE CONFIG ---
-# Place your logo file at: backend\agribotailogo.png (relative to this script)
-LOGO_PATH = "backend\agribotailogo.png"
+# Place your logo file at: backend/agribotailogo.png (relative to this script)
+LOGO_PATH = "backend/agribotailogo.png"
 
 st.set_page_config(
     page_title="AgriBot-AI | Dashboard",
