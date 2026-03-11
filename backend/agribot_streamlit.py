@@ -8,11 +8,12 @@ from oauth2client.service_account import ServiceAccountCredentials
 import time
 
 # --- PAGE CONFIG ---
+# Place your logo file at: backend/agribotailogo.png (relative to this script)
 LOGO_PATH = "backend/agribotailogo.png"
 
 st.set_page_config(
     page_title="AgriBot-AI | Dashboard",
-    page_icon="🌱",
+    page_icon=LOGO_PATH if os.path.exists(LOGO_PATH) else "🌱",
     layout="wide",
     initial_sidebar_state="expanded"
 )
