@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # ============================================
-# LOGIN SYSTEM
+# LOGIN SYSTEM (with Enter‑key support)
 # ============================================
 users = {
     "admin": {"password": "admin123", "role": "admin"},
@@ -31,16 +31,21 @@ if "logged_in" not in st.session_state:
 
 def login():
     st.title("🔐 AgriBot-AI Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    if st.button("Login"):
-        if username in users and users[username]["password"] == password:
-            st.session_state.logged_in = True
-            st.session_state.role = users[username]["role"]
-            st.success("Login Successful")
-            st.rerun()
-        else:
-            st.error("Invalid credentials")
+
+    # Use a form so pressing Enter submits
+    with st.form("login_form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submitted = st.form_submit_button("Login")
+
+        if submitted:
+            if username in users and users[username]["password"] == password:
+                st.session_state.logged_in = True
+                st.session_state.role = users[username]["role"]
+                st.success("Login Successful")
+                st.rerun()
+            else:
+                st.error("Invalid credentials")
 
 if not st.session_state.logged_in:
     login()
@@ -299,7 +304,7 @@ if page == "📡 LIVE DASHBOARD":
                 features = np.array([[float(val_temp), float(val_hum), float(val_ph)]])
                 pred = model.predict(scaler.transform(features))[0]
                 if pred == -1:
-                    st.error("### 🚨 ALERT\nAnomalous conditions detected. Adjust the irrigation...")
+                    st.error("### 🚨 ALERT\nAnomalous conditions detected. Adjusting irrigation...")
                 else:
                     st.success("### ✅ HEALTHY\nCrop environment is optimal.")
             except Exception as e:
