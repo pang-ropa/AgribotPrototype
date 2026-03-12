@@ -4,8 +4,12 @@ import joblib
 import gspread
 import numpy as np
 import os
+import random
 from oauth2client.service_account import ServiceAccountCredentials
+from datetime import datetime, timedelta
 import time
+import plotly.express as px
+import plotly.graph_objects as go
 
 # --- PAGE CONFIG ---
 LOGO_PATH = "backend/agribotailogo.png"
@@ -31,13 +35,10 @@ if "logged_in" not in st.session_state:
 
 def login():
     st.title("🔐 AgriBot-AI Login")
-
-    # Use a form so pressing Enter submits
     with st.form("login_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         submitted = st.form_submit_button("Login")
-
         if submitted:
             if username in users and users[username]["password"] == password:
                 st.session_state.logged_in = True
@@ -52,7 +53,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ============================================
-# CUSTOM CSS (modern styling)
+# CUSTOM CSS (your original styling)
 # ============================================
 css_code = """
     <style>
@@ -161,10 +162,10 @@ def load_assets():
     except:
         return None, None
 
-def get_data():
+@st.cache_resource
+def get_sheet():
+    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     try:
-        scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-        
         if "gcp_service_account" in st.secrets:
             creds_dict = dict(st.secrets["gcp_service_account"])
             creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
@@ -172,31 +173,57 @@ def get_data():
             creds = ServiceAccountCredentials.from_json_keyfile_name('backend/credentials.json', scope)
         else:
             st.error("Authentication Error: secrets.toml or credentials.json missing.")
-            return pd.DataFrame()
-
+            return None
         client = gspread.authorize(creds)
-        sheet = client.open("Agribot-Live-Data").sheet1
-        data = sheet.get_all_records()
-        return pd.DataFrame(data)
+        return client.open("Agribot-Live-Data").sheet1
     except Exception as e:
         st.error(f"Database Connection Error: {e}")
-        return pd.DataFrame()
+        return None
 
-# --- COLUMN FINDER (flexible) ---
-def find_column(df, possible_names, must_contain=None, exclude=None):
-    for name in possible_names:
-        for col in df.columns:
-            col_lower = col.lower()
-            if name.lower() in col_lower:
-                if must_contain and must_contain.lower() not in col_lower:
-                    continue
-                if exclude and exclude.lower() in col_lower:
-                    continue
-                return col
-    return None
+sheet = get_sheet()
 
 # ============================================
-# SIDEBAR (with role‑based pages)
+# DATA FETCHING FUNCTIONS (10‑plant aware)
+# ============================================
+@st.cache_data(ttl=10)
+def get_latest_readings():
+    """Return the most recent reading for each plant (1-10) from the sheet."""
+    if sheet is None:
+        return pd.DataFrame()
+    try:
+        records = sheet.get_all_records()
+        df = pd.DataFrame(records)
+        if df.empty:
+            return pd.DataFrame()
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        # Keep only the latest row per plant_id
+        latest = df.sort_values('timestamp').groupby('plant_id').last().reset_index()
+        return latest
+    except Exception as e:
+        st.error(f"Data fetch error: {e}")
+        return pd.DataFrame()
+
+@st.cache_data(ttl=60)
+def get_historical_data(plant_id=None, hours=24):
+    """Return historical data for a specific plant (or all if plant_id=None)."""
+    if sheet is None:
+        return pd.DataFrame()
+    try:
+        records = sheet.get_all_records()
+        df = pd.DataFrame(records)
+        if df.empty:
+            return df
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        cutoff = datetime.now() - timedelta(hours=hours)
+        df = df[df['timestamp'] >= cutoff]
+        if plant_id is not None:
+            df = df[df['plant_id'] == plant_id]
+        return df.sort_values('timestamp')
+    except:
+        return pd.DataFrame()
+
+# ============================================
+# SIDEBAR (role‑based pages)
 # ============================================
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
@@ -205,103 +232,82 @@ with st.sidebar:
     st.markdown('<div class="sidebar-title">AgriBot-AI</div>', unsafe_allow_html=True)
     st.markdown('<div class="sidebar-hr"></div>', unsafe_allow_html=True)
 
-    # Role‑based page options
     if st.session_state.role == "admin":
-        page = st.radio(
-            "",
-            ["📡 LIVE DASHBOARD", "📈 ANALYSIS", "📜 SYSTEM LOGS", "👥 USER MANAGEMENT"],
-            label_visibility="collapsed"
-        )
+        page = st.radio("", ["📡 LIVE DASHBOARD", "📈 ANALYSIS", "📜 SYSTEM LOGS", "👥 USER MANAGEMENT"], label_visibility="collapsed")
     else:
-        page = st.radio(
-            "",
-            ["📡 LIVE DASHBOARD", "📈 ANALYSIS"],
-            label_visibility="collapsed"
-        )
+        page = st.radio("", ["📡 LIVE DASHBOARD", "📈 ANALYSIS"], label_visibility="collapsed")
 
     st.success("🟢 SYSTEM: ONLINE")
-
     if st.button("Logout"):
         st.session_state.logged_in = False
         st.session_state.role = None
         st.rerun()
 
 # ============================================
-# LOAD DATA & MAP COLUMNS
+# MAIN CONTENT
 # ============================================
 model, scaler = load_assets()
-df = get_data()
-
-if not df.empty:
-    # Timestamp handling
-    timestamp_col = find_column(df, possible_names=['timestamp', 'time', 'datetime'])
-    if timestamp_col:
-        try:
-            df[timestamp_col] = pd.to_datetime(df[timestamp_col])
-            df = df.set_index(timestamp_col).sort_index()
-        except Exception as e:
-            st.warning(f"Could not parse timestamp column '{timestamp_col}': {e}")
-    else:
-        st.info("No timestamp column – charts will use row numbers.")
-
-    # Sensor columns (temperature prefers Celsius)
-    temp_col = find_column(df, possible_names=['temperature', 'temp', 't'], must_contain='c', exclude='f')
-    if temp_col is None:
-        temp_col = find_column(df, possible_names=['temperature', 'temp', 't'])
-        if temp_col:
-            st.warning(f"⚠️ Using '{temp_col}' for temperature – verify it's Celsius.")
-
-    hum_col  = find_column(df, possible_names=['humidity', 'humid'])
-    ph_col   = find_column(df, possible_names=['ph', 'ph level', 'ph value'])
-    soil_col = find_column(df, possible_names=['soil moisture', 'moisture', 'soil'])
-
-    # Latest values
-    val_temp = df[temp_col].iloc[-1] if temp_col else 0
-    val_hum  = df[hum_col].iloc[-1]  if hum_col else 0
-    val_ph   = df[ph_col].iloc[-1]   if ph_col else 0
-    val_soil = df[soil_col].iloc[-1] if soil_col else 0
-
-    if not temp_col: st.warning("⚠️ Temperature column not found.")
-    if not hum_col:  st.warning("⚠️ Humidity column not found.")
-    if not ph_col:   st.warning("⚠️ pH column not found.")
-    if not soil_col: st.warning("⚠️ Soil moisture column not found.")
-else:
-    val_temp = val_hum = val_ph = val_soil = 0
-
-# ============================================
-# PAGE RENDERING
-# ============================================
+latest = get_latest_readings()
 
 # --- LIVE DASHBOARD ---
 if page == "📡 LIVE DASHBOARD":
-    st.title("Real-Time Monitoring")
+    st.title("Real-Time Monitoring – 10 Lettuces")
 
-    m1, m2, m3, m4 = st.columns(4)
-    with m1: st.metric("TEMP", f"{val_temp}°C")
-    with m2: st.metric("HUMIDITY", f"{val_hum}%")
-    with m3: st.metric("PH", f"{val_ph}")
-    with m4: st.metric("SOIL", f"{val_soil}%")
+    if latest.empty:
+        st.warning("No data yet. Waiting for sensor readings...")
+        st.stop()
+
+    # Compute averages across all plants
+    avg_temp = latest['temp_c'].mean()
+    avg_hum = latest['humidity'].mean()
+    avg_ph = (latest['ph1'].mean() + latest['ph2'].mean()) / 2   # average of both pH sensors
+    avg_soil = latest['soil_moisture'].mean()
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("🌡️ TEMP", f"{avg_temp:.1f} °C")
+    col2.metric("💧 HUMIDITY", f"{avg_hum:.0f} %")
+    col3.metric("🧪 pH (avg)", f"{avg_ph:.2f}")
+    col4.metric("🌱 SOIL (avg)", f"{avg_soil:.0f} %")
 
     st.markdown("---")
 
     col_l, col_r = st.columns([1.3, 1], gap="large")
+
     with col_l:
-        st.subheader("📸 Plant Health Feed")
-        mock_dir = "backend/mock_images"
-        if os.path.exists(mock_dir):
-            files = [f for f in os.listdir(mock_dir) if f.lower().endswith(('.png', '.jpg'))]
-            if files:
-                st.image(os.path.join(mock_dir, sorted(files)[-1]), use_container_width=True)
-            else:
-                st.info("No images found. Please capture and upload images to the mock_images folder.")
-        else:
-            st.info("Camera feed not available. Create a folder 'backend/mock_images' and add images to simulate.")
+        st.subheader("🌿 Plant Health Feed")
+        latest = latest.sort_values('plant_id')
+        # Display in 2 rows of 5
+        row1 = st.columns(5)
+        row2 = st.columns(5)
+        for idx, (_, plant) in enumerate(latest.iterrows()):
+            col = row1[idx] if idx < 5 else row2[idx-5]
+            pid = int(plant['plant_id'])
+            soil = plant['soil_moisture']
+            ph_avg = (plant['ph1'] + plant['ph2']) / 2
+
+            health = "✅ Healthy"
+            if soil < 30:
+                health = "⚠️ Dry"
+            elif soil > 80:
+                health = "⚠️ Wet"
+            if ph_avg < 5.5 or ph_avg > 6.5:
+                health = "🔴 pH Alert"
+
+            with col:
+                # No camera yet – show a lettuce emoji
+                st.markdown("<span style='font-size:2rem;'>🥬</span>", unsafe_allow_html=True)
+                st.markdown(f"**Lettuce #{pid}**<br>{health}<br>Soil: {soil:.0f}%", unsafe_allow_html=True)
 
     with col_r:
         st.subheader("🤖 AI Health Recommendation")
-        if not df.empty and model and scaler and temp_col and hum_col and ph_col:
+        # Use plant 1 as representative for AI (environmental conditions are common)
+        plant1 = latest[latest['plant_id'] == 1]
+        if not plant1.empty and model and scaler:
             try:
-                features = np.array([[float(val_temp), float(val_hum), float(val_ph)]])
+                temp_val = float(plant1.iloc[0]['temp_c'])
+                hum_val  = float(plant1.iloc[0]['humidity'])
+                ph_val   = (float(plant1.iloc[0]['ph1']) + float(plant1.iloc[0]['ph2'])) / 2
+                features = np.array([[temp_val, hum_val, ph_val]])
                 pred = model.predict(scaler.transform(features))[0]
                 if pred == -1:
                     st.error("### 🚨 ALERT\nAnomalous conditions detected. Adjusting irrigation...")
@@ -312,40 +318,99 @@ if page == "📡 LIVE DASHBOARD":
         else:
             st.warning("Awaiting sensor data or AI model...")
 
+        # Recent alerts (based on thresholds)
+        st.markdown("### 🔔 Recent Alerts")
+        alerts = []
+        for _, plant in latest.iterrows():
+            pid = int(plant['plant_id'])
+            if plant['soil_moisture'] < 20 or plant['soil_moisture'] > 80:
+                alerts.append(f"🌱 Plant {pid} soil: {plant['soil_moisture']:.0f}%")
+            avg_ph = (plant['ph1'] + plant['ph2']) / 2
+            if avg_ph < 5.5 or avg_ph > 6.5:
+                alerts.append(f"🧪 Plant {pid} pH: {avg_ph:.2f}")
+        if avg_temp < 15 or avg_temp > 30:
+            alerts.append(f"🌡️ Temp out of range: {avg_temp:.1f}°C")
+        if avg_hum < 50 or avg_hum > 85:
+            alerts.append(f"💧 Humidity out of range: {avg_hum:.0f}%")
+        if alerts:
+            for alert in alerts[:5]:
+                st.markdown(f'<div style="padding:5px; background:#ffebee; color:#b71c1c; border-radius:5px; margin:5px 0;">{alert}</div>', unsafe_allow_html=True)
+        else:
+            st.info("✅ All parameters within range.")
+
 # --- ANALYSIS PAGE ---
 elif page == "📈 ANALYSIS":
     st.title("Historical Trends – Individual Sensors")
 
-    if not df.empty:
-        def plot_variable(col, title, unit=""):
-            if col:
-                st.subheader(f"{title}")
-                chart_data = df[[col]].copy()
-                chart_data[col] = pd.to_numeric(chart_data[col], errors='coerce')
-                chart_data = chart_data.dropna()
-                if not chart_data.empty:
-                    st.line_chart(chart_data, use_container_width=True)
-                    if unit:
-                        st.caption(f"*Values in {unit}*")
-                else:
-                    st.info(f"No valid numeric data for {title}.")
-            else:
-                st.info(f"ℹ️ {title} data not available.")
+    if not latest.empty:
+        col_s1, col_s2, col_s3 = st.columns([1,1,2])
+        with col_s1:
+            sensor_choice = st.selectbox("Sensor", ["Temperature (°C)", "Humidity (%)", "pH (avg)", "Soil Moisture (%)"])
+        with col_s2:
+            plant_sel = st.selectbox("Plant", list(range(1,11)))
+        with col_s3:
+            time_range = st.selectbox("Time range", ["24 hours", "7 days", "30 days"])
+            hours = 24 if time_range == "24 hours" else (168 if time_range == "7 days" else 720)
 
-        plot_variable(temp_col, "🌡️ Temperature", "°C")
-        plot_variable(hum_col,  "💧 Humidity", "%")
-        plot_variable(ph_col,   "🧪 pH Level")
-        plot_variable(soil_col, "🪴 Soil Moisture", "%")
+        hist_df = get_historical_data(plant_id=plant_sel, hours=hours)
+        if not hist_df.empty:
+            if sensor_choice == "Temperature (°C)":
+                y_col = 'temp_c'
+                y_label = "°C"
+            elif sensor_choice == "Humidity (%)":
+                y_col = 'humidity'
+                y_label = "%"
+            elif sensor_choice == "pH (avg)":
+                hist_df['ph_avg'] = (hist_df['ph1'] + hist_df['ph2']) / 2
+                y_col = 'ph_avg'
+                y_label = "pH"
+            else:
+                y_col = 'soil_moisture'
+                y_label = "%"
+
+            fig = px.line(hist_df, x='timestamp', y=y_col, title=f"{sensor_choice} - Plant {plant_sel}")
+            fig.update_layout(yaxis_title=y_label)
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.warning("No historical data for this plant yet.")
     else:
-        st.warning("No historical data available yet.")
+        st.warning("No data available.")
 
 # --- SYSTEM LOGS ---
 elif page == "📜 SYSTEM LOGS":
     st.title("System Activity Logs")
-    if not df.empty:
-        st.table(df.tail(20))
+    logs = get_historical_data(plant_id=None, hours=24)
+    if not logs.empty:
+        # Add event classification
+        def classify(row):
+            if row['temp_c'] < 15 or row['temp_c'] > 30:
+                return "🌡️ Temp alert"
+            if row['humidity'] < 50 or row['humidity'] > 85:
+                return "💧 Humidity alert"
+            avg_ph = (row['ph1'] + row['ph2']) / 2
+            if avg_ph < 5.5 or avg_ph > 6.5:
+                return "🧪 pH alert"
+            if row['soil_moisture'] < 20 or row['soil_moisture'] > 80:
+                return "🌱 Soil alert"
+            return "Normal"
+        logs['event'] = logs.apply(classify, axis=1)
+        st.dataframe(
+            logs[['timestamp', 'plant_id', 'temp_c', 'humidity', 'ph1', 'ph2', 'soil_moisture', 'event']].tail(20),
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "timestamp": "Time",
+                "plant_id": "Plant",
+                "temp_c": "Temp (°C)",
+                "humidity": "Hum (%)",
+                "ph1": "pH1",
+                "ph2": "pH2",
+                "soil_moisture": "Soil %",
+                "event": "Event"
+            }
+        )
     else:
-        st.warning("No logs available.")
+        st.info("No logs available.")
 
 # --- USER MANAGEMENT (Admin only) ---
 elif page == "👥 USER MANAGEMENT":
