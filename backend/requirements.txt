@@ -4,3 +4,5 @@ joblib
 gspread
 oauth2client
 scikit-learn
+numpy
+plotly
