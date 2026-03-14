@@ -523,7 +523,7 @@ model, scaler = load_assets()
 latest = get_latest_readings()
 
 # --- LIVE DASHBOARD ---
-if page == "📡 LIVE DASHBOARD":
+if page == "LIVE DASHBOARD":
     st.title("Real-Time Monitoring – 10 Lettuces")
 
     if latest.empty:
