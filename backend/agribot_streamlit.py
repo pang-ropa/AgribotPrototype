@@ -5,6 +5,7 @@ import gspread
 import numpy as np
 import os
 import random
+import base64
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, timedelta
 import time
@@ -12,7 +13,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # --- PAGE CONFIG ---
-LOGO_PATH = "backend/agribotailogo.png"
+LOGO_PATH = r"C:\Users\admin\Downloads\AgribotPrototype\backend\agribotailogo.png"
 
 st.set_page_config(
     page_title="AgriBot-AI | Dashboard",
@@ -22,11 +23,44 @@ st.set_page_config(
 )
 
 # ============================================
-# LOGIN SYSTEM (with Enter‑key support)
+# BACKGROUND IMAGE FUNCTION
+# ============================================
+def set_background(image_file):
+    """Convert image to base64 and set as background. Supports jpg and png."""
+    ext = os.path.splitext(image_file)[1].lower()
+    mime = "image/png" if ext == ".png" else "image/jpeg"
+    with open(image_file, "rb") as image:
+        encoded = base64.b64encode(image.read()).decode()
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("data:{mime};base64,{encoded}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+        /* Dark overlay so login card text stays readable */
+        .stApp::before {{
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 0;
+            pointer-events: none;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# ============================================
+# LOGIN SYSTEM – GLASS CARD + BACKGROUND
 # ============================================
 users = {
-    "admin": {"password": "admin123", "role": "admin"},
-    "user":  {"password": "user123",  "role": "user"}
+    "admin@agribot.ai": {"password": "admin123", "role": "admin"},
+    "user@agribot.ai":  {"password": "user123",  "role": "user"}
 }
 
 if "logged_in" not in st.session_state:
@@ -34,26 +68,116 @@ if "logged_in" not in st.session_state:
     st.session_state.role = None
 
 def login():
-    st.title("🔐 AgriBot-AI Login")
-    with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Login")
-        if submitted:
-            if username in users and users[username]["password"] == password:
-                st.session_state.logged_in = True
-                st.session_state.role = users[username]["role"]
-                st.success("Login Successful")
-                st.rerun()
-            else:
-                st.error("Invalid credentials")
+    # Load background
+    bg_path = r"C:\Users\admin\Downloads\AgribotPrototype\backend\background.jpg"
+    set_background(bg_path)
 
+    # Load logo as base64
+    logo_html = ""
+    if os.path.exists(LOGO_PATH):
+        with open(LOGO_PATH, "rb") as f:
+            logo_b64 = base64.b64encode(f.read()).decode()
+        logo_html = f'''<div style="display:flex; justify-content:center; margin-bottom:15px;">
+            <img src="data:image/png;base64,{logo_b64}"
+            style="width:130px; height:130px; border-radius:50%;
+                   border: 3px solid #4CAF50; object-fit:cover;" />
+        </div>'''
+
+    # Full login page as one HTML block — no st.image(), no black box
+    st.markdown(f"""
+    <style>
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+
+    [data-testid="stForm"] {{
+        background: linear-gradient(160deg,
+            rgba(10, 46, 10, 0.82) 0%,
+            rgba(27, 94, 32, 0.78) 50%,
+            rgba(46, 125, 50, 0.75) 100%) !important;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 18px;
+        border: 1px solid rgba(76, 175, 80, 0.5);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+                    0 0 0 1px rgba(76, 175, 80, 0.2);
+        padding: 30px 40px 40px 40px;
+    }}
+
+    /* Input fields */
+    [data-testid="stForm"] input {{
+        background: rgba(0, 0, 0, 0.35) !important;
+        color: white !important;
+        border: 1px solid rgba(76, 175, 80, 0.5) !important;
+        border-radius: 10px !important;
+    }}
+    [data-testid="stForm"] input::placeholder {{
+        color: rgba(200, 230, 200, 0.6) !important;
+    }}
+
+    /* Login button */
+    [data-testid="stForm"] button[kind="primaryFormSubmit"] {{
+        background: linear-gradient(90deg, #2e7d32, #43a047) !important;
+        border: none !important;
+        color: white !important;
+        font-weight: 700 !important;
+        border-radius: 10px !important;
+        letter-spacing: 1px;
+    }}
+    [data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {{
+        background: linear-gradient(90deg, #388e3c, #66bb6a) !important;
+    }}
+
+    .stTextInput label {{ color: #c8e6c9 !important; font-weight: 600 !important; }}
+
+    .login-title {{
+        text-align: center;
+        font-size: 42px;
+        font-weight: 800;
+        color: white;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        margin-bottom: 4px;
+    }}
+    .login-tagline {{
+        text-align: center;
+        color: #a5d6a7;
+        margin-bottom: 20px;
+        font-size: 15px;
+        letter-spacing: 0.5px;
+    }}
+    </style>
+
+    <div style="display:flex; flex-direction:column; align-items:center; margin-top:60px;">
+        {logo_html}
+        <div class="login-title">AgriBot-AI</div>
+        <div class="login-tagline">Smart Farming · Intelligent Monitoring</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        with st.form("login_form"):
+            email = st.text_input("Email", placeholder="admin@agribot.ai or user@agribot.ai")
+            password = st.text_input("Password", type="password", placeholder="••••••••")
+            submitted = st.form_submit_button("Login", use_container_width=True)
+
+            if submitted:
+                if email in users and users[email]["password"] == password:
+                    st.session_state.logged_in = True
+                    st.session_state.role = users[email]["role"]
+                    st.success("Login Successful")
+                    st.rerun()
+                else:
+                    st.error("Invalid email or password")
+
+# ============================================
+# SHOW LOGIN PAGE IF NOT LOGGED IN
+# ============================================
 if not st.session_state.logged_in:
     login()
     st.stop()
 
 # ============================================
-# CUSTOM CSS (your original styling)
+# CUSTOM CSS (your original styling – unchanged)
 # ============================================
 css_code = """
     <style>
@@ -183,11 +307,10 @@ def get_sheet():
 sheet = get_sheet()
 
 # ============================================
-# DATA FETCHING FUNCTIONS (10‑plant aware)
+# DATA FETCHING FUNCTIONS
 # ============================================
 @st.cache_data(ttl=10)
 def get_latest_readings():
-    """Return the most recent reading for each plant (1-10) from the sheet."""
     if sheet is None:
         return pd.DataFrame()
     try:
@@ -196,7 +319,6 @@ def get_latest_readings():
         if df.empty:
             return pd.DataFrame()
         df['timestamp'] = pd.to_datetime(df['timestamp'])
-        # Keep only the latest row per plant_id
         latest = df.sort_values('timestamp').groupby('plant_id').last().reset_index()
         return latest
     except Exception as e:
@@ -205,7 +327,6 @@ def get_latest_readings():
 
 @st.cache_data(ttl=60)
 def get_historical_data(plant_id=None, hours=24):
-    """Return historical data for a specific plant (or all if plant_id=None)."""
     if sheet is None:
         return pd.DataFrame()
     try:
@@ -223,11 +344,19 @@ def get_historical_data(plant_id=None, hours=24):
         return pd.DataFrame()
 
 # ============================================
-# SIDEBAR (role‑based pages)
+# SIDEBAR (role-based pages)
 # ============================================
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
-        st.image(LOGO_PATH)
+        with open(LOGO_PATH, "rb") as f:
+            logo_b64 = base64.b64encode(f.read()).decode()
+        st.markdown(
+            f'''<div style="display:flex; justify-content:center; padding-top:30px; margin-bottom:0px;">
+            <img src="data:image/png;base64,{logo_b64}" width="150"
+            style="border-radius:50%; border: 4px solid #4CAF50;" />
+            </div>''',
+            unsafe_allow_html=True
+        )
 
     st.markdown('<div class="sidebar-title">AgriBot-AI</div>', unsafe_allow_html=True)
     st.markdown('<div class="sidebar-hr"></div>', unsafe_allow_html=True)
@@ -257,10 +386,9 @@ if page == "📡 LIVE DASHBOARD":
         st.warning("No data yet. Waiting for sensor readings...")
         st.stop()
 
-    # Compute averages across all plants
     avg_temp = latest['temp_c'].mean()
     avg_hum = latest['humidity'].mean()
-    avg_ph = (latest['ph1'].mean() + latest['ph2'].mean()) / 2   # average of both pH sensors
+    avg_ph = (latest['ph1'].mean() + latest['ph2'].mean()) / 2
     avg_soil = latest['soil_moisture'].mean()
 
     col1, col2, col3, col4 = st.columns(4)
@@ -276,7 +404,6 @@ if page == "📡 LIVE DASHBOARD":
     with col_l:
         st.subheader("🌿 Plant Health Feed")
         latest = latest.sort_values('plant_id')
-        # Display in 2 rows of 5
         row1 = st.columns(5)
         row2 = st.columns(5)
         for idx, (_, plant) in enumerate(latest.iterrows()):
@@ -294,13 +421,11 @@ if page == "📡 LIVE DASHBOARD":
                 health = "🔴 pH Alert"
 
             with col:
-                # No camera yet – show a lettuce emoji
                 st.markdown("<span style='font-size:2rem;'>🥬</span>", unsafe_allow_html=True)
                 st.markdown(f"**Lettuce #{pid}**<br>{health}<br>Soil: {soil:.0f}%", unsafe_allow_html=True)
 
     with col_r:
         st.subheader("🤖 AI Health Recommendation")
-        # Use plant 1 as representative for AI (environmental conditions are common)
         plant1 = latest[latest['plant_id'] == 1]
         if not plant1.empty and model and scaler:
             try:
@@ -318,7 +443,6 @@ if page == "📡 LIVE DASHBOARD":
         else:
             st.warning("Awaiting sensor data or AI model...")
 
-        # Recent alerts (based on thresholds)
         st.markdown("### 🔔 Recent Alerts")
         alerts = []
         for _, plant in latest.iterrows():
@@ -381,7 +505,6 @@ elif page == "📜 SYSTEM LOGS":
     st.title("System Activity Logs")
     logs = get_historical_data(plant_id=None, hours=24)
     if not logs.empty:
-        # Add event classification
         def classify(row):
             if row['temp_c'] < 15 or row['temp_c'] > 30:
                 return "🌡️ Temp alert"
@@ -417,14 +540,14 @@ elif page == "👥 USER MANAGEMENT":
     st.title("Admin Control Panel")
     st.subheader("Registered Users")
     user_data = pd.DataFrame({
-        "Username": ["admin", "user"],
+        "Username": ["admin@agribot.ai", "user@agribot.ai"],
         "Role": ["Administrator", "Standard User"]
     })
     st.table(user_data)
     st.info("Future feature: add / remove users via database")
 
 # ============================================
-# AUTO‑REFRESH
+# AUTO-REFRESH
 # ============================================
 time.sleep(10)
 st.rerun()
