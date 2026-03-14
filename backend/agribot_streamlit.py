@@ -4,7 +4,6 @@ import joblib
 import gspread
 import numpy as np
 import os
-import random
 import base64
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, timedelta
@@ -12,8 +11,11 @@ import time
 import plotly.express as px
 import plotly.graph_objects as go
 
-# --- PAGE CONFIG ---
-LOGO_PATH = r"C:\Users\admin\Downloads\AgribotPrototype\backend\agribotailogo.png"
+# ============================================
+# PAGE CONFIG (relative paths)
+# ============================================
+LOGO_PATH = "backend/agribotailogo.png"
+BACKGROUND_PATH = "backend/background.jpg"
 
 st.set_page_config(
     page_title="AgriBot-AI | Dashboard",
@@ -23,10 +25,12 @@ st.set_page_config(
 )
 
 # ============================================
-# BACKGROUND IMAGE FUNCTION
+# BACKGROUND IMAGE FUNCTION (glass login)
 # ============================================
 def set_background(image_file):
-    """Convert image to base64 and set as background. Supports jpg and png."""
+    """Convert image to base64 and set as background. Supports jpg/png."""
+    if not os.path.exists(image_file):
+        return
     ext = os.path.splitext(image_file)[1].lower()
     mime = "image/png" if ext == ".png" else "image/jpeg"
     with open(image_file, "rb") as image:
@@ -41,7 +45,7 @@ def set_background(image_file):
             background-repeat: no-repeat;
             background-attachment: fixed;
         }}
-        /* Dark overlay so login card text stays readable */
+        /* Dark overlay for readability */
         .stApp::before {{
             content: "";
             position: fixed;
@@ -68,9 +72,8 @@ if "logged_in" not in st.session_state:
     st.session_state.role = None
 
 def login():
-    # Load background
-    bg_path = r"C:\Users\admin\Downloads\AgribotPrototype\backend\background.jpg"
-    set_background(bg_path)
+    # Apply background
+    set_background(BACKGROUND_PATH)
 
     # Load logo as base64
     logo_html = ""
@@ -83,7 +86,7 @@ def login():
                    border: 3px solid #4CAF50; object-fit:cover;" />
         </div>'''
 
-    # Full login page as one HTML block — no st.image(), no black box
+    # Glass card styling
     st.markdown(f"""
     <style>
     #MainMenu {{visibility: hidden;}}
@@ -91,32 +94,32 @@ def login():
 
     [data-testid="stForm"] {{
         background: linear-gradient(160deg,
-            rgba(10, 46, 10, 0.82) 0%,
-            rgba(27, 94, 32, 0.78) 50%,
-            rgba(46, 125, 50, 0.75) 100%) !important;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+            rgba(56, 142, 60, 0.55) 0%,
+            rgba(76, 175, 80, 0.45) 50%,
+            rgba(129, 199, 132, 0.40) 100%) !important;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
         border-radius: 18px;
-        border: 1px solid rgba(76, 175, 80, 0.5);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
-                    0 0 0 1px rgba(76, 175, 80, 0.2);
+        border: 1px solid rgba(165, 214, 167, 0.5);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25),
+                    0 0 0 1px rgba(165, 214, 167, 0.15);
         padding: 30px 40px 40px 40px;
     }}
 
     /* Input fields */
     [data-testid="stForm"] input {{
-        background: rgba(0, 0, 0, 0.35) !important;
+        background: rgba(255, 255, 255, 0.12) !important;
         color: white !important;
-        border: 1px solid rgba(76, 175, 80, 0.5) !important;
+        border: 1px solid rgba(165, 214, 167, 0.6) !important;
         border-radius: 10px !important;
     }}
     [data-testid="stForm"] input::placeholder {{
-        color: rgba(200, 230, 200, 0.6) !important;
+        color: rgba(220, 240, 220, 0.7) !important;
     }}
 
     /* Login button */
     [data-testid="stForm"] button[kind="primaryFormSubmit"] {{
-        background: linear-gradient(90deg, #2e7d32, #43a047) !important;
+        background: linear-gradient(90deg, #388e3c, #66bb6a) !important;
         border: none !important;
         color: white !important;
         font-weight: 700 !important;
@@ -124,10 +127,10 @@ def login():
         letter-spacing: 1px;
     }}
     [data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {{
-        background: linear-gradient(90deg, #388e3c, #66bb6a) !important;
+        background: linear-gradient(90deg, #43a047, #81c784) !important;
     }}
 
-    .stTextInput label {{ color: #c8e6c9 !important; font-weight: 600 !important; }}
+    .stTextInput label {{ color: #e8f5e9 !important; font-weight: 600 !important; }}
 
     .login-title {{
         text-align: center;
@@ -177,7 +180,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ============================================
-# CUSTOM CSS (your original styling – unchanged)
+# CUSTOM CSS (sidebar & dashboard styling)
 # ============================================
 css_code = """
     <style>
@@ -192,63 +195,181 @@ css_code = """
         left: 15px !important;
         z-index: 999999 !important;
     }
+    /* ── Sidebar shell ── */
     section[data-testid="stSidebar"] {
-        width: 350px !important;
+        width: 280px !important;
         background-color: #0E1117 !important;
-        border-right: 2px solid #4CAF50;
+        border-right: 2px solid #2e7d32 !important;
     }
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        justify-content: flex-start !important;
-    }
-    [data-testid="stSidebar"] [data-testid="stImage"] {
-        pointer-events: none !important;
-        user-select: none !important;
-        display: flex !important;
-        justify-content: center !important;
-        padding-top: 40px !important;
-        margin-bottom: 0px !important;
+        padding: 0 14px 24px 14px !important;
     }
     [data-testid="stSidebar"] [data-testid="stElementToolbar"] { display: none !important; }
-    [data-testid="stSidebar"] [data-testid="stImage"] img {
-        border-radius: 50% !important;
-        border: 4px solid #4CAF50 !important;
-        width: 170px !important;
-        height: 170px !important;
-        object-fit: cover !important;
-    }
-    .sidebar-title {
-        text-align: center !important;
-        color: #4CAF50 !important;
-        font-size: 26px !important;
-        font-weight: 800 !important;
-        margin-top: 15px !important;
-        margin-bottom: 5px !important;
-        width: 100% !important;
-        display: block !important;
-    }
-    .sidebar-hr {
-        height: 3px;
-        background-color: #4CAF50;
-        width: 60%;
-        margin: 5px auto 25px auto !important;
-        border-radius: 5px;
-    }
-    .stRadio > div {
-        gap: 10px;
+
+    /* ── Logo area ── */
+    .sidebar-logo-wrap {
+        display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
+        padding-top: 30px;
+        margin-bottom: 4px;
+        width: 100%;
+    }
+    .sidebar-logo-ring {
+        padding: 3px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4CAF50, #1b5e20);
+        box-shadow: 0 0 16px rgba(76,175,80,0.35);
+        margin-bottom: 12px;
+    }
+    .sidebar-logo-ring img {
+        border-radius: 50%;
+        display: block;
+        width: 115px;
+        height: 115px;
+        object-fit: cover;
+        background: #0E1117;
+    }
+
+    /* ── Title & tagline ── */
+    .sidebar-title {
+        text-align: center;
+        font-size: 20px;
+        font-weight: 800;
+        color: #4CAF50;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+    .sidebar-tagline {
+        text-align: center;
+        font-size: 10px;
+        color: #66bb6a;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+    .sidebar-divider {
+        width: 60%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #4CAF50, transparent);
+        border-radius: 2px;
+        margin: 14px auto 18px auto;
+    }
+
+    /* ── Nav section label ── */
+    .sidebar-nav-label {
+        font-size: 9px;
+        font-weight: 700;
+        color: #388e3c;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        width: 100%;
+        padding: 0 2px;
+        margin-bottom: 6px;
+    }
+
+    /* ── Radio nav buttons ── */
+    .stRadio > div {
+        gap: 5px !important;
         width: 100% !important;
+        flex-direction: column !important;
     }
     .stRadio label {
-        font-size: 18px !important;
+        font-size: 13px !important;
         font-weight: 600 !important;
-        color: #4CAF50 !important;
-        text-align: center;
+        color: #a5d6a7 !important;
+        background: rgba(46,125,50,0.08) !important;
+        border: 1px solid rgba(76,175,80,0.18) !important;
+        border-radius: 8px !important;
+        padding: 10px 14px !important;
+        width: 100% !important;
+        cursor: pointer !important;
+        letter-spacing: 0.3px !important;
+        transition: all 0.15s ease !important;
+    }
+    .stRadio label:hover {
+        background: rgba(76,175,80,0.18) !important;
+        border-color: #4CAF50 !important;
+        color: #ffffff !important;
+    }
+    div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
+        background: rgba(46,125,50,0.35) !important;
+        border: 1px solid #4CAF50 !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 8px rgba(76,175,80,0.25) !important;
+    }
+    /* Hide radio dot */
+    .stRadio [data-baseweb="radio"] > div:first-child { display: none !important; }
+    .stRadio [data-testid="stMarkdownContainer"] p { margin: 0 !important; }
+
+    /* ── Status badge ── */
+    .sidebar-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(46,125,50,0.18);
+        border: 1px solid #2e7d32;
+        border-radius: 8px;
+        padding: 9px 14px;
         width: 100%;
-        cursor: pointer;
+        margin-top: 14px;
+        margin-bottom: 8px;
+        box-sizing: border-box;
+    }
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background: #4CAF50;
+        border-radius: 50%;
+        box-shadow: 0 0 6px #4CAF50;
+        animation: blink 2s ease-in-out infinite;
+        flex-shrink: 0;
+    }
+    @keyframes blink {
+        0%,100% { opacity: 1; box-shadow: 0 0 5px #4CAF50; }
+        50%      { opacity: 0.6; box-shadow: 0 0 12px #4CAF50; }
+    }
+    .status-text {
+        font-size: 11px;
+        font-weight: 700;
+        color: #81c784;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+    }
+
+    /* ── Logout button ── */
+    [data-testid="stSidebar"] .stButton > button {
+        background: transparent !important;
+        border: 1px solid #2e7d32 !important;
+        color: #81c784 !important;
+        border-radius: 8px !important;
+        width: 100% !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        padding: 9px !important;
+        letter-spacing: 0.8px !important;
+    }
+    [data-testid="stSidebar"] .stButton > button:hover {
+        background: rgba(211,47,47,0.12) !important;
+        border-color: #c62828 !important;
+        color: #ef9a9a !important;
+    }
+
+    /* ── Role badge ── */
+    .role-badge {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 3px 10px;
+        border-radius: 20px;
+        background: rgba(76,175,80,0.12);
+        border: 1px solid #2e7d32;
+        color: #81c784;
+        margin-top: 4px;
     }
     div[data-testid="stMetric"] {
         background: rgba(46, 125, 50, 0.15) !important;
@@ -304,8 +425,6 @@ def get_sheet():
         st.error(f"Database Connection Error: {e}")
         return None
 
-sheet = get_sheet()
-
 # ============================================
 # DATA FETCHING FUNCTIONS
 # ============================================
@@ -344,30 +463,55 @@ def get_historical_data(plant_id=None, hours=24):
         return pd.DataFrame()
 
 # ============================================
-# SIDEBAR (role-based pages)
+# SIDEBAR (role-based pages with new design)
 # ============================================
+sheet = get_sheet()  # ensure sheet is available for data functions
 with st.sidebar:
+    # Logo
+    logo_b64 = ""
     if os.path.exists(LOGO_PATH):
         with open(LOGO_PATH, "rb") as f:
             logo_b64 = base64.b64encode(f.read()).decode()
-        st.markdown(
-            f'''<div style="display:flex; justify-content:center; padding-top:30px; margin-bottom:0px;">
-            <img src="data:image/png;base64,{logo_b64}" width="150"
-            style="border-radius:50%; border: 4px solid #4CAF50;" />
-            </div>''',
-            unsafe_allow_html=True
-        )
 
-    st.markdown('<div class="sidebar-title">AgriBot-AI</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sidebar-hr"></div>', unsafe_allow_html=True)
+    role_label = "Administrator" if st.session_state.role == "admin" else "Field User"
+
+    st.markdown(f"""
+    <div class="sidebar-logo-wrap">
+        <div class="sidebar-logo-ring">
+            <img src="data:image/png;base64,{logo_b64}" />
+        </div>
+        <div class="sidebar-title">AgriBot-AI</div>
+        <div class="sidebar-tagline">Crop Monitoring System</div>
+        <div style="margin-top:8px;">
+            <span class="role-badge">{"👑 " if st.session_state.role == "admin" else "🌿 "}{role_label}</span>
+        </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-nav-label">Navigation</div>
+    """, unsafe_allow_html=True)
 
     if st.session_state.role == "admin":
-        page = st.radio("", ["📡 LIVE DASHBOARD", "📈 ANALYSIS", "📜 SYSTEM LOGS", "👥 USER MANAGEMENT"], label_visibility="collapsed")
+        page = st.radio("", [" Live Dashboard", " Analysis", " System Logs", " User Management"], label_visibility="collapsed")
     else:
-        page = st.radio("", ["📡 LIVE DASHBOARD", "📈 ANALYSIS"], label_visibility="collapsed")
+        page = st.radio("", [" Live Dashboard", " Analysis"], label_visibility="collapsed")
 
-    st.success("🟢 SYSTEM: ONLINE")
-    if st.button("Logout"):
+    # Normalize page name to match original keys
+    page_map = {
+        " Live Dashboard": "LIVE DASHBOARD",
+        " Analysis": "ANALYSIS",
+        " System Logs": "SYSTEM LOGS",
+        " User Management": "USER MANAGEMENT"
+    }
+    page = page_map.get(page, page)
+
+    st.markdown("""
+    <div class="sidebar-status">
+        <div class="status-dot"></div>
+        <span class="status-text">SYSTEM ONLINE</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if st.button("⏻  Logout", use_container_width=True):
         st.session_state.logged_in = False
         st.session_state.role = None
         st.rerun()
@@ -425,7 +569,7 @@ if page == "📡 LIVE DASHBOARD":
                 st.markdown(f"**Lettuce #{pid}**<br>{health}<br>Soil: {soil:.0f}%", unsafe_allow_html=True)
 
     with col_r:
-        st.subheader("🤖 AI Health Recommendation")
+        st.subheader("AI Health Recommendation")
         plant1 = latest[latest['plant_id'] == 1]
         if not plant1.empty and model and scaler:
             try:
@@ -435,15 +579,15 @@ if page == "📡 LIVE DASHBOARD":
                 features = np.array([[temp_val, hum_val, ph_val]])
                 pred = model.predict(scaler.transform(features))[0]
                 if pred == -1:
-                    st.error("### 🚨 ALERT\nAnomalous conditions detected. Adjusting irrigation...")
+                    st.error("### ALERT\nAnomalous conditions detected. Adjusting irrigation...")
                 else:
-                    st.success("### ✅ HEALTHY\nCrop environment is optimal.")
+                    st.success("### HEALTHY\nCrop environment is optimal.")
             except Exception as e:
                 st.info(f"Processing sensor data with AI model... (error: {e})")
         else:
             st.warning("Awaiting sensor data or AI model...")
 
-        st.markdown("### 🔔 Recent Alerts")
+        st.markdown("### Recent Alerts")
         alerts = []
         for _, plant in latest.iterrows():
             pid = int(plant['plant_id'])
@@ -451,19 +595,19 @@ if page == "📡 LIVE DASHBOARD":
                 alerts.append(f"🌱 Plant {pid} soil: {plant['soil_moisture']:.0f}%")
             avg_ph = (plant['ph1'] + plant['ph2']) / 2
             if avg_ph < 5.5 or avg_ph > 6.5:
-                alerts.append(f"🧪 Plant {pid} pH: {avg_ph:.2f}")
+                alerts.append(f"Plant {pid} pH: {avg_ph:.2f}")
         if avg_temp < 15 or avg_temp > 30:
-            alerts.append(f"🌡️ Temp out of range: {avg_temp:.1f}°C")
+            alerts.append(f"Temp out of range: {avg_temp:.1f}°C")
         if avg_hum < 50 or avg_hum > 85:
-            alerts.append(f"💧 Humidity out of range: {avg_hum:.0f}%")
+            alerts.append(f"Humidity out of range: {avg_hum:.0f}%")
         if alerts:
             for alert in alerts[:5]:
                 st.markdown(f'<div style="padding:5px; background:#ffebee; color:#b71c1c; border-radius:5px; margin:5px 0;">{alert}</div>', unsafe_allow_html=True)
         else:
-            st.info("✅ All parameters within range.")
+            st.info("All parameters within range.")
 
 # --- ANALYSIS PAGE ---
-elif page == "📈 ANALYSIS":
+elif page == "ANALYSIS":
     st.title("Historical Trends – Individual Sensors")
 
     if not latest.empty:
@@ -501,20 +645,20 @@ elif page == "📈 ANALYSIS":
         st.warning("No data available.")
 
 # --- SYSTEM LOGS ---
-elif page == "📜 SYSTEM LOGS":
+elif page == "SYSTEM LOGS":
     st.title("System Activity Logs")
     logs = get_historical_data(plant_id=None, hours=24)
     if not logs.empty:
         def classify(row):
             if row['temp_c'] < 15 or row['temp_c'] > 30:
-                return "🌡️ Temp alert"
+                return "Temp alert"
             if row['humidity'] < 50 or row['humidity'] > 85:
-                return "💧 Humidity alert"
+                return "Humidity alert"
             avg_ph = (row['ph1'] + row['ph2']) / 2
             if avg_ph < 5.5 or avg_ph > 6.5:
-                return "🧪 pH alert"
+                return "pH alert"
             if row['soil_moisture'] < 20 or row['soil_moisture'] > 80:
-                return "🌱 Soil alert"
+                return "Soil alert"
             return "Normal"
         logs['event'] = logs.apply(classify, axis=1)
         st.dataframe(
@@ -536,7 +680,7 @@ elif page == "📜 SYSTEM LOGS":
         st.info("No logs available.")
 
 # --- USER MANAGEMENT (Admin only) ---
-elif page == "👥 USER MANAGEMENT":
+elif page == "USER MANAGEMENT":
     st.title("Admin Control Panel")
     st.subheader("Registered Users")
     user_data = pd.DataFrame({
