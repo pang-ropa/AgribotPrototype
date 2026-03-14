@@ -22,6 +22,17 @@ st.set_page_config(
 )
 
 # ============================================
+# KIOSK MODE CHECK (must be before login)
+# ============================================
+# If the URL contains ?kiosk=true, auto-login as user and enable auto‑cycling
+if "kiosk" in st.query_params and st.query_params["kiosk"] == "true":
+    st.session_state.logged_in = True
+    st.session_state.role = "user"
+    st.session_state.kiosk_mode = True
+    if "page_index" not in st.session_state:
+        st.session_state.page_index = 0
+
+# ============================================
 # LOGIN SYSTEM (with Enter‑key support)
 # ============================================
 users = {
@@ -53,7 +64,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ============================================
-# CUSTOM CSS (your original styling)
+# CUSTOM CSS (unchanged)
 # ============================================
 css_code = """
     <style>
@@ -187,7 +198,6 @@ sheet = get_sheet()
 # ============================================
 @st.cache_data(ttl=10)
 def get_latest_readings():
-    """Return the most recent reading for each plant (1-10) from the sheet."""
     if sheet is None:
         return pd.DataFrame()
     try:
@@ -196,7 +206,6 @@ def get_latest_readings():
         if df.empty:
             return pd.DataFrame()
         df['timestamp'] = pd.to_datetime(df['timestamp'])
-        # Keep only the latest row per plant_id
         latest = df.sort_values('timestamp').groupby('plant_id').last().reset_index()
         return latest
     except Exception as e:
@@ -205,7 +214,6 @@ def get_latest_readings():
 
 @st.cache_data(ttl=60)
 def get_historical_data(plant_id=None, hours=24):
-    """Return historical data for a specific plant (or all if plant_id=None)."""
     if sheet is None:
         return pd.DataFrame()
     try:
@@ -223,7 +231,7 @@ def get_historical_data(plant_id=None, hours=24):
         return pd.DataFrame()
 
 # ============================================
-# SIDEBAR (role‑based pages)
+# SIDEBAR (role‑based pages, with kiosk mode)
 # ============================================
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
@@ -232,15 +240,32 @@ with st.sidebar:
     st.markdown('<div class="sidebar-title">AgriBot-AI</div>', unsafe_allow_html=True)
     st.markdown('<div class="sidebar-hr"></div>', unsafe_allow_html=True)
 
+    # Define page options based on role
     if st.session_state.role == "admin":
-        page = st.radio("", ["📡 LIVE DASHBOARD", "📈 ANALYSIS", "📜 SYSTEM LOGS", "👥 USER MANAGEMENT"], label_visibility="collapsed")
+        page_options = ["📡 LIVE DASHBOARD", "📈 ANALYSIS", "📜 SYSTEM LOGS", "👥 USER MANAGEMENT"]
     else:
-        page = st.radio("", ["📡 LIVE DASHBOARD", "📈 ANALYSIS"], label_visibility="collapsed")
+        page_options = ["📡 LIVE DASHBOARD", "📈 ANALYSIS"]
+
+    # Kiosk mode: auto‑select page, hide radio
+    if st.session_state.get("kiosk_mode", False):
+        # Use session state index to select page
+        idx = st.session_state.get("page_index", 0) % len(page_options)
+        page = page_options[idx]
+        # Show a small indicator instead of the radio
+        st.caption(f"🔄 Auto‑cycling: **{page}**")
+        # Optionally add a manual override button to exit kiosk?
+        if st.button("Exit Kiosk"):
+            st.session_state.kiosk_mode = False
+            st.rerun()
+    else:
+        # Normal interactive mode: radio selection
+        page = st.radio("", page_options, label_visibility="collapsed")
 
     st.success("🟢 SYSTEM: ONLINE")
     if st.button("Logout"):
         st.session_state.logged_in = False
         st.session_state.role = None
+        st.session_state.kiosk_mode = False
         st.rerun()
 
 # ============================================
@@ -257,10 +282,9 @@ if page == "📡 LIVE DASHBOARD":
         st.warning("No data yet. Waiting for sensor readings...")
         st.stop()
 
-    # Compute averages across all plants
     avg_temp = latest['temp_c'].mean()
     avg_hum = latest['humidity'].mean()
-    avg_ph = (latest['ph1'].mean() + latest['ph2'].mean()) / 2   # average of both pH sensors
+    avg_ph = (latest['ph1'].mean() + latest['ph2'].mean()) / 2
     avg_soil = latest['soil_moisture'].mean()
 
     col1, col2, col3, col4 = st.columns(4)
@@ -276,7 +300,6 @@ if page == "📡 LIVE DASHBOARD":
     with col_l:
         st.subheader("🌿 Plant Health Feed")
         latest = latest.sort_values('plant_id')
-        # Display in 2 rows of 5
         row1 = st.columns(5)
         row2 = st.columns(5)
         for idx, (_, plant) in enumerate(latest.iterrows()):
@@ -294,13 +317,14 @@ if page == "📡 LIVE DASHBOARD":
                 health = "🔴 pH Alert"
 
             with col:
-                # No camera yet – show a lettuce emoji
-                st.markdown("<span style='font-size:2rem;'>🥬</span>", unsafe_allow_html=True)
+                if plant['image_path'] and plant['image_path'].startswith('http'):
+                    st.image(plant['image_path'], width=100)
+                else:
+                    st.markdown("<span style='font-size:2rem;'>🥬</span>", unsafe_allow_html=True)
                 st.markdown(f"**Lettuce #{pid}**<br>{health}<br>Soil: {soil:.0f}%", unsafe_allow_html=True)
 
     with col_r:
         st.subheader("🤖 AI Health Recommendation")
-        # Use plant 1 as representative for AI (environmental conditions are common)
         plant1 = latest[latest['plant_id'] == 1]
         if not plant1.empty and model and scaler:
             try:
@@ -318,7 +342,6 @@ if page == "📡 LIVE DASHBOARD":
         else:
             st.warning("Awaiting sensor data or AI model...")
 
-        # Recent alerts (based on thresholds)
         st.markdown("### 🔔 Recent Alerts")
         alerts = []
         for _, plant in latest.iterrows():
@@ -376,12 +399,11 @@ elif page == "📈 ANALYSIS":
     else:
         st.warning("No data available.")
 
-# --- SYSTEM LOGS ---
+# --- SYSTEM LOGS (only for admin) ---
 elif page == "📜 SYSTEM LOGS":
     st.title("System Activity Logs")
     logs = get_historical_data(plant_id=None, hours=24)
     if not logs.empty:
-        # Add event classification
         def classify(row):
             if row['temp_c'] < 15 or row['temp_c'] > 30:
                 return "🌡️ Temp alert"
@@ -424,7 +446,12 @@ elif page == "👥 USER MANAGEMENT":
     st.info("Future feature: add / remove users via database")
 
 # ============================================
-# AUTO‑REFRESH
+# AUTO‑REFRESH AND PAGE CYCLING (kiosk mode)
 # ============================================
 time.sleep(10)
+
+# If in kiosk mode, advance to the next page
+if st.session_state.get("kiosk_mode", False):
+    st.session_state.page_index = st.session_state.get("page_index", 0) + 1
+
 st.rerun()
