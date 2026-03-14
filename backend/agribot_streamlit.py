@@ -4,10 +4,8 @@ import joblib
 import gspread
 import numpy as np
 import os
-import random
 import base64
 import subprocess
-import threading
 import time
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, timedelta
@@ -25,13 +23,16 @@ except ImportError:
 # ============================================
 # PAGE CONFIG
 # ============================================
-LOGO_PATH = r"C:\Users\admin\Downloads\AgribotPrototype\backend\logo.png"
-# On Pi, update this path:
-PI_LOGO_PATH = os.path.expanduser("~/env/Thesis code/backend/logo.png")
-ACTUAL_LOGO = PI_LOGO_PATH if os.path.exists(PI_LOGO_PATH) else (LOGO_PATH if os.path.exists(LOGO_PATH) else "")
+LOGO_PATH    = r"C:\Users\admin\Downloads\AgribotPrototype\backend\agribotailogo.png"
+PI_LOGO_PATH = os.path.expanduser("~/env/Thesis code/backend/agribotailogologo.png")
+ACTUAL_LOGO  = PI_LOGO_PATH if os.path.exists(PI_LOGO_PATH) else (LOGO_PATH if os.path.exists(LOGO_PATH) else "")
 
-# Camera capture config
-SAVE_DIR     = os.path.expanduser("~/captures")
+# Google Sheets config
+CREDENTIALS_FILE = os.path.expanduser("~/env/Thesis code/credentials.json")
+SPREADSHEET_ID   = "1mYScsUkoZn84FIoO_QMaku3gZT3Z9df72kPE3ray9-A"
+
+# Camera capture config (local snapshots from dashboard)
+SAVE_DIR      = os.path.expanduser("~/captures")
 GDRIVE_FOLDER = "gdrive:AgriBot/captures"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
@@ -231,8 +232,6 @@ div[data-testid="stMetricLabel"] { margin-top:10px !important; font-weight:bold 
 div[data-testid="stMetricValue"] { margin-top:-5px !important; font-size:32px !important; }
 #MainMenu {visibility:hidden;} footer {visibility:hidden;}
 [data-testid="stDecoration"] {display:none;}
-
-/* Camera page styles */
 .cam-card {
     background: rgba(14,17,23,0.85);
     border: 1px solid #2e7d32;
@@ -251,6 +250,16 @@ div[data-testid="stMetricValue"] { margin-top:-5px !important; font-size:32px !i
 }
 .upload-badge-ok  { background:#1b5e20; color:#a5d6a7; border-radius:8px; padding:6px 12px; font-size:12px; font-weight:700; }
 .upload-badge-err { background:#b71c1c; color:#ef9a9a; border-radius:8px; padding:6px 12px; font-size:12px; font-weight:700; }
+.drive2-badge {
+    background: rgba(46,125,50,0.2);
+    border: 1px solid #4CAF50;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #a5d6a7;
+    font-size: 12px;
+    margin-top: 6px;
+    word-break: break-all;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -268,29 +277,39 @@ def load_assets():
 
 @st.cache_resource
 def get_sheet():
-    scope = ["https://www.googleapis.com/auth/spreadsheets","https://www.googleapis.com/auth/drive"]
+    scope = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
     try:
         if "gcp_service_account" in st.secrets:
-            creds = ServiceAccountCredentials.from_json_keyfile_dict(dict(st.secrets["gcp_service_account"]), scope)
-        elif os.path.exists('backend/credentials.json'):
-            creds = ServiceAccountCredentials.from_json_keyfile_name('backend/credentials.json', scope)
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(
+                dict(st.secrets["gcp_service_account"]), scope)
+        elif os.path.exists(CREDENTIALS_FILE):
+            creds = ServiceAccountCredentials.from_json_keyfile_name(
+                CREDENTIALS_FILE, scope)
         else:
+            st.error("credentials.json not found.")
             return None
-        return gspread.authorize(creds).open("Agribot-Live-Data").sheet1
+        client = gspread.authorize(creds)
+        # Open by ID so sheet name changes don't break it
+        return client.open_by_key(SPREADSHEET_ID).sheet1
     except Exception as e:
         st.error(f"Database Connection Error: {e}")
         return None
 
-@st.cache_data(ttl=10)
+@st.cache_data(ttl=30)
 def get_latest_readings():
     if sheet is None:
         return pd.DataFrame()
     try:
         df = pd.DataFrame(sheet.get_all_records())
-        if df.empty: return df
+        if df.empty:
+            return df
         df['timestamp'] = pd.to_datetime(df['timestamp'])
         return df.sort_values('timestamp').groupby('plant_id').last().reset_index()
-    except: return pd.DataFrame()
+    except:
+        return pd.DataFrame()
 
 @st.cache_data(ttl=60)
 def get_historical_data(plant_id=None, hours=24):
@@ -298,13 +317,39 @@ def get_historical_data(plant_id=None, hours=24):
         return pd.DataFrame()
     try:
         df = pd.DataFrame(sheet.get_all_records())
-        if df.empty: return df
+        if df.empty:
+            return df
         df['timestamp'] = pd.to_datetime(df['timestamp'])
         df = df[df['timestamp'] >= datetime.now() - timedelta(hours=hours)]
         if plant_id is not None:
             df = df[df['plant_id'] == plant_id]
         return df.sort_values('timestamp')
-    except: return pd.DataFrame()
+    except:
+        return pd.DataFrame()
+
+# ============================================
+# NEW: get latest Drive 2 image URL from Sheet
+# ============================================
+def get_latest_drive2_image_url():
+    """
+    Reads the image_url column from the Sheet (plant_id == 1 rows).
+    Returns the most recent non-empty URL, or empty string.
+    """
+    if sheet is None:
+        return ""
+    try:
+        df = pd.DataFrame(sheet.get_all_records())
+        if df.empty or 'image_url' not in df.columns:
+            return ""
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        plant1 = df[df['plant_id'] == 1].sort_values('timestamp', ascending=False)
+        for _, row in plant1.iterrows():
+            url = str(row.get('image_url', '')).strip()
+            if url.startswith("http"):
+                return url
+        return ""
+    except:
+        return ""
 
 # ============================================
 # CAMERA HELPERS
@@ -431,13 +476,14 @@ if page == "📡 LIVE DASHBOARD":
     avg_soil = latest['soil_moisture'].mean()
 
     col1,col2,col3,col4 = st.columns(4)
-    col1.metric("🌡️ TEMP",     f"{avg_temp:.1f} °C")
-    col2.metric("💧 HUMIDITY", f"{avg_hum:.0f} %")
-    col3.metric("🧪 pH (avg)", f"{avg_ph:.2f}")
+    col1.metric("🌡️ TEMP",      f"{avg_temp:.1f} °C")
+    col2.metric("💧 HUMIDITY",  f"{avg_hum:.0f} %")
+    col3.metric("🧪 pH (avg)",  f"{avg_ph:.2f}")
     col4.metric("🌱 SOIL (avg)",f"{avg_soil:.0f} %")
     st.markdown("---")
 
     col_l, col_r = st.columns([1.3,1], gap="large")
+
     with col_l:
         st.subheader("🌿 Plant Health Feed")
         latest_s = latest.sort_values('plant_id')
@@ -445,13 +491,13 @@ if page == "📡 LIVE DASHBOARD":
         row2 = st.columns(5)
         for idx, (_, plant) in enumerate(latest_s.iterrows()):
             col = row1[idx] if idx < 5 else row2[idx-5]
-            pid  = int(plant['plant_id'])
-            soil = plant['soil_moisture']
+            pid    = int(plant['plant_id'])
+            soil   = plant['soil_moisture']
             ph_avg = (plant['ph1'] + plant['ph2']) / 2
             health = "✅ Healthy"
-            if soil < 30: health = "⚠️ Dry"
-            elif soil > 80: health = "⚠️ Wet"
-            if ph_avg < 5.5 or ph_avg > 6.5: health = "🔴 pH Alert"
+            if soil < 30:                        health = "⚠️ Dry"
+            elif soil > 80:                      health = "⚠️ Wet"
+            if ph_avg < 5.5 or ph_avg > 6.5:    health = "🔴 pH Alert"
             with col:
                 st.markdown("<span style='font-size:2rem;'>🥬</span>", unsafe_allow_html=True)
                 st.markdown(f"**Lettuce #{pid}**<br>{health}<br>Soil: {soil:.0f}%", unsafe_allow_html=True)
@@ -473,6 +519,21 @@ if page == "📡 LIVE DASHBOARD":
                 st.info(f"AI processing... ({e})")
         else:
             st.warning("Awaiting sensor data or AI model...")
+
+        # ---- NEW: latest Drive 2 image from Sheet ----
+        st.markdown("### 📸 Latest Lettuce Image")
+        drive2_url = get_latest_drive2_image_url()
+        if drive2_url:
+            st.image(drive2_url,
+                     caption="Latest capture — Plant 1 (from Drive 2)",
+                     use_container_width=True)
+            st.markdown(
+                f'<div class="drive2-badge">☁️ Stored in Drive 2<br>'
+                f'<a href="{drive2_url}" target="_blank" style="color:#81c784;">View in Drive</a></div>',
+                unsafe_allow_html=True)
+        else:
+            st.info("No image yet. Pi script will upload on next 30s cycle.")
+        # ---- END NEW ----
 
         st.markdown("### 🔔 Recent Alerts")
         alerts = []
@@ -507,43 +568,57 @@ elif page == "📷 CAMERA FEED":
         st.code("rpicam-hello --list-cameras", language="bash")
         st.stop()
 
-    # ---- Layout ----
     col_feed, col_ctrl = st.columns([3, 1])
 
     with col_ctrl:
         st.markdown('<div class="cam-card">', unsafe_allow_html=True)
         st.markdown("### ⚙️ Controls")
-
         auto_upload      = st.toggle("☁️ Auto Upload to Drive", value=True)
         capture_interval = st.slider("Auto-capture every (sec)", 10, 300, 60)
         live_mode        = st.toggle("▶️ Live Feed", value=True)
         resolution       = st.selectbox("Resolution", ["1280x720", "1920x1080", "640x480"], index=0)
-
         st.markdown("---")
-        do_capture    = st.button("📸 Capture Now",       use_container_width=True)
+        do_capture    = st.button("📸 Capture Now",        use_container_width=True)
         do_upload_all = st.button("☁️ Upload All to Drive", use_container_width=True)
-        do_stop       = st.button("⏹ Stop Feed",          use_container_width=True)
+        do_stop       = st.button("⏹ Stop Feed",           use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
+
+        # ---- NEW: Drive 2 latest image in camera sidebar ----
+        st.markdown('<div class="cam-card">', unsafe_allow_html=True)
+        st.markdown("### 🖼️ Last Drive 2 Upload")
+        drive2_url = get_latest_drive2_image_url()
+        if drive2_url:
+            st.image(drive2_url,
+                     caption="Pi script — latest upload",
+                     use_container_width=True)
+            st.markdown(
+                f'<div class="drive2-badge">☁️ From agribot_pi_final.py<br>'
+                f'<a href="{drive2_url}" target="_blank" style="color:#81c784;">Open in Drive</a></div>',
+                unsafe_allow_html=True)
+        else:
+            st.markdown("<div class='cam-stat'>No Drive 2 image yet</div>", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        # ---- END NEW ----
 
         # Stats
         st.markdown('<div class="cam-card">', unsafe_allow_html=True)
         st.markdown("### 📊 Stats")
         total_files = len(get_recent_files(999))
-        st.markdown(f'<div class="cam-stat">📁 Total Captures: <b>{total_files}</b></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="cam-stat">📁 Local snapshots: <b>{total_files}</b></div>', unsafe_allow_html=True)
         st.markdown(f'<div class="cam-stat">🕒 Interval: <b>{capture_interval}s</b></div>', unsafe_allow_html=True)
         st.markdown(f'<div class="cam-stat">☁️ Auto-upload: <b>{"ON" if auto_upload else "OFF"}</b></div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="cam-stat">📡 Drive Folder: <b>AgriBot/captures</b></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="cam-stat">📡 Pi uploads to Drive 2 every 30s</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # Recent captures
+        # Recent local captures
         st.markdown('<div class="cam-card">', unsafe_allow_html=True)
-        st.markdown("### 🗂️ Recent Captures")
+        st.markdown("### 🗂️ Local Snapshots")
         recent = get_recent_files(6)
         if recent:
             for f in reversed(recent):
                 st.markdown(f"<div class='cam-stat'>📁 {f}</div>", unsafe_allow_html=True)
         else:
-            st.markdown("<div class='cam-stat'>No captures yet</div>", unsafe_allow_html=True)
+            st.markdown("<div class='cam-stat'>No local snapshots yet</div>", unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col_feed:
@@ -561,7 +636,7 @@ elif page == "📷 CAMERA FEED":
                     ok, err = upload_to_drive(filepath)
                     if ok:
                         upload_placeholder.markdown(
-                            f'<span class="upload-badge-ok">☁️ Uploaded to Google Drive: {filename}</span>',
+                            f'<span class="upload-badge-ok">☁️ Uploaded: {filename}</span>',
                             unsafe_allow_html=True)
                     else:
                         upload_placeholder.markdown(
@@ -570,31 +645,26 @@ elif page == "📷 CAMERA FEED":
             except Exception as e:
                 status_placeholder.error(f"Capture error: {e}")
 
-        # Upload all
+        # Upload all local
         if do_upload_all:
             with st.spinner("Uploading all captures to Google Drive..."):
                 ok, err = upload_all_to_drive()
             if ok:
-                upload_placeholder.success("☁️ All files uploaded to Google Drive!")
+                upload_placeholder.success("☁️ All local files uploaded!")
             else:
                 upload_placeholder.error(f"Upload failed: {err}")
 
         # Live feed loop
         if live_mode and not do_stop:
             last_auto_capture = time.time()
-            frame_count = 0
-
             st.markdown(
                 '<div style="border:1px solid #2e7d32;border-radius:12px;padding:4px;background:#0a0d12;">',
                 unsafe_allow_html=True)
-
             while live_mode:
                 try:
                     frame = cam.capture_array()
                     frame_placeholder.image(frame, channels="RGB", use_container_width=True)
-                    frame_count += 1
 
-                    # Auto-capture on interval
                     if (time.time() - last_auto_capture) >= capture_interval:
                         filepath, filename = capture_image(cam)
                         last_auto_capture = time.time()
@@ -609,16 +679,12 @@ elif page == "📷 CAMERA FEED":
                                 upload_placeholder.markdown(
                                     f'<span class="upload-badge-err">⚠️ Auto-upload failed</span>',
                                     unsafe_allow_html=True)
-
-                    time.sleep(0.05)  # ~20fps
-
+                    time.sleep(0.05)
                 except Exception as e:
                     status_placeholder.error(f"Feed error: {e}")
                     break
-
             st.markdown('</div>', unsafe_allow_html=True)
         else:
-            # Static snapshot when feed is off
             try:
                 frame = cam.capture_array()
                 frame_placeholder.image(frame, channels="RGB",
@@ -627,11 +693,11 @@ elif page == "📷 CAMERA FEED":
             except Exception as e:
                 st.warning(f"Could not grab frame: {e}")
 
-        # Show last saved capture below feed
+        # Last local snapshot below feed
         recent = get_recent_files(1)
         if recent:
             st.markdown("---")
-            st.markdown("**Last saved capture:**")
+            st.markdown("**Last local snapshot:**")
             last_img_path = os.path.join(SAVE_DIR, recent[-1])
             try:
                 st.image(last_img_path, caption=recent[-1], use_container_width=True)
@@ -658,7 +724,8 @@ elif page == "📈 ANALYSIS":
                 hist_df['ph_avg'] = (hist_df['ph1']+hist_df['ph2'])/2
                 y_col,y_label = 'ph_avg','pH'
             else: y_col,y_label = 'soil_moisture','%'
-            fig = px.line(hist_df, x='timestamp', y=y_col, title=f"{sensor_choice} - Plant {plant_sel}")
+            fig = px.line(hist_df, x='timestamp', y=y_col,
+                          title=f"{sensor_choice} - Plant {plant_sel}")
             fig.update_layout(yaxis_title=y_label)
             st.plotly_chart(fig, use_container_width=True)
         else:
@@ -672,20 +739,35 @@ elif page == "📜 SYSTEM LOGS":
     logs = get_historical_data(plant_id=None, hours=24)
     if not logs.empty:
         def classify(row):
-            if row['temp_c'] < 15 or row['temp_c'] > 30: return "🌡️ Temp alert"
-            if row['humidity'] < 50 or row['humidity'] > 85: return "💧 Humidity alert"
+            if row['temp_c'] < 15 or row['temp_c'] > 30:          return "🌡️ Temp alert"
+            if row['humidity'] < 50 or row['humidity'] > 85:       return "💧 Humidity alert"
             if (row['ph1']+row['ph2'])/2 < 5.5 or (row['ph1']+row['ph2'])/2 > 6.5: return "🧪 pH alert"
             if row['soil_moisture'] < 20 or row['soil_moisture'] > 80: return "🌱 Soil alert"
             return "Normal"
         logs['event'] = logs.apply(classify, axis=1)
+
+        # Show image_url as clickable link if column exists
+        display_cols = ['timestamp','plant_id','temp_c','humidity','ph1','ph2','soil_moisture','event']
+        col_config   = {
+            "timestamp":    "Time",
+            "plant_id":     "Plant",
+            "temp_c":       "Temp (°C)",
+            "humidity":     "Hum (%)",
+            "ph1":          "pH1",
+            "ph2":          "pH2",
+            "soil_moisture":"Soil %",
+            "event":        "Event"
+        }
+        if 'image_url' in logs.columns:
+            display_cols.insert(-1, 'image_url')
+            col_config['image_url'] = st.column_config.LinkColumn("📸 Image")
+
         st.dataframe(
-            logs[['timestamp','plant_id','temp_c','humidity','ph1','ph2','soil_moisture','event']].tail(20),
-            use_container_width=True, hide_index=True,
-            column_config={
-                "timestamp":"Time","plant_id":"Plant","temp_c":"Temp (°C)",
-                "humidity":"Hum (%)","ph1":"pH1","ph2":"pH2",
-                "soil_moisture":"Soil %","event":"Event"
-            })
+            logs[display_cols].tail(20),
+            use_container_width=True,
+            hide_index=True,
+            column_config=col_config
+        )
     else:
         st.info("No logs available.")
 
@@ -700,8 +782,8 @@ elif page == "👥 USER MANAGEMENT":
     st.info("Future feature: add / remove users via database")
 
 # ============================================
-# AUTO-REFRESH (only on non-camera pages)
+# AUTO-REFRESH (non-camera pages only)
 # ============================================
 if page != "📷 CAMERA FEED":
-    time.sleep(10)
+    time.sleep(30)
     st.rerun()
