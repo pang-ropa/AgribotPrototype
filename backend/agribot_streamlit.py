@@ -11,16 +11,15 @@ from datetime import datetime, timedelta
 import plotly.express as px
 
 # ============================================================
-# PATHS — resolved relative to this script
+# PATHS
 # ============================================================
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-
-LOGO_PATH = os.path.join(SCRIPT_DIR, "agribotailogo.png")
-BG_PATH   = os.path.join(SCRIPT_DIR, "background.jpg")
-PI_LOGO   = os.path.expanduser("~/env/Thesis code/backend/agribotailogo.png")
-PI_BG     = os.path.expanduser("~/env/Thesis code/backend/background.jpg")
-WIN_LOGO  = r"C:\Users\admin\Downloads\AgribotPrototype\backend\agribotailogo.png"
-WIN_BG    = r"C:\Users\admin\Downloads\AgribotPrototype\backend\background.jpg"
+LOGO_PATH  = os.path.join(SCRIPT_DIR, "agribotailogo.png")
+BG_PATH    = os.path.join(SCRIPT_DIR, "background.jpg")
+PI_LOGO    = os.path.expanduser("~/env/Thesis code/backend/agribotailogo.png")
+PI_BG      = os.path.expanduser("~/env/Thesis code/backend/background.jpg")
+WIN_LOGO   = r"C:\Users\admin\Downloads\AgribotPrototype\backend\agribotailogo.png"
+WIN_BG     = r"C:\Users\admin\Downloads\AgribotPrototype\backend\background.jpg"
 
 ACTUAL_LOGO = next((p for p in [LOGO_PATH, PI_LOGO, WIN_LOGO] if os.path.exists(p)), "")
 ACTUAL_BG   = next((p for p in [BG_PATH,   PI_BG,   WIN_BG]   if os.path.exists(p)), "")
@@ -31,19 +30,14 @@ if not os.path.exists(CREDENTIALS_FILE):
 
 SPREADSHEET_ID = "1mYScsUkoZn84FIoO_QMaku3gZT3Z9df72kPE3ray9-A"
 
-# ── Sheet columns (agribot_pi_final.py) ───────────────────────
-# A:timestamp | B:plant_id | C:temp_c | D:humidity
-# E:soil_moisture | F:ph | G:image_url
-# 10 rows/cycle · 1 cycle/minute
-
-# ── Tab favicon: use actual thesis logo if available ──────────
+# ── Tab favicon ───────────────────────────────────────────────
 _page_icon = "🌱"
 if ACTUAL_LOGO:
     try:
         from PIL import Image as _PILImage
         _page_icon = _PILImage.open(ACTUAL_LOGO)
     except Exception:
-        _page_icon = "🌱"
+        pass
 
 st.set_page_config(
     page_title="AgriBot-AI | Dashboard",
@@ -62,14 +56,13 @@ def file_to_b64(path: str) -> str:
     except Exception:
         return ""
 
-def gdrive_thumbnail(url: str, size: str = "w800") -> str:
-    """Convert Drive view URL → thumbnail URL that st.image() can render."""
+def gdrive_thumbnail(url: str, size: str = "w1200") -> str:
     if not url:
         return ""
     try:
         if "id=" in url:
-            file_id = url.split("id=")[1].split("&")[0]
-            return f"https://drive.google.com/thumbnail?id={file_id}&sz={size}"
+            fid = url.split("id=")[1].split("&")[0]
+            return f"https://drive.google.com/thumbnail?id={fid}&sz={size}"
     except Exception:
         pass
     return url
@@ -78,29 +71,22 @@ def set_background(path: str):
     b64 = file_to_b64(path)
     if not b64:
         return
-    ext  = os.path.splitext(path)[1].lower()
-    mime = "image/png" if ext == ".png" else "image/jpeg"
-    st.markdown(f"""
-        <style>
-        .stApp {{
-            background-image: url("data:{mime};base64,{b64}");
-            background-size:cover; background-position:center;
-            background-repeat:no-repeat; background-attachment:fixed;
-        }}
-        .stApp::before {{
-            content:""; position:fixed; inset:0;
-            background:rgba(0,0,0,0.48); z-index:0; pointer-events:none;
-        }}
-        </style>""", unsafe_allow_html=True)
+    mime = "image/png" if path.endswith(".png") else "image/jpeg"
+    st.markdown(f"""<style>
+    .stApp{{background-image:url("data:{mime};base64,{b64}");
+            background-size:cover;background-position:center;
+            background-repeat:no-repeat;background-attachment:fixed;}}
+    .stApp::before{{content:"";position:fixed;inset:0;
+            background:rgba(0,0,0,0.52);z-index:0;pointer-events:none;}}
+    </style>""", unsafe_allow_html=True)
 
 # ============================================================
 # LOGIN
 # ============================================================
 USERS = {
     "admin@agribot.ai": {"password": "admin123", "role": "admin"},
-    "user@agribot.ai":  {"password": "user123",  "role": "user"}
+    "user@agribot.ai":  {"password": "user123",  "role": "user"},
 }
-
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.role      = None
@@ -109,53 +95,53 @@ def login():
     set_background(ACTUAL_BG)
     logo_b64  = file_to_b64(ACTUAL_LOGO)
     logo_html = (
-        '<div style="display:flex;justify-content:center;margin-bottom:18px;">'
-        f'<img src="data:image/png;base64,{logo_b64}" '
-        'style="width:130px;height:130px;border-radius:50%;'
-        'border:3px solid #4CAF50;object-fit:cover;'
-        'box-shadow:0 0 24px rgba(76,175,80,0.45);"/></div>'
+        f'<div style="display:flex;justify-content:center;margin-bottom:20px;">'
+        f'<img src="data:image/png;base64,{logo_b64}" style="width:120px;height:120px;'
+        f'border-radius:50%;border:3px solid #4CAF50;object-fit:cover;'
+        f'box-shadow:0 0 28px rgba(76,175,80,0.5);"/></div>'
     ) if logo_b64 else ""
 
-    st.markdown(f"""
-    <style>
-    #MainMenu{{visibility:hidden;}} footer{{visibility:hidden;}}
+    st.markdown(f"""<style>
+    #MainMenu{{visibility:hidden;}}footer{{visibility:hidden;}}
     [data-testid="stForm"]{{
-        background:linear-gradient(160deg,rgba(56,142,60,0.55) 0%,
-            rgba(76,175,80,0.45) 50%,rgba(129,199,132,0.40) 100%)!important;
-        backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-        border-radius:18px;border:1px solid rgba(165,214,167,0.5);
-        box-shadow:0 8px 32px rgba(0,0,0,0.25);padding:30px 40px 40px 40px;
+        background:linear-gradient(160deg,rgba(27,94,32,0.65) 0%,rgba(46,125,50,0.55) 100%)!important;
+        backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+        border-radius:20px;border:1px solid rgba(165,214,167,0.35);
+        box-shadow:0 12px 40px rgba(0,0,0,0.35);padding:34px 44px 44px;
     }}
     [data-testid="stForm"] input{{
-        background:rgba(255,255,255,0.12)!important;color:white!important;
-        border:1px solid rgba(165,214,167,0.6)!important;border-radius:10px!important;
+        background:rgba(255,255,255,0.1)!important;color:#fff!important;
+        border:1px solid rgba(165,214,167,0.45)!important;border-radius:10px!important;
+        font-size:14px!important;
     }}
-    [data-testid="stForm"] input::placeholder{{color:rgba(220,240,220,0.7)!important;}}
+    [data-testid="stForm"] input::placeholder{{color:rgba(200,230,200,0.6)!important;}}
     [data-testid="stForm"] button[kind="primaryFormSubmit"]{{
-        background:linear-gradient(90deg,#388e3c,#66bb6a)!important;
-        border:none!important;color:white!important;font-weight:700!important;
-        border-radius:10px!important;letter-spacing:1px;
+        background:linear-gradient(90deg,#2e7d32,#66bb6a)!important;
+        border:none!important;color:#fff!important;font-weight:700!important;
+        border-radius:10px!important;letter-spacing:1.5px;font-size:14px!important;
+        padding:12px!important;margin-top:4px!important;
     }}
-    .stTextInput label{{color:#e8f5e9!important;font-weight:600!important;}}
+    .stTextInput label{{color:#c8e6c9!important;font-weight:600!important;font-size:13px!important;}}
     </style>
-    <div style="display:flex;flex-direction:column;align-items:center;margin-top:60px;">
+    <div style="display:flex;flex-direction:column;align-items:center;margin-top:52px;">
         {logo_html}
-        <div style="text-align:center;font-size:42px;font-weight:800;color:white;
-            text-shadow:0 2px 8px rgba(0,0,0,0.5);margin-bottom:4px;">AgriBot-AI</div>
-        <div style="text-align:center;color:#a5d6a7;margin-bottom:20px;font-size:15px;">
+        <div style="text-align:center;font-size:38px;font-weight:900;color:#fff;
+            letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,0.6);margin-bottom:6px;">
+            AgriBot-AI</div>
+        <div style="text-align:center;color:#81c784;font-size:13px;letter-spacing:3px;
+            text-transform:uppercase;margin-bottom:24px;">
             Smart Farming · Intelligent Monitoring</div>
     </div>""", unsafe_allow_html=True)
 
-    c1, c2, c3 = st.columns([1, 2, 1])
-    with c2:
+    _, mid, _ = st.columns([1, 1.6, 1])
+    with mid:
         with st.form("login_form"):
-            email    = st.text_input("Email",    placeholder="admin@agribot.ai or user@agribot.ai")
+            email    = st.text_input("Email",    placeholder="admin@agribot.ai")
             password = st.text_input("Password", type="password", placeholder="••••••••")
-            if st.form_submit_button("Login", use_container_width=True):
+            if st.form_submit_button("LOGIN", use_container_width=True):
                 if email in USERS and USERS[email]["password"] == password:
                     st.session_state.logged_in = True
                     st.session_state.role      = USERS[email]["role"]
-                    st.success("Login Successful")
                     st.rerun()
                 else:
                     st.error("Invalid email or password")
@@ -167,120 +153,135 @@ if not st.session_state.logged_in:
 # ============================================================
 # GLOBAL CSS
 # ============================================================
-st.markdown("""
-<style>
-[data-testid="stHeader"]{background-color:transparent!important;}
+st.markdown("""<style>
+/* ── Core layout ─────────────────────────────────────────── */
+[data-testid="stHeader"]{background:transparent!important;}
+#MainMenu{visibility:hidden;}footer{visibility:hidden;}
+[data-testid="stDecoration"]{display:none;}
+
+/* ── Sidebar ─────────────────────────────────────────────── */
 section[data-testid="stSidebar"]{
-    width:270px!important;background-color:#0E1117!important;
-    border-right:2px solid #2e7d32!important;
+    width:260px!important;
+    background:linear-gradient(180deg,#0a0d12 0%,#0d1117 100%)!important;
+    border-right:1px solid rgba(46,125,50,0.5)!important;
 }
 [data-testid="stSidebar"] [data-testid="stVerticalBlock"]{
     display:flex!important;flex-direction:column!important;
-    align-items:center!important;padding:0 14px 24px 14px!important;
+    align-items:center!important;padding:0 16px 28px!important;
 }
 [data-testid="stSidebar"] [data-testid="stElementToolbar"]{display:none!important;}
-.stRadio>div{gap:5px!important;width:100%!important;flex-direction:column!important;}
+
+/* ── Sidebar nav radio ───────────────────────────────────── */
+.stRadio>div{gap:4px!important;width:100%!important;flex-direction:column!important;}
 .stRadio label{
-    font-size:13px!important;font-weight:600!important;color:#a5d6a7!important;
-    background:rgba(46,125,50,0.08)!important;border:1px solid rgba(76,175,80,0.18)!important;
-    border-radius:8px!important;padding:10px 14px!important;width:100%!important;
-    cursor:pointer!important;transition:all 0.15s ease!important;
+    font-size:12px!important;font-weight:700!important;
+    color:#81c784!important;letter-spacing:1px!important;
+    text-transform:uppercase!important;
+    background:transparent!important;
+    border:none!important;border-radius:8px!important;
+    padding:10px 14px!important;width:100%!important;
+    cursor:pointer!important;transition:all 0.2s!important;
 }
-.stRadio label:hover{background:rgba(76,175,80,0.18)!important;
-    border-color:#4CAF50!important;color:#fff!important;}
+.stRadio label:hover{
+    background:rgba(76,175,80,0.12)!important;
+    color:#fff!important;
+}
 div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked){
-    background:rgba(46,125,50,0.35)!important;border:1px solid #4CAF50!important;
-    color:#fff!important;box-shadow:0 0 8px rgba(76,175,80,0.25)!important;
+    background:rgba(46,125,50,0.22)!important;
+    border-left:3px solid #4CAF50!important;
+    color:#fff!important;padding-left:11px!important;
 }
 .stRadio [data-baseweb="radio"]>div:first-child{display:none!important;}
 .stRadio [data-testid="stMarkdownContainer"] p{margin:0!important;}
+
+/* ── Sidebar button (logout) ─────────────────────────────── */
 [data-testid="stSidebar"] .stButton>button{
-    background:transparent!important;border:1px solid #2e7d32!important;
-    color:#81c784!important;border-radius:8px!important;width:100%!important;
-    font-size:13px!important;font-weight:600!important;padding:9px!important;
+    background:rgba(46,125,50,0.12)!important;
+    border:1px solid rgba(76,175,80,0.3)!important;
+    color:#81c784!important;border-radius:10px!important;
+    width:100%!important;font-size:12px!important;
+    font-weight:700!important;letter-spacing:1px!important;
+    text-transform:uppercase!important;padding:10px!important;
+    transition:all 0.2s!important;
 }
 [data-testid="stSidebar"] .stButton>button:hover{
-    background:rgba(211,47,47,0.12)!important;border-color:#c62828!important;
+    background:rgba(198,40,40,0.15)!important;
+    border-color:rgba(198,40,40,0.5)!important;
     color:#ef9a9a!important;
 }
+
+/* ── Metric cards ────────────────────────────────────────── */
 div[data-testid="stMetric"]{
-    background:rgba(46,125,50,0.15)!important;border:1px solid #4CAF50!important;
-    border-radius:14px!important;padding:18px 14px!important;text-align:center!important;
-    margin-bottom:10px!important;
+    background:rgba(13,17,23,0.85)!important;
+    border:1px solid rgba(76,175,80,0.3)!important;
+    border-radius:16px!important;padding:20px 16px!important;
+    text-align:center!important;
 }
 div[data-testid="stMetricLabel"]{
-    font-weight:bold!important;color:#A5D6A7!important;
-    justify-content:center!important;font-size:13px!important;
+    font-weight:700!important;font-size:11px!important;
+    color:#66bb6a!important;letter-spacing:2px!important;
+    text-transform:uppercase!important;justify-content:center!important;
 }
-div[data-testid="stMetricValue"]{font-size:30px!important;color:#ffffff!important;}
-#MainMenu{visibility:hidden;} footer{visibility:hidden;}
-[data-testid="stDecoration"]{display:none;}
+div[data-testid="stMetricValue"]{
+    font-size:34px!important;font-weight:900!important;
+    color:#ffffff!important;margin-top:4px!important;
+}
 
-/* Camera image frame */
-.cam-frame{
-    background:rgba(14,17,23,0.92);
-    border:2px solid #2e7d32;
-    border-radius:16px;
-    padding:14px;
-    height:100%;
+/* ── Custom cards ────────────────────────────────────────── */
+.cam-card{
+    background:rgba(13,17,23,0.9);
+    border:1px solid rgba(46,125,50,0.4);
+    border-radius:18px;padding:20px;
 }
-.cam-frame-title{
-    font-size:14px;font-weight:700;color:#a5d6a7;
-    margin-bottom:10px;letter-spacing:0.5px;
+.sensor-row{
+    background:rgba(13,17,23,0.85);
+    border:1px solid rgba(46,125,50,0.25);
+    border-radius:14px;padding:16px 18px;
+    margin-bottom:10px;display:flex;
+    align-items:center;justify-content:space-between;
 }
-.cam-no-image{
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    background:rgba(46,125,50,0.06);border:2px dashed #2e7d32;
-    border-radius:12px;padding:60px 20px;text-align:center;
-    min-height:320px;
-}
-/* Sensor info card */
-.sensor-card{
-    background:rgba(14,17,23,0.88);
-    border:1px solid #2e7d32;
-    border-radius:12px;
-    padding:14px 16px;
-    margin-bottom:10px;
-}
-.sensor-label{
-    font-size:11px;font-weight:700;color:#66bb6a;
-    text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;
-}
-.sensor-value{
-    font-size:28px;font-weight:800;color:#ffffff;line-height:1.2;
-}
-.sensor-unit{font-size:14px;color:#a5d6a7;margin-left:3px;}
-.sensor-status-ok  {font-size:11px;color:#4CAF50;margin-top:2px;}
-.sensor-status-warn{font-size:11px;color:#FF9800;margin-top:2px;}
-.sensor-status-bad {font-size:11px;color:#f44336;margin-top:2px;}
+.s-label{font-size:11px;font-weight:700;color:#66bb6a;
+    text-transform:uppercase;letter-spacing:1.5px;margin-bottom:3px;}
+.s-val{font-size:26px;font-weight:900;color:#fff;line-height:1;}
+.s-unit{font-size:13px;color:#a5d6a7;margin-left:2px;}
+.s-ok  {font-size:11px;color:#4CAF50;margin-top:3px;}
+.s-warn{font-size:11px;color:#FF9800;margin-top:3px;}
+.s-bad {font-size:11px;color:#f44336;margin-top:3px;}
+.s-icon{font-size:26px;opacity:0.6;}
 
-/* AI / Alert boxes */
-.ai-box{
-    background:rgba(14,17,23,0.88);border:1px solid #2e7d32;
-    border-radius:14px;padding:18px;margin-bottom:10px;
+.section-title{
+    font-size:13px;font-weight:700;color:#66bb6a;
+    letter-spacing:2px;text-transform:uppercase;
+    margin-bottom:14px;margin-top:2px;
+    border-left:3px solid #4CAF50;padding-left:10px;
 }
 .alert-item{
-    padding:8px 12px;background:#ffebee;color:#b71c1c;
-    border-radius:8px;margin:5px 0;font-size:13px;
+    padding:9px 14px;background:rgba(183,28,28,0.12);
+    border:1px solid rgba(183,28,28,0.3);
+    color:#ef9a9a;border-radius:10px;margin:5px 0;font-size:13px;
 }
 .sched-badge{
-    display:inline-block;background:rgba(21,101,192,0.25);
-    border:1px solid #1565C0;border-radius:6px;
+    display:inline-block;background:rgba(21,101,192,0.2);
+    border:1px solid rgba(21,101,192,0.5);border-radius:6px;
     padding:2px 9px;font-size:11px;color:#90CAF9;
-    font-weight:700;margin:1px 2px;
+    font-weight:700;margin:0 2px;
 }
-.cam-stat{
-    background:rgba(46,125,50,0.15);border:1px solid #388e3c;
-    border-radius:10px;padding:10px 14px;margin:5px 0;
-    color:#a5d6a7;font-size:13px;
+.cam-meta{font-size:11px;color:#66bb6a;margin-top:8px;line-height:1.7;}
+.drive-link{
+    display:inline-block;margin-top:10px;
+    background:rgba(46,125,50,0.15);
+    border:1px solid rgba(76,175,80,0.3);
+    border-radius:8px;padding:6px 12px;
+    color:#81c784;font-size:12px;text-decoration:none;
 }
-.drive-badge{
-    background:rgba(46,125,50,0.2);border:1px solid #4CAF50;
-    border-radius:8px;padding:6px 10px;color:#a5d6a7;
-    font-size:11px;margin-top:8px;
+.cam-placeholder{
+    display:flex;flex-direction:column;align-items:center;
+    justify-content:center;min-height:340px;
+    background:rgba(46,125,50,0.04);
+    border:2px dashed rgba(46,125,50,0.3);
+    border-radius:14px;text-align:center;padding:40px;
 }
-</style>
-""", unsafe_allow_html=True)
+</style>""", unsafe_allow_html=True)
 
 # ============================================================
 # DATA FUNCTIONS
@@ -310,12 +311,11 @@ def get_sheet():
             return None
         return gspread.authorize(creds).open_by_key(SPREADSHEET_ID).sheet1
     except Exception as e:
-        st.error(f"Database Error: {e}")
+        st.error(f"Database Connection Error: {e}")
         return None
 
 @st.cache_data(ttl=30)
 def get_latest_readings():
-    """Most recent row per plant_id."""
     if sheet is None:
         return pd.DataFrame()
     try:
@@ -344,86 +344,65 @@ def get_historical_data(plant_id=None, hours=24):
         return pd.DataFrame()
 
 @st.cache_data(ttl=30)
-def get_latest_single_image() -> str:
-    """
-    Returns the single most recently uploaded image URL across ALL plants.
-    Converts to thumbnail format so st.image() renders it correctly.
-    """
+def get_latest_image() -> dict:
+    """Returns {url, plant_id, timestamp} for the single most recent captured image."""
     if sheet is None:
-        return ""
+        return {}
     try:
         df = pd.DataFrame(sheet.get_all_records())
         if df.empty or 'image_url' not in df.columns:
-            return ""
+            return {}
         df['timestamp'] = pd.to_datetime(df['timestamp'])
         df = df.sort_values('timestamp', ascending=False)
         for _, row in df.iterrows():
             raw = str(row.get('image_url', '')).strip()
             if raw.startswith("http"):
-                return gdrive_thumbnail(raw, size="w1200")
-        return ""
+                return {
+                    "url":       gdrive_thumbnail(raw, "w1200"),
+                    "plant_id":  int(row.get('plant_id', 0)),
+                    "timestamp": pd.to_datetime(row['timestamp']).strftime("%b %d, %Y · %I:%M %p"),
+                }
+        return {}
     except Exception:
-        return ""
-
-@st.cache_data(ttl=30)
-def get_latest_image_per_plant() -> dict:
-    """Returns {plant_id: thumbnail_url} for all 10 plants."""
-    result = {i: "" for i in range(1, 11)}
-    if sheet is None:
-        return result
-    try:
-        df = pd.DataFrame(sheet.get_all_records())
-        if df.empty or 'image_url' not in df.columns:
-            return result
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
-        df = df.sort_values('timestamp', ascending=False)
-        for pid in range(1, 11):
-            for _, row in df[df['plant_id'] == pid].iterrows():
-                raw = str(row.get('image_url', '')).strip()
-                if raw.startswith("http"):
-                    result[pid] = gdrive_thumbnail(raw, size="w600")
-                    break
-    except Exception:
-        pass
-    return result
+        return {}
 
 # ============================================================
 # SIDEBAR
 # ============================================================
-sheet     = get_sheet()
-logo_b64  = file_to_b64(ACTUAL_LOGO)
-role_icon = "👑 " if st.session_state.role == "admin" else "🌿 "
-role_lbl  = "Administrator" if st.session_state.role == "admin" else "Field User"
+sheet    = get_sheet()
+logo_b64 = file_to_b64(ACTUAL_LOGO)
 
 with st.sidebar:
+    # Logo + branding
     st.markdown(f"""
     <div style="display:flex;flex-direction:column;align-items:center;
-                padding-top:28px;margin-bottom:4px;width:100%;">
-        <div style="padding:3px;border-radius:50%;
-                    background:linear-gradient(135deg,#4CAF50,#1b5e20);
-                    box-shadow:0 0 18px rgba(76,175,80,0.4);margin-bottom:12px;">
+                padding-top:32px;width:100%;margin-bottom:8px;">
+        <div style="padding:4px;border-radius:50%;
+                    background:linear-gradient(145deg,#388e3c,#1b5e20);
+                    box-shadow:0 0 20px rgba(76,175,80,0.3);margin-bottom:14px;">
             <img src="data:image/png;base64,{logo_b64}"
-                 style="border-radius:50%;display:block;width:115px;height:115px;
-                        object-fit:cover;background:#0E1117;"/>
+                 style="border-radius:50%;width:110px;height:110px;
+                        display:block;object-fit:cover;background:#0a0d12;"/>
         </div>
-        <div style="text-align:center;font-size:20px;font-weight:800;
-                    color:#4CAF50;margin-bottom:2px;">AgriBot-AI</div>
-        <div style="text-align:center;font-size:10px;color:#66bb6a;
-                    letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">
+        <div style="font-size:19px;font-weight:900;color:#4CAF50;
+                    letter-spacing:0.5px;margin-bottom:2px;">AgriBot-AI</div>
+        <div style="font-size:9px;color:#388e3c;letter-spacing:3px;
+                    text-transform:uppercase;margin-bottom:10px;">
             Crop Monitoring System</div>
         <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;
-                    text-transform:uppercase;padding:3px 10px;border-radius:20px;
-                    background:rgba(76,175,80,0.12);border:1px solid #2e7d32;
-                    color:#81c784;margin-top:2px;">{role_icon}{role_lbl}</div>
+                    text-transform:uppercase;padding:4px 14px;border-radius:20px;
+                    background:rgba(46,125,50,0.15);border:1px solid rgba(76,175,80,0.25);
+                    color:#66bb6a;">
+            {'👑 Administrator' if st.session_state.role == 'admin' else '🌿 Field User'}
+        </div>
     </div>
-    <div style="width:60%;height:2px;background:linear-gradient(90deg,transparent,
-                #4CAF50,transparent);border-radius:2px;margin:14px auto 16px auto;"></div>
-    <div style="font-size:9px;font-weight:700;color:#388e3c;letter-spacing:2.5px;
-                text-transform:uppercase;width:100%;padding:0 2px;margin-bottom:6px;">
-        Navigation</div>
+    <div style="width:55%;height:1px;background:linear-gradient(90deg,transparent,
+                rgba(76,175,80,0.4),transparent);margin:14px auto 18px;"></div>
+    <div style="font-size:9px;font-weight:700;color:#2e7d32;letter-spacing:3px;
+                text-transform:uppercase;width:100%;padding:0 4px;
+                margin-bottom:8px;">Navigation</div>
     """, unsafe_allow_html=True)
 
-    # ── Navigation — Camera Feed removed ─────────────────────
     nav_opts = (
         ["📡  Live Dashboard", "📈  Analysis",
          "📜  System Logs",    "👥  User Management"]
@@ -439,24 +418,24 @@ with st.sidebar:
     }
     page = page_map.get(raw_page, "DASHBOARD")
 
+    # System online indicator
     st.markdown("""
-    <div style="display:flex;align-items:center;gap:8px;background:rgba(46,125,50,0.18);
-                border:1px solid #2e7d32;border-radius:8px;padding:9px 14px;
-                width:100%;margin-top:14px;margin-bottom:8px;box-sizing:border-box;">
+    <div style="display:flex;align-items:center;gap:10px;
+                background:rgba(46,125,50,0.1);border:1px solid rgba(46,125,50,0.3);
+                border-radius:10px;padding:10px 14px;width:100%;
+                margin:16px 0 10px;box-sizing:border-box;">
         <div style="width:8px;height:8px;background:#4CAF50;border-radius:50%;
-                    box-shadow:0 0 6px #4CAF50;animation:pulse 2s infinite;
+                    box-shadow:0 0 8px #4CAF50;animation:pulse 2s infinite;
                     flex-shrink:0;"></div>
-        <span style="font-size:11px;font-weight:700;color:#81c784;
-                     letter-spacing:1.5px;text-transform:uppercase;">SYSTEM ONLINE</span>
+        <span style="font-size:11px;font-weight:700;color:#66bb6a;
+                     letter-spacing:2px;text-transform:uppercase;">System Online</span>
     </div>
     <style>
-    @keyframes pulse{
-        0%,100%{opacity:1;box-shadow:0 0 5px #4CAF50;}
-        50%{opacity:0.6;box-shadow:0 0 14px #4CAF50;}
-    }
+    @keyframes pulse{0%,100%{box-shadow:0 0 5px #4CAF50;}
+                     50%{box-shadow:0 0 14px #4CAF50;opacity:0.7;}}
     </style>""", unsafe_allow_html=True)
 
-    if st.button("⏻  Logout", use_container_width=True):
+    if st.button("Logout", use_container_width=True):
         st.session_state.logged_in = False
         st.session_state.role      = None
         st.rerun()
@@ -467,106 +446,88 @@ with st.sidebar:
 model,  scaler = load_assets()
 latest         = get_latest_readings()
 
-PH_LOW,   PH_HIGH   = 5.5, 6.5
-SOIL_DRY, SOIL_WET  = 30,  80
-TEMP_LOW, TEMP_HIGH = 15,  30
-HUM_LOW,  HUM_HIGH  = 50,  85
+PH_LOW,   PH_HIGH   = 5.5,  6.5
+SOIL_DRY, SOIL_WET  = 30,   80
+TEMP_LOW, TEMP_HIGH = 15,   30
+HUM_LOW,  HUM_HIGH  = 50,   85
 
-def health_status(soil, ph):
-    if ph < PH_LOW or ph > PH_HIGH:  return "🔴 pH Alert", "#f44336"
-    if soil < SOIL_DRY:              return "⚠️ Too Dry",  "#FF9800"
-    if soil > SOIL_WET:              return "⚠️ Too Wet",  "#FF9800"
-    return                                  "✅ Healthy",   "#4CAF50"
+def sensor_cls(val, lo, hi):
+    return "s-ok" if lo <= val <= hi else ("s-bad" if val < lo * 0.7 or val > hi * 1.3 else "s-warn")
 
-def sensor_status_class(val, low, high):
-    return "sensor-status-ok" if low <= val <= high else "sensor-status-warn"
+def health_of(soil, ph):
+    if ph < PH_LOW or ph > PH_HIGH:  return "🔴 pH Alert",  "#f44336"
+    if soil < SOIL_DRY:               return "⚠️ Too Dry",   "#FF9800"
+    if soil > SOIL_WET:               return "⚠️ Too Wet",   "#FF9800"
+    return                                   "✅ Healthy",    "#4CAF50"
 
 # ==============================================================
 # PAGE: LIVE DASHBOARD
-# Layout (matches wireframe):
-#   ┌─────────────────────────┬──────────────┐
-#   │  Latest Camera Image    │  Soil        │
-#   │  (big, left)            │  Humidity    │
-#   │                         │  Temp        │
-#   │                         │  pH          │
-#   ├─────────────────────────┴──────────────┤
-#   │  AI Recommendation  │  Recent Alerts   │
-#   └─────────────────────────────────────────┘
 # ==============================================================
 if page == "DASHBOARD":
-    st.title("Real-Time Monitoring – 10 Lettuces")
+    st.markdown("""
+    <div style="margin-bottom:6px;">
+        <div style="font-size:26px;font-weight:900;color:#ffffff;
+                    letter-spacing:0.3px;line-height:1.2;">
+            Real-Time Monitoring</div>
+        <div style="font-size:13px;color:#66bb6a;letter-spacing:1px;margin-top:4px;">
+            Greenhouse Overview — AgriBot-AI Crop System</div>
+    </div>""", unsafe_allow_html=True)
 
     if latest.empty:
-        st.warning("No data yet — waiting for sensor readings from the Pi...")
+        st.warning("No sensor data yet — waiting for the Pi...")
         st.stop()
 
-    # Aggregate sensor values across all plants
+    # Aggregate across all plants (greenhouse-level view)
     avg_temp = float(latest['temp_c'].mean())
     avg_hum  = float(latest['humidity'].mean())
     avg_ph   = float(latest['ph'].mean())
     avg_soil = float(latest['soil_moisture'].mean())
 
-    # ── Fetch the single latest captured image ─────────────────
-    with st.spinner("Loading latest image..."):
-        latest_img_url = get_latest_single_image()
+    # ── 4 summary metric cards ─────────────────────────────────
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("TEMP",     f"{avg_temp:.1f} °C")
+    m2.metric("HUMIDITY", f"{avg_hum:.0f} %")
+    m3.metric("PH",       f"{avg_ph:.2f}")
+    m4.metric("SOIL",     f"{avg_soil:.0f} %")
 
-    # Find which plant + timestamp corresponds to that image
-    latest_img_plant = ""
-    latest_img_ts    = ""
-    if not latest.empty and latest_img_url:
-        try:
-            df_all = pd.DataFrame(sheet.get_all_records())
-            df_all['timestamp'] = pd.to_datetime(df_all['timestamp'])
-            df_all = df_all.sort_values('timestamp', ascending=False)
-            for _, row in df_all.iterrows():
-                if str(row.get('image_url', '')).startswith("http"):
-                    latest_img_plant = int(row['plant_id'])
-                    latest_img_ts    = row['timestamp'].strftime("%b %d %Y · %I:%M %p")
-                    break
-        except Exception:
-            pass
+    st.markdown("<div style='margin:18px 0 6px;'></div>", unsafe_allow_html=True)
 
-    st.markdown("---")
+    # ── Latest image (load once) ────────────────────────────────
+    with st.spinner("Loading latest capture..."):
+        img_data = get_latest_image()
 
     # ══════════════════════════════════════════════════════════
-    # TOP ROW:  Camera (left 3/5)  |  Sensor metrics (right 2/5)
+    # MAIN ROW: Camera image (left) | Sensor details (right)
     # ══════════════════════════════════════════════════════════
     cam_col, sensor_col = st.columns([3, 2], gap="large")
 
+    # ── LEFT: latest captured image ───────────────────────────
     with cam_col:
-        st.markdown('<div class="cam-frame">', unsafe_allow_html=True)
-        st.markdown(
-            '<div class="cam-frame-title">📷 Latest Captured Image</div>',
-            unsafe_allow_html=True)
-
-        if latest_img_url:
-            st.image(latest_img_url, use_container_width=True)
-            caption_parts = []
-            if latest_img_plant:
-                caption_parts.append(f"🥬 Plant {latest_img_plant}")
-            if latest_img_ts:
-                caption_parts.append(f"🕒 {latest_img_ts}")
-            caption_parts.append("Captured at "
-                "<span class='sched-badge'>7:00 AM</span>"
-                "<span class='sched-badge'>12:00 NN</span>"
-                "<span class='sched-badge'>12:30 PM</span>")
-            st.markdown(
-                f'<div style="margin-top:8px;font-size:12px;color:#81c784;">'
-                f'{" &nbsp;|&nbsp; ".join(caption_parts)}</div>',
-                unsafe_allow_html=True)
-            if latest_img_url:
-                st.markdown(
-                    f'<div class="drive-badge">☁️ Stored in Google Drive &nbsp;|&nbsp; '
-                    f'<a href="{latest_img_url}" target="_blank" style="color:#81c784;">'
-                    f'View full image ↗</a></div>',
+        st.markdown('<div class="cam-card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">📷 Plant Health Feed</div>',
                     unsafe_allow_html=True)
+
+        if img_data.get("url"):
+            st.image(img_data["url"], use_container_width=True)
+            pid_txt = f"🥬 Plant {img_data['plant_id']}" if img_data.get("plant_id") else ""
+            ts_txt  = f"🕒 {img_data['timestamp']}"       if img_data.get("timestamp") else ""
+            st.markdown(
+                f'<div class="cam-meta">'
+                f'{pid_txt}&nbsp;&nbsp;{ts_txt}<br>'
+                f'Captured at '
+                f'<span class="sched-badge">7:00 AM</span>'
+                f'<span class="sched-badge">12:00 NN</span>'
+                f'<span class="sched-badge">12:30 PM</span>'
+                f'</div>'
+                f'<a href="{img_data["url"]}" target="_blank" class="drive-link">'
+                f'☁️ View in Google Drive ↗</a>',
+                unsafe_allow_html=True)
         else:
             st.markdown(
-                '<div class="cam-no-image">'
-                '<div style="font-size:52px;margin-bottom:14px;">📷</div>'
-                '<div style="font-size:15px;font-weight:700;color:#4CAF50;margin-bottom:6px;">'
-                'No image captured yet</div>'
-                '<div style="font-size:12px;color:#388e3c;">'
+                '<div class="cam-placeholder">'
+                '<div style="font-size:54px;margin-bottom:16px;">📷</div>'
+                '<div style="font-size:15px;font-weight:700;color:#4CAF50;">No image yet</div>'
+                '<div style="font-size:12px;color:#2e7d32;margin-top:8px;">'
                 'Pi captures at '
                 '<span class="sched-badge">7:00 AM</span>'
                 '<span class="sched-badge">12:00 NN</span>'
@@ -575,68 +536,51 @@ if page == "DASHBOARD":
                 unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
+    # ── RIGHT: sensor value cards ──────────────────────────────
     with sensor_col:
-        # ── Soil Moisture ──────────────────────────────────────
-        soil_status = "✅ Normal" if SOIL_DRY <= avg_soil <= SOIL_WET else "⚠️ Out of range"
-        soil_cls    = "sensor-status-ok" if SOIL_DRY <= avg_soil <= SOIL_WET else "sensor-status-warn"
-        st.markdown(
-            f'<div class="sensor-card">'
-            f'<div class="sensor-label">🌱 Soil Moisture (avg)</div>'
-            f'<div class="sensor-value">{avg_soil:.0f}'
-            f'<span class="sensor-unit">%</span></div>'
-            f'<div class="{soil_cls}">{soil_status}</div>'
-            f'</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">📊 Sensor Readings</div>',
+                    unsafe_allow_html=True)
 
-        # ── Humidity ──────────────────────────────────────────
-        hum_status = "✅ Normal" if HUM_LOW <= avg_hum <= HUM_HIGH else "⚠️ Out of range"
-        hum_cls    = "sensor-status-ok" if HUM_LOW <= avg_hum <= HUM_HIGH else "sensor-status-warn"
-        st.markdown(
-            f'<div class="sensor-card">'
-            f'<div class="sensor-label">💧 Humidity</div>'
-            f'<div class="sensor-value">{avg_hum:.0f}'
-            f'<span class="sensor-unit">%</span></div>'
-            f'<div class="{hum_cls}">{hum_status}</div>'
-            f'</div>', unsafe_allow_html=True)
-
-        # ── Temperature ───────────────────────────────────────
-        temp_status = "✅ Normal" if TEMP_LOW <= avg_temp <= TEMP_HIGH else "⚠️ Out of range"
-        temp_cls    = "sensor-status-ok" if TEMP_LOW <= avg_temp <= TEMP_HIGH else "sensor-status-warn"
-        st.markdown(
-            f'<div class="sensor-card">'
-            f'<div class="sensor-label">🌡️ Temperature</div>'
-            f'<div class="sensor-value">{avg_temp:.1f}'
-            f'<span class="sensor-unit">°C</span></div>'
-            f'<div class="{temp_cls}">{temp_status}</div>'
-            f'</div>', unsafe_allow_html=True)
-
-        # ── pH ────────────────────────────────────────────────
-        ph_status = "✅ Normal" if PH_LOW <= avg_ph <= PH_HIGH else "🔴 Out of range"
-        ph_cls    = "sensor-status-ok" if PH_LOW <= avg_ph <= PH_HIGH else "sensor-status-bad"
-        st.markdown(
-            f'<div class="sensor-card">'
-            f'<div class="sensor-label">🧪 pH</div>'
-            f'<div class="sensor-value">{avg_ph:.2f}'
-            f'<span class="sensor-unit">pH</span></div>'
-            f'<div class="{ph_cls}">{ph_status}</div>'
-            f'</div>', unsafe_allow_html=True)
-
-        # ── Last updated timestamp ─────────────────────────────
-        if not latest.empty and 'timestamp' in latest.columns:
-            last_ts = pd.to_datetime(latest['timestamp']).max()
+        sensors = [
+            ("🌱", "Soil Moisture",  avg_soil, SOIL_DRY, SOIL_WET,  "%"),
+            ("💧", "Humidity",       avg_hum,  HUM_LOW,  HUM_HIGH,  "%"),
+            ("🌡️", "Temperature",    avg_temp, TEMP_LOW, TEMP_HIGH, "°C"),
+            ("🧪", "pH Level",       avg_ph,   PH_LOW,   PH_HIGH,   ""),
+        ]
+        for icon, label, val, lo, hi, unit in sensors:
+            in_range  = lo <= val <= hi
+            status_lbl = "✅ Normal" if in_range else "⚠️ Out of range"
+            status_cls = "s-ok"     if in_range else "s-warn"
+            fmt        = f"{val:.2f}" if unit == "" else f"{val:.0f}"
             st.markdown(
-                f'<div style="text-align:center;font-size:11px;color:#4CAF50;'
-                f'margin-top:6px;">🔄 Last updated: {last_ts.strftime("%H:%M:%S")}</div>',
+                f'<div class="sensor-row">'
+                f'<div>'
+                f'  <div class="s-label">{label}</div>'
+                f'  <div class="s-val">{fmt}<span class="s-unit">{unit}</span></div>'
+                f'  <div class="{status_cls}">{status_lbl}</div>'
+                f'</div>'
+                f'<div class="s-icon">{icon}</div>'
+                f'</div>',
                 unsafe_allow_html=True)
 
-    st.markdown("---")
+        # Last updated
+        if not latest.empty:
+            last_ts = pd.to_datetime(latest['timestamp']).max()
+            st.markdown(
+                f'<div style="text-align:right;font-size:11px;color:#388e3c;margin-top:4px;">'
+                f'🔄 Updated {last_ts.strftime("%H:%M:%S")}</div>',
+                unsafe_allow_html=True)
+
+    st.markdown("<div style='margin:20px 0 4px;'></div>", unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════
-    # BOTTOM ROW:  AI Recommendation  |  Recent Alerts
+    # BOTTOM ROW: AI Recommendation | Recent Alerts
     # ══════════════════════════════════════════════════════════
     ai_col, alert_col = st.columns(2, gap="large")
 
     with ai_col:
-        st.subheader("🤖 AI Health Recommendation")
+        st.markdown('<div class="section-title">🤖 AI Health Recommendation</div>',
+                    unsafe_allow_html=True)
         p1 = latest[latest['plant_id'] == 1]
         if not p1.empty and model and scaler:
             try:
@@ -645,42 +589,48 @@ if page == "DASHBOARD":
                                   float(p1.iloc[0]['ph'])]])
                 pred = model.predict(scaler.transform(feat))[0]
                 if pred == -1:
-                    st.error("### 🚨 ALERT\nAnomalous conditions detected.")
+                    st.error("🚨 **ALERT** — Anomalous conditions detected in the greenhouse.")
                 else:
-                    st.success("### ✅ HEALTHY\nCrop environment is optimal.")
+                    st.success("✅ **HEALTHY** — Crop environment is optimal.")
             except Exception as e:
-                st.info(f"AI processing... ({e})")
+                st.info(f"AI model processing... ({e})")
         else:
             st.warning("Awaiting sensor data or AI model...")
 
     with alert_col:
-        st.subheader("🔔 Recent Alerts")
+        st.markdown('<div class="section-title">🔔 Recent Alerts</div>',
+                    unsafe_allow_html=True)
         alerts = []
         for _, plant in latest.iterrows():
             pid  = int(plant['plant_id'])
             soil = float(plant['soil_moisture'])
             ph   = float(plant['ph'])
-            if soil < SOIL_DRY or soil > SOIL_WET:
-                alerts.append(f"🌱 Plant {pid} soil: {soil:.0f}%")
+            if soil < SOIL_DRY:      alerts.append(f"🌱 Plant {pid}: soil too dry ({soil:.0f}%)")
+            elif soil > SOIL_WET:    alerts.append(f"🌱 Plant {pid}: soil too wet ({soil:.0f}%)")
             if ph < PH_LOW or ph > PH_HIGH:
-                alerts.append(f"🧪 Plant {pid} pH: {ph:.2f}")
+                alerts.append(f"🧪 Plant {pid}: pH out of range ({ph:.2f})")
         if avg_temp < TEMP_LOW or avg_temp > TEMP_HIGH:
-            alerts.append(f"🌡️ Temp: {avg_temp:.1f}°C out of range")
+            alerts.append(f"🌡️ Temperature: {avg_temp:.1f}°C out of range")
         if avg_hum < HUM_LOW or avg_hum > HUM_HIGH:
             alerts.append(f"💧 Humidity: {avg_hum:.0f}% out of range")
+
         if alerts:
             for a in alerts[:6]:
-                st.markdown(
-                    f'<div class="alert-item">{a}</div>',
-                    unsafe_allow_html=True)
+                st.markdown(f'<div class="alert-item">{a}</div>', unsafe_allow_html=True)
         else:
-            st.success("✅ All parameters within range.")
+            st.success("✅ All greenhouse parameters are within range.")
 
 # ==============================================================
 # PAGE: ANALYSIS
 # ==============================================================
 elif page == "ANALYSIS":
-    st.title("Historical Trends – Individual Sensors")
+    st.markdown("""
+    <div style="margin-bottom:18px;">
+        <div style="font-size:24px;font-weight:900;color:#fff;">Historical Trends</div>
+        <div style="font-size:13px;color:#66bb6a;letter-spacing:1px;margin-top:4px;">
+            Sensor data over time — per plant</div>
+    </div>""", unsafe_allow_html=True)
+
     if not latest.empty:
         sc1, sc2, sc3 = st.columns([1, 1, 2])
         with sc1:
@@ -695,63 +645,65 @@ elif page == "ANALYSIS":
         hist_df = get_historical_data(plant_id=plant_sel, hours=hours)
         if not hist_df.empty:
             col_map = {
-                "Temperature (°C)": ("temp_c",        "°C"),
-                "Humidity (%)":     ("humidity",       "%"),
-                "pH":               ("ph",             "pH"),
-                "Soil Moisture (%)":("soil_moisture",  "%"),
+                "Temperature (°C)": ("temp_c",       "°C"),
+                "Humidity (%)":     ("humidity",      "%"),
+                "pH":               ("ph",            "pH"),
+                "Soil Moisture (%)":("soil_moisture", "%"),
             }
             y_col, y_label = col_map[sensor_choice]
             fig = px.line(hist_df, x='timestamp', y=y_col,
                           title=f"{sensor_choice} — Plant {plant_sel}")
             fig.update_layout(yaxis_title=y_label,
                               paper_bgcolor='rgba(0,0,0,0)',
-                              plot_bgcolor='rgba(14,17,23,0.8)',
-                              font_color='#a5d6a7')
+                              plot_bgcolor='rgba(13,17,23,0.85)',
+                              font_color='#a5d6a7',
+                              title_font_color='#ffffff')
             st.plotly_chart(fig, use_container_width=True)
 
-            if sensor_choice == "Soil Moisture (%)" and not latest.empty:
-                st.subheader("🌱 Soil Moisture — All 10 Plants (current)")
+            if sensor_choice == "Soil Moisture (%)":
+                st.markdown('<div class="section-title">🌱 Current Soil — All Plants</div>',
+                            unsafe_allow_html=True)
                 bar = px.bar(latest.sort_values('plant_id'),
                              x='plant_id', y='soil_moisture',
                              color='soil_moisture', color_continuous_scale='Greens',
                              labels={'plant_id': 'Plant', 'soil_moisture': 'Soil %'})
                 bar.update_layout(paper_bgcolor='rgba(0,0,0,0)',
-                                  plot_bgcolor='rgba(14,17,23,0.8)',
+                                  plot_bgcolor='rgba(13,17,23,0.85)',
                                   font_color='#a5d6a7')
                 st.plotly_chart(bar, use_container_width=True)
         else:
-            st.warning("No historical data for this plant yet.")
+            st.warning("No data for this plant in the selected time range.")
     else:
-        st.warning("No data available.")
+        st.warning("No data available yet.")
 
 # ==============================================================
 # PAGE: SYSTEM LOGS
 # ==============================================================
 elif page == "LOGS":
-    st.title("System Activity Logs")
+    st.markdown("""
+    <div style="margin-bottom:18px;">
+        <div style="font-size:24px;font-weight:900;color:#fff;">System Logs</div>
+        <div style="font-size:13px;color:#66bb6a;letter-spacing:1px;margin-top:4px;">
+            Last 24 hours of sensor activity</div>
+    </div>""", unsafe_allow_html=True)
+
     logs = get_historical_data(plant_id=None, hours=24)
     if not logs.empty:
-        def classify(row):
-            if row['temp_c'] < TEMP_LOW or row['temp_c'] > TEMP_HIGH:
-                return "🌡️ Temp alert"
-            if row['humidity'] < HUM_LOW or row['humidity'] > HUM_HIGH:
-                return "💧 Humidity alert"
-            if row['ph'] < PH_LOW or row['ph'] > PH_HIGH:
-                return "🧪 pH alert"
-            if row['soil_moisture'] < SOIL_DRY or row['soil_moisture'] > SOIL_WET:
-                return "🌱 Soil alert"
+        def classify(r):
+            if r['temp_c'] < TEMP_LOW or r['temp_c'] > TEMP_HIGH:       return "🌡️ Temp alert"
+            if r['humidity'] < HUM_LOW or r['humidity'] > HUM_HIGH:     return "💧 Humidity alert"
+            if r['ph'] < PH_LOW or r['ph'] > PH_HIGH:                   return "🧪 pH alert"
+            if r['soil_moisture'] < SOIL_DRY or r['soil_moisture'] > SOIL_WET: return "🌱 Soil alert"
             return "Normal"
         logs['event'] = logs.apply(classify, axis=1)
-        display_cols = ['timestamp','plant_id','temp_c','humidity','soil_moisture','ph','event']
-        col_cfg = {
-            "timestamp": "Time", "plant_id": "Plant", "temp_c": "Temp (°C)",
-            "humidity": "Hum (%)", "soil_moisture": "Soil %", "ph": "pH", "event": "Event"
-        }
+        cols = ['timestamp', 'plant_id', 'temp_c', 'humidity', 'soil_moisture', 'ph', 'event']
+        cfg  = {"timestamp": "Time", "plant_id": "Plant", "temp_c": "Temp (°C)",
+                "humidity": "Hum (%)", "soil_moisture": "Soil %", "ph": "pH", "event": "Event"}
         if 'image_url' in logs.columns:
-            display_cols.insert(-1, 'image_url')
-            col_cfg['image_url'] = st.column_config.LinkColumn("📸 Image")
-        st.dataframe(logs[display_cols].tail(50), use_container_width=True,
-                     hide_index=True, column_config=col_cfg)
+            cols.insert(-1, 'image_url')
+            cfg['image_url'] = st.column_config.LinkColumn("📸 Image")
+        st.dataframe(logs[cols].tail(50), use_container_width=True,
+                     hide_index=True, column_config=cfg)
     else:
         st.info("No logs available.")
 
@@ -759,8 +711,12 @@ elif page == "LOGS":
 # PAGE: USER MANAGEMENT
 # ==============================================================
 elif page == "USERS":
-    st.title("Admin Control Panel")
-    st.subheader("Registered Users")
+    st.markdown("""
+    <div style="margin-bottom:18px;">
+        <div style="font-size:24px;font-weight:900;color:#fff;">Admin Control Panel</div>
+        <div style="font-size:13px;color:#66bb6a;letter-spacing:1px;margin-top:4px;">
+            Registered user accounts</div>
+    </div>""", unsafe_allow_html=True)
     st.table(pd.DataFrame({
         "Username": ["admin@agribot.ai", "user@agribot.ai"],
         "Role":     ["Administrator",    "Standard User"]
