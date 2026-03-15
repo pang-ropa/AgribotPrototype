@@ -471,33 +471,72 @@ if page == "📡 LIVE DASHBOARD":
     col4.metric("🌱 SOIL (avg)", f"{avg_soil:.0f} %")
     st.markdown("---")
 
-    col_l, col_r = st.columns([1.3, 1], gap="large")
+    # ── Load all 10 plant images once for the whole dashboard page ──
+    with st.spinner("Loading plant images..."):
+        dash_urls = get_all_plant_image_urls()
 
-    with col_l:
-        st.subheader("🌿 Plant Health Feed")
-        latest_s = latest.sort_values('plant_id')
-        row1 = st.columns(5)
-        row2 = st.columns(5)
-        for idx, (_, plant) in enumerate(latest_s.iterrows()):
-            col = row1[idx] if idx < 5 else row2[idx - 5]
-            pid   = int(plant['plant_id'])
-            soil  = plant['soil_moisture']   # per-plant soil reading
-            ph    = plant['ph']              # shared pH per cycle
+    # ── Left: 10-plant image gallery (replaces plant health feed) ──
+    st.subheader("📸 Plant Image Feed — Latest Captures")
+    uploaded_count = sum(1 for u in dash_urls.values() if u)
+    st.markdown(
+        f'<div class="cam-stat" style="margin-bottom:12px;">'
+        f'🖼️ Images available: <b>{uploaded_count} / 10</b> plants &nbsp;|&nbsp; '
+        f'Captured at '
+        f'<span class="schedule-badge">7:00 AM</span>'
+        f'<span class="schedule-badge">12:00 NN</span>'
+        f'<span class="schedule-badge">12:30 PM</span></div>',
+        unsafe_allow_html=True)
 
-            health = "✅ Healthy"
-            if soil < SOIL_DRY:                   health = "⚠️ Dry"
-            elif soil > SOIL_WET:                 health = "⚠️ Wet"
-            if ph < PH_LOW or ph > PH_HIGH:       health = "🔴 pH Alert"
+    latest_s = latest.sort_values('plant_id')
+    row1_cols = st.columns(5)
+    row2_cols = st.columns(5)
 
-            with col:
-                st.markdown("<span style='font-size:2rem;'>🥬</span>",
-                            unsafe_allow_html=True)
+    for idx, (_, plant) in enumerate(latest_s.iterrows()):
+        pid   = int(plant['plant_id'])
+        soil  = plant['soil_moisture']
+        ph    = plant['ph']
+        url   = dash_urls.get(pid, "")
+
+        health_color = "#4CAF50"
+        health_label = "✅ Healthy"
+        if soil < SOIL_DRY:
+            health_label, health_color = "⚠️ Dry",      "#FF9800"
+        elif soil > SOIL_WET:
+            health_label, health_color = "⚠️ Wet",      "#FF9800"
+        if ph < PH_LOW or ph > PH_HIGH:
+            health_label, health_color = "🔴 pH Alert",  "#f44336"
+
+        col = row1_cols[idx] if idx < 5 else row2_cols[idx - 5]
+        with col:
+            st.markdown('<div class="plant-cam-card">', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="plant-cam-title">🥬 Lettuce #{pid}</div>',
+                unsafe_allow_html=True)
+            if url:
+                st.image(url, use_container_width=True)
+            else:
                 st.markdown(
-                    f"**Lettuce #{pid}**<br>{health}<br>"
-                    f"Soil: {soil:.0f}%<br>pH: {ph:.2f}",
+                    '<div class="plant-cam-no-img" style="padding:18px 4px;">📷</div>',
                     unsafe_allow_html=True)
+            st.markdown(
+                f'<div style="font-size:11px;font-weight:700;color:{health_color};'
+                f'margin:4px 0 2px 0;">{health_label}</div>'
+                f'<div style="font-size:10px;color:#81c784;">Soil: {soil:.0f}% &nbsp;|&nbsp; pH: {ph:.2f}</div>',
+                unsafe_allow_html=True)
+            if url:
+                st.markdown(
+                    f'<div style="margin-top:4px;">'
+                    f'<a href="{url}" target="_blank" '
+                    f'style="color:#4CAF50;font-size:10px;">View in Drive ↗</a></div>',
+                    unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
-    with col_r:
+    st.markdown("---")
+
+    # ── Bottom row: AI + Alerts side by side ──────────────────
+    ai_col, alert_col = st.columns([1, 1], gap="large")
+
+    with ai_col:
         st.subheader("🤖 AI Health Recommendation")
         plant1 = latest[latest['plant_id'] == 1]
         if not plant1.empty and model and scaler:
@@ -505,7 +544,7 @@ if page == "📡 LIVE DASHBOARD":
                 features = np.array([[
                     float(plant1.iloc[0]['temp_c']),
                     float(plant1.iloc[0]['humidity']),
-                    float(plant1.iloc[0]['ph'])      # single ph
+                    float(plant1.iloc[0]['ph'])
                 ]])
                 pred = model.predict(scaler.transform(features))[0]
                 if pred == -1:
@@ -517,23 +556,8 @@ if page == "📡 LIVE DASHBOARD":
         else:
             st.warning("Awaiting sensor data or AI model...")
 
-        # Latest captured image for Plant 1 from Drive
-        st.markdown("### 📸 Latest Lettuce Image — Plant 1")
-        plant1_url = get_plant_image_url(1)
-        if plant1_url:
-            st.image(plant1_url,
-                     caption="Most recent capture — Plant 1 (from Google Drive)",
-                     use_container_width=True)
-            st.markdown(
-                f'<div class="drive-badge">☁️ Stored in Google Drive<br>'
-                f'<a href="{plant1_url}" target="_blank" style="color:#81c784;">'
-                f'View full image ↗</a></div>',
-                unsafe_allow_html=True)
-        else:
-            st.info("No image yet — Pi captures at 7:00 AM, 12:00 NN, 12:30 PM.")
-
-        # Alerts
-        st.markdown("### 🔔 Recent Alerts")
+    with alert_col:
+        st.subheader("🔔 Recent Alerts")
         alerts = []
         for _, plant in latest.iterrows():
             pid  = int(plant['plant_id'])
@@ -548,20 +572,19 @@ if page == "📡 LIVE DASHBOARD":
         if avg_hum < HUM_LOW or avg_hum > HUM_HIGH:
             alerts.append(f"💧 Humidity out of range: {avg_hum:.0f}%")
         if alerts:
-            for alert in alerts[:5]:
+            for alert in alerts[:6]:
                 st.markdown(
-                    f'<div style="padding:5px;background:#ffebee;color:#b71c1c;'
-                    f'border-radius:5px;margin:5px 0;">{alert}</div>',
+                    f'<div style="padding:6px 10px;background:#ffebee;color:#b71c1c;'
+                    f'border-radius:6px;margin:4px 0;font-size:13px;">{alert}</div>',
                     unsafe_allow_html=True)
         else:
-            st.info("✅ All parameters within range.")
+            st.success("✅ All parameters within range.")
 
 # ==============================================================
-# PAGE: CAMERA FEED
-# Shows the 10 Drive image URLs uploaded by agribot_pi_final.py
+# PAGE: CAMERA FEED — all 10 plant images in a full grid
 # ==============================================================
 elif page == "📷 CAMERA FEED":
-    st.title("📷 AgriBot Camera — Plant Image Gallery")
+    st.title("📷 AgriBot Camera — All 10 Plants")
     st.markdown(
         "Images are captured by the Pi robot at "
         "<span class='schedule-badge'>7:00 AM</span>"
@@ -569,124 +592,157 @@ elif page == "📷 CAMERA FEED":
         "<span class='schedule-badge'>12:30 PM</span>"
         " and uploaded to Google Drive automatically.",
         unsafe_allow_html=True)
-    st.markdown("---")
 
-    # Controls row
+    # Controls bar
     ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1, 1, 2])
     with ctrl_col1:
-        selected_plant = st.selectbox("Focus on plant", ["All Plants"] + [f"Plant {i}" for i in range(1, 11)])
-    with ctrl_col2:
         if st.button("🔄 Refresh Images", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
+    with ctrl_col2:
+        view_mode = st.selectbox("View mode", ["Grid (5×2)", "List (1 per row)"])
     with ctrl_col3:
         st.markdown(
-            '<div class="cam-stat" style="margin-top:0;">📡 Pi script captures 10 plants per session '
-            '(1 min travel + 5 s exposure each)</div>',
+            '<div class="cam-stat" style="margin-top:0;">'
+            '📡 Bot moves 60 s per plant · 5 s exposure · uploads to Google Drive</div>',
             unsafe_allow_html=True)
 
     st.markdown("---")
 
-    # Load all 10 plant URLs in one Sheet read
+    # Load all 10 URLs + latest sensor readings in one go
     with st.spinner("Loading plant images from Google Drive..."):
         all_urls = get_all_plant_image_urls()
 
-    # ── All-plant grid view ────────────────────────────────────
-    if selected_plant == "All Plants":
-        st.subheader("🌿 All 10 Plants — Latest Captures")
-        uploaded_count = sum(1 for u in all_urls.values() if u)
-        st.markdown(
-            f'<div class="cam-stat" style="margin-bottom:14px;">'
-            f'📊 Images available: <b>{uploaded_count} / 10</b> plants</div>',
-            unsafe_allow_html=True)
+    uploaded_count = sum(1 for u in all_urls.values() if u)
+    st.markdown(
+        f'<div class="cam-stat" style="margin-bottom:16px;">'
+        f'🖼️ <b>{uploaded_count} / 10</b> plant images available in Drive</div>',
+        unsafe_allow_html=True)
 
-        # 5-per-row grid
+    # ── GRID VIEW (5 columns × 2 rows) ────────────────────────
+    if view_mode == "Grid (5×2)":
         row1_cols = st.columns(5)
         row2_cols = st.columns(5)
+
         for plant_id in range(1, 11):
-            col = row1_cols[plant_id - 1] if plant_id <= 5 else row2_cols[plant_id - 6]
             url = all_urls[plant_id]
+            col = row1_cols[plant_id - 1] if plant_id <= 5 else row2_cols[plant_id - 6]
+
+            # Get sensor row for this plant
+            sensor_row = None
+            if not latest.empty:
+                sr = latest[latest['plant_id'] == plant_id]
+                if not sr.empty:
+                    sensor_row = sr.iloc[0]
+
             with col:
-                st.markdown(f'<div class="plant-cam-card">', unsafe_allow_html=True)
-                st.markdown(f'<div class="plant-cam-title">🥬 Plant {plant_id}</div>', unsafe_allow_html=True)
+                st.markdown('<div class="plant-cam-card">', unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="plant-cam-title">🥬 Plant {plant_id}</div>',
+                    unsafe_allow_html=True)
+
                 if url:
                     st.image(url, use_container_width=True)
                     st.markdown(
-                        f'<div class="plant-cam-time">'
-                        f'<a href="{url}" target="_blank" style="color:#81c784;font-size:10px;">'
-                        f'View in Drive ↗</a></div>',
+                        f'<a href="{url}" target="_blank" '
+                        f'style="color:#4CAF50;font-size:10px;">View in Drive ↗</a>',
                         unsafe_allow_html=True)
                 else:
                     st.markdown(
                         '<div class="plant-cam-no-img">📷</div>'
-                        '<div style="font-size:11px;color:#4CAF50;">No image yet</div>',
+                        '<div style="font-size:10px;color:#4CAF50;">No image yet</div>',
                         unsafe_allow_html=True)
+
+                if sensor_row is not None:
+                    soil = sensor_row['soil_moisture']
+                    ph   = sensor_row['ph']
+                    temp = sensor_row['temp_c']
+                    hum  = sensor_row['humidity']
+
+                    health_color = "#4CAF50"
+                    health_label = "✅ Healthy"
+                    if soil < SOIL_DRY:
+                        health_label, health_color = "⚠️ Dry",     "#FF9800"
+                    elif soil > SOIL_WET:
+                        health_label, health_color = "⚠️ Wet",     "#FF9800"
+                    if ph < PH_LOW or ph > PH_HIGH:
+                        health_label, health_color = "🔴 pH Alert", "#f44336"
+
+                    st.markdown(
+                        f'<div style="margin-top:6px;font-size:11px;font-weight:700;'
+                        f'color:{health_color};">{health_label}</div>'
+                        f'<div style="font-size:10px;color:#81c784;line-height:1.6;">'
+                        f'🌡️ {temp:.1f}°C &nbsp; 💧 {hum:.0f}%<br>'
+                        f'🌱 Soil {soil:.0f}% &nbsp; 🧪 pH {ph:.2f}</div>',
+                        unsafe_allow_html=True)
+
                 st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── Single-plant focus view ────────────────────────────────
+    # ── LIST VIEW (full-width per plant) ──────────────────────
     else:
-        pid = int(selected_plant.split(" ")[1])
-        url = all_urls[pid]
+        for plant_id in range(1, 11):
+            url = all_urls[plant_id]
 
-        detail_col, info_col = st.columns([2, 1])
-
-        with detail_col:
-            st.subheader(f"🥬 Plant {pid} — Detailed View")
-            if url:
-                st.image(url, caption=f"Latest capture — Plant {pid}", use_container_width=True)
-                st.markdown(
-                    f'<div class="drive-badge">☁️ Google Drive — Plant {pid} latest image<br>'
-                    f'<a href="{url}" target="_blank" style="color:#81c784;">Open full image ↗</a></div>',
-                    unsafe_allow_html=True)
-            else:
-                st.markdown(
-                    '<div class="plant-cam-card" style="padding:40px;text-align:center;">'
-                    '<div style="font-size:48px;margin-bottom:12px;">📷</div>'
-                    '<div style="color:#4CAF50;font-weight:600;">No image captured yet</div>'
-                    '<div style="color:#388e3c;font-size:12px;margin-top:6px;">'
-                    'Pi captures at 7:00 AM · 12:00 NN · 12:30 PM</div></div>',
-                    unsafe_allow_html=True)
-
-        with info_col:
-            st.subheader("📊 Plant Sensor Data")
+            sensor_row = None
             if not latest.empty:
-                row = latest[latest['plant_id'] == pid]
-                if not row.empty:
-                    r = row.iloc[0]
-                    soil = r['soil_moisture']
-                    ph   = r['ph']
-                    st.markdown(f'<div class="cam-stat">🌡️ Temperature: <b>{r["temp_c"]:.1f} °C</b></div>', unsafe_allow_html=True)
-                    st.markdown(f'<div class="cam-stat">💧 Humidity: <b>{r["humidity"]:.0f} %</b></div>', unsafe_allow_html=True)
-                    st.markdown(f'<div class="cam-stat">🌱 Soil Moisture: <b>{soil:.1f} %</b> '
-                                f'{"⚠️" if soil < SOIL_DRY or soil > SOIL_WET else "✅"}</div>',
-                                unsafe_allow_html=True)
-                    st.markdown(f'<div class="cam-stat">🧪 pH: <b>{ph:.2f}</b> '
-                                f'{"⚠️" if ph < PH_LOW or ph > PH_HIGH else "✅"}</div>',
-                                unsafe_allow_html=True)
-                    st.markdown(f'<div class="cam-stat">🕒 Last update: <b>{r["timestamp"].strftime("%H:%M:%S")}</b></div>',
-                                unsafe_allow_html=True)
-                else:
-                    st.info(f"No sensor data for Plant {pid} yet.")
-            else:
-                st.info("No sensor data available.")
+                sr = latest[latest['plant_id'] == plant_id]
+                if not sr.empty:
+                    sensor_row = sr.iloc[0]
+
+            with st.container():
+                st.markdown(f"#### 🥬 Plant {plant_id}")
+                img_col, data_col = st.columns([2, 1])
+
+                with img_col:
+                    if url:
+                        st.image(url,
+                                 caption=f"Latest capture — Plant {plant_id}",
+                                 use_container_width=True)
+                        st.markdown(
+                            f'<div class="drive-badge">☁️ Google Drive &nbsp;|&nbsp; '
+                            f'<a href="{url}" target="_blank" style="color:#81c784;">'
+                            f'Open full image ↗</a></div>',
+                            unsafe_allow_html=True)
+                    else:
+                        st.markdown(
+                            '<div class="plant-cam-card" style="padding:30px;text-align:center;">'
+                            '<div style="font-size:40px;">📷</div>'
+                            '<div style="color:#4CAF50;margin-top:8px;">No image captured yet</div>'
+                            '<div style="color:#388e3c;font-size:12px;">Pi captures at 7:00 AM · 12:00 NN · 12:30 PM</div>'
+                            '</div>', unsafe_allow_html=True)
+
+                with data_col:
+                    if sensor_row is not None:
+                        soil = sensor_row['soil_moisture']
+                        ph   = sensor_row['ph']
+                        temp = sensor_row['temp_c']
+                        hum  = sensor_row['humidity']
+                        ts   = sensor_row['timestamp']
+
+                        health_color = "#4CAF50"
+                        health_label = "✅ Healthy"
+                        if soil < SOIL_DRY:
+                            health_label, health_color = "⚠️ Dry",     "#FF9800"
+                        elif soil > SOIL_WET:
+                            health_label, health_color = "⚠️ Wet",     "#FF9800"
+                        if ph < PH_LOW or ph > PH_HIGH:
+                            health_label, health_color = "🔴 pH Alert", "#f44336"
+
+                        st.markdown(
+                            f'<div class="plant-cam-card">'
+                            f'<div style="font-size:14px;font-weight:700;color:{health_color};'
+                            f'margin-bottom:10px;">{health_label}</div>'
+                            f'<div class="cam-stat">🌡️ Temperature: <b>{temp:.1f} °C</b></div>'
+                            f'<div class="cam-stat">💧 Humidity: <b>{hum:.0f} %</b></div>'
+                            f'<div class="cam-stat">🌱 Soil Moisture: <b>{soil:.1f} %</b></div>'
+                            f'<div class="cam-stat">🧪 pH: <b>{ph:.2f}</b></div>'
+                            f'<div class="cam-stat">🕒 <b>{ts.strftime("%H:%M:%S")}</b></div>'
+                            f'</div>',
+                            unsafe_allow_html=True)
+                    else:
+                        st.info("No sensor data yet.")
 
             st.markdown("---")
-            st.markdown("**📷 Other Plant Images**")
-            other_ids = [i for i in range(1, 11) if i != pid]
-            for oid in other_ids:
-                o_url = all_urls[oid]
-                icon  = "✅" if o_url else "⬜"
-                label = f"Plant {oid}"
-                if o_url:
-                    st.markdown(
-                        f'<div class="cam-stat" style="padding:6px 12px;">'
-                        f'{icon} <a href="{o_url}" target="_blank" style="color:#81c784;">{label}</a></div>',
-                        unsafe_allow_html=True)
-                else:
-                    st.markdown(
-                        f'<div class="cam-stat" style="padding:6px 12px;color:#388e3c;">'
-                        f'{icon} {label} — no image yet</div>',
-                        unsafe_allow_html=True)
 
 # ==============================================================
 # PAGE: ANALYSIS
