@@ -101,37 +101,42 @@ def login():
         f'box-shadow:0 0 28px rgba(76,175,80,0.5);"/></div>'
     ) if logo_b64 else ""
 
-    st.markdown(f"""<style>
-    #MainMenu{{visibility:hidden;}}footer{{visibility:hidden;}}
-    [data-testid="stForm"]{{
+    # Inject CSS separately (no f-string needed — no dynamic values)
+    st.markdown("""<style>
+    #MainMenu{visibility:hidden;}footer{visibility:hidden;}
+    [data-testid="stForm"]{
         background:linear-gradient(160deg,rgba(27,94,32,0.65) 0%,rgba(46,125,50,0.55) 100%)!important;
         backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
         border-radius:20px;border:1px solid rgba(165,214,167,0.35);
         box-shadow:0 12px 40px rgba(0,0,0,0.35);padding:34px 44px 44px;
-    }}
-    [data-testid="stForm"] input{{
+    }
+    [data-testid="stForm"] input{
         background:rgba(255,255,255,0.1)!important;color:#fff!important;
         border:1px solid rgba(165,214,167,0.45)!important;border-radius:10px!important;
         font-size:14px!important;
-    }}
-    [data-testid="stForm"] input::placeholder{{color:rgba(200,230,200,0.6)!important;}}
-    [data-testid="stForm"] button[kind="primaryFormSubmit"]{{
+    }
+    [data-testid="stForm"] input::placeholder{color:rgba(200,230,200,0.6)!important;}
+    [data-testid="stForm"] button[kind="primaryFormSubmit"]{
         background:linear-gradient(90deg,#2e7d32,#66bb6a)!important;
         border:none!important;color:#fff!important;font-weight:700!important;
         border-radius:10px!important;letter-spacing:1.5px;font-size:14px!important;
         padding:12px!important;margin-top:4px!important;
-    }}
-    .stTextInput label{{color:#c8e6c9!important;font-weight:600!important;font-size:13px!important;}}
-    </style>
-    <div style="display:flex;flex-direction:column;align-items:center;margin-top:52px;">
-        {logo_html}
-        <div style="text-align:center;font-size:38px;font-weight:900;color:#fff;
-            letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,0.6);margin-bottom:6px;">
-            AgriBot-AI</div>
-        <div style="text-align:center;color:#81c784;font-size:13px;letter-spacing:3px;
-            text-transform:uppercase;margin-bottom:24px;">
-            Smart Farming · Intelligent Monitoring</div>
-    </div>""", unsafe_allow_html=True)
+    }
+    .stTextInput label{color:#c8e6c9!important;font-weight:600!important;font-size:13px!important;}
+    </style>""", unsafe_allow_html=True)
+
+    # Inject header HTML separately (f-string only for logo_html — no CSS braces conflict)
+    st.markdown(
+        f'<div style="display:flex;flex-direction:column;align-items:center;margin-top:52px;">'
+        f'{logo_html}'
+        f'<div style="text-align:center;font-size:38px;font-weight:900;color:#fff;'
+        f'letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,0.6);margin-bottom:6px;">'
+        f'AgriBot-AI</div>'
+        f'<div style="text-align:center;color:#81c784;font-size:13px;letter-spacing:3px;'
+        f'text-transform:uppercase;margin-bottom:24px;">'
+        f'Smart Farming &middot; Intelligent Monitoring</div>'
+        f'</div>',
+        unsafe_allow_html=True)
 
     _, mid, _ = st.columns([1, 1.6, 1])
     with mid:
@@ -536,49 +541,17 @@ if page == "DASHBOARD":
                 unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── RIGHT: sensor value cards ──────────────────────────────
+    # ── RIGHT: AI recommendation + Alerts ────────────────────
     with sensor_col:
-        st.markdown('<div class="section-title">📊 Sensor Readings</div>',
-                    unsafe_allow_html=True)
-
-        sensors = [
-            ("🌱", "Soil Moisture",  avg_soil, SOIL_DRY, SOIL_WET,  "%"),
-            ("💧", "Humidity",       avg_hum,  HUM_LOW,  HUM_HIGH,  "%"),
-            ("🌡️", "Temperature",    avg_temp, TEMP_LOW, TEMP_HIGH, "°C"),
-            ("🧪", "pH Level",       avg_ph,   PH_LOW,   PH_HIGH,   ""),
-        ]
-        for icon, label, val, lo, hi, unit in sensors:
-            in_range  = lo <= val <= hi
-            status_lbl = "✅ Normal" if in_range else "⚠️ Out of range"
-            status_cls = "s-ok"     if in_range else "s-warn"
-            fmt        = f"{val:.2f}" if unit == "" else f"{val:.0f}"
-            st.markdown(
-                f'<div class="sensor-row">'
-                f'<div>'
-                f'  <div class="s-label">{label}</div>'
-                f'  <div class="s-val">{fmt}<span class="s-unit">{unit}</span></div>'
-                f'  <div class="{status_cls}">{status_lbl}</div>'
-                f'</div>'
-                f'<div class="s-icon">{icon}</div>'
-                f'</div>',
-                unsafe_allow_html=True)
-
-        # Last updated
+        # Last updated timestamp
         if not latest.empty:
             last_ts = pd.to_datetime(latest['timestamp']).max()
             st.markdown(
-                f'<div style="text-align:right;font-size:11px;color:#388e3c;margin-top:4px;">'
-                f'🔄 Updated {last_ts.strftime("%H:%M:%S")}</div>',
+                f'<div style="text-align:right;font-size:11px;color:#388e3c;'
+                f'margin-bottom:12px;">🔄 Updated {last_ts.strftime("%H:%M:%S")}</div>',
                 unsafe_allow_html=True)
 
-    st.markdown("<div style='margin:20px 0 4px;'></div>", unsafe_allow_html=True)
-
-    # ══════════════════════════════════════════════════════════
-    # BOTTOM ROW: AI Recommendation | Recent Alerts
-    # ══════════════════════════════════════════════════════════
-    ai_col, alert_col = st.columns(2, gap="large")
-
-    with ai_col:
+        # AI Recommendation
         st.markdown('<div class="section-title">🤖 AI Health Recommendation</div>',
                     unsafe_allow_html=True)
         p1 = latest[latest['plant_id'] == 1]
@@ -597,7 +570,9 @@ if page == "DASHBOARD":
         else:
             st.warning("Awaiting sensor data or AI model...")
 
-    with alert_col:
+        st.markdown("<div style='margin:14px 0 4px;'></div>", unsafe_allow_html=True)
+
+        # Recent Alerts
         st.markdown('<div class="section-title">🔔 Recent Alerts</div>',
                     unsafe_allow_html=True)
         alerts = []
@@ -605,8 +580,10 @@ if page == "DASHBOARD":
             pid  = int(plant['plant_id'])
             soil = float(plant['soil_moisture'])
             ph   = float(plant['ph'])
-            if soil < SOIL_DRY:      alerts.append(f"🌱 Plant {pid}: soil too dry ({soil:.0f}%)")
-            elif soil > SOIL_WET:    alerts.append(f"🌱 Plant {pid}: soil too wet ({soil:.0f}%)")
+            if soil < SOIL_DRY:
+                alerts.append(f"🌱 Plant {pid}: soil too dry ({soil:.0f}%)")
+            elif soil > SOIL_WET:
+                alerts.append(f"🌱 Plant {pid}: soil too wet ({soil:.0f}%)")
             if ph < PH_LOW or ph > PH_HIGH:
                 alerts.append(f"🧪 Plant {pid}: pH out of range ({ph:.2f})")
         if avg_temp < TEMP_LOW or avg_temp > TEMP_HIGH:
