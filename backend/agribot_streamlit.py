@@ -591,7 +591,7 @@ def show_login():
         margin-top: -60px;   /* <-- Change this to move everything up/down */
     }
     .login-bottom-spacer {
-        height: 0px;        /* <-- Change this to add extra space below the button */
+        margin-bottom: -300px;        /* <-- Change this to add extra space below the button */
     }
     </style>""", unsafe_allow_html=True)
 
