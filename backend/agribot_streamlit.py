@@ -583,13 +583,9 @@ def show_landing():
 def show_login():
     set_background(ACTUAL_BG)
 
+    # Hide sidebar
     st.markdown("""<style>
     section[data-testid="stSidebar"] { display: none !important; }
-
-    /* Adjust this value to move the whole login block up/down */
-    .login-main-container {
-        margin-top: -80px;   /* ← change this number (e.g., -80, -100) */
-    }
     </style>""", unsafe_allow_html=True)
 
     logo_b64  = file_to_b64(ACTUAL_LOGO)
@@ -601,20 +597,31 @@ def show_login():
         f'box-shadow:0 0 28px rgba(76,175,80,0.5);"/></div>'
     ) if logo_b64 else ""
 
-    st.markdown(
-        f'<div class="login-main-container" style="display:flex; flex-direction:column; align-items:center;">'
-        f'{logo_html}'
-        f'<div style="text-align:center; font-size:34px; font-weight:900; color:#fff; '
-        f'letter-spacing:1px; text-shadow:0 2px 12px rgba(0,0,0,0.6); margin-bottom:4px;">'
-        f'AgriBot-AI</div>'
-        f'<div style="text-align:center; color:#81c784; font-size:12px; '
-        f'letter-spacing:3px; text-transform:uppercase; margin-bottom:20px;">'
-        f'Smart Farming &middot; Intelligent Monitoring</div>'
-        f'</div>',
-        unsafe_allow_html=True)
-
+    # Use a single centered column, and inside it a flex container that fills the column height
     _, mid, _ = st.columns([1, 1.6, 1])
     with mid:
+        # This container uses the full column height (100vh) and centers content vertically
+        st.markdown(
+            '<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">',
+            unsafe_allow_html=True
+        )
+
+        # Logo and title
+        st.markdown(logo_html, unsafe_allow_html=True)
+        st.markdown(
+            '<div style="text-align:center; font-size:34px; font-weight:900; color:#fff; '
+            'letter-spacing:1px; text-shadow:0 2px 12px rgba(0,0,0,0.6); margin-bottom:4px;">'
+            'AgriBot-AI</div>',
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            '<div style="text-align:center; color:#81c784; font-size:12px; '
+            'letter-spacing:3px; text-transform:uppercase; margin-bottom:20px;">'
+            'Smart Farming &middot; Intelligent Monitoring</div>',
+            unsafe_allow_html=True
+        )
+
+        # Login form
         with st.form("login_form"):
             email    = st.text_input("Email",    placeholder="admin@agribot.ai")
             password = st.text_input("Password", type="password", placeholder="••••••••")
@@ -628,9 +635,13 @@ def show_login():
                 else:
                     st.error("Invalid email or password")
 
+        # Back to landing button
         if st.button("← Back to Landing", use_container_width=True, key="back_btn"):
             st.session_state.page = "landing"
             st.rerun()
+
+        # Close the flex container
+        st.markdown('</div>', unsafe_allow_html=True)
 
     st.stop()
 
