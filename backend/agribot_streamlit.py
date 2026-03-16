@@ -588,7 +588,7 @@ def show_login():
 
     /* Adjust this value to move the whole login block up/down */
     .login-main-container {
-        margin-top: -600px;   /* ← change this number (e.g., -80, -100) */
+        margin-top: -60px;   /* ← change this number (e.g., -80, -100) */
     }
     </style>""", unsafe_allow_html=True)
 
