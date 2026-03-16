@@ -5,7 +5,6 @@ import gspread
 import numpy as np
 import os
 import base64
-import json
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, timedelta
 import plotly.express as px
@@ -30,9 +29,6 @@ if not os.path.exists(CREDENTIALS_FILE):
     CREDENTIALS_FILE = os.path.expanduser("~/env/Thesis code/credentials.json")
 
 SPREADSHEET_ID = "1mYScsUkoZn84FIoO_QMaku3gZT3Z9df72kPE3ray9-A"
-
-# Persistent session file — survives server restarts / WebSocket drops
-SESSION_FILE = os.path.join(SCRIPT_DIR, ".agribot_session")
 
 # ── Tab favicon ───────────────────────────────────────────────
 _page_icon = "🌱"
@@ -89,39 +85,12 @@ def set_background(path: str):
     </style>""", unsafe_allow_html=True)
 
 # ============================================================
-# PERSISTENT SESSION — read/write a local file so login
-# survives WebSocket drops, browser refreshes, server restarts
-# ============================================================
-def session_save(role: str):
-    try:
-        with open(SESSION_FILE, "w") as f:
-            json.dump({"logged_in": True, "role": role}, f)
-    except Exception:
-        pass
-
-def session_load() -> dict:
-    try:
-        if os.path.exists(SESSION_FILE):
-            with open(SESSION_FILE) as f:
-                return json.load(f)
-    except Exception:
-        pass
-    return {}
-
-def session_clear():
-    try:
-        if os.path.exists(SESSION_FILE):
-            os.remove(SESSION_FILE)
-    except Exception:
-        pass
-
-# ============================================================
-# SESSION STATE — restore from file on every cold start
+# SESSION STATE — initialise once, never reset on rerun
 # ============================================================
 if "logged_in" not in st.session_state:
-    saved = session_load()
-    st.session_state.logged_in = saved.get("logged_in", False)
-    st.session_state.role      = saved.get("role", None)
+    st.session_state.logged_in = False
+if "role" not in st.session_state:
+    st.session_state.role = None
 
 USERS = {
     "admin@agribot.ai": {"password": "admin123", "role": "admin"},
@@ -129,202 +98,178 @@ USERS = {
 }
 
 # ============================================================
-# GLOBAL CSS
-# ── Matches the user-requested hide_st_style pattern exactly:
-#      #MainMenu {visibility: hidden;}
-#      footer    {visibility: hidden;}
-#      header    {visibility: hidden;}
-# ── Plus full scroll-disable and layout fixes
+# GLOBAL CHROME-REMOVAL CSS (runs on every page, before login too)
+# Hides Streamlit toolbar, fork button, deploy button, footer,
+# manage-app overlay, and all whitespace padding.
 # ============================================================
-hide_st_style = """
+HIDE_ST_CHROME = """
 <style>
-/* === USER-REQUESTED: hide hamburger, footer, header === */
-#MainMenu { visibility: hidden; display: none !important; }
-footer    { visibility: hidden; display: none !important; }
-header    { visibility: hidden; display: none !important; }
+/* ── Streamlit top bar & decorations ─────────────────────── */
+[data-testid="stHeader"]          { display:none !important; }
+[data-testid="stToolbar"]         { display:none !important; }
+[data-testid="stDecoration"]      { display:none !important; }
+[data-testid="stStatusWidget"]    { display:none !important; }
+[data-testid="collapsedControl"]  { display:none !important; }
+header[data-testid="stHeader"]    { display:none !important; }
 
-/* === STREAMLIT CHROME — toolbar, deploy, badges, fork === */
-[data-testid="stHeader"]         { display: none !important; }
-[data-testid="stToolbar"]        { display: none !important; }
-[data-testid="stDecoration"]     { display: none !important; }
-[data-testid="stStatusWidget"]   { display: none !important; }
-[data-testid="collapsedControl"] { display: none !important; }
-.stDeployButton                  { display: none !important; }
-button[title="View App"]         { display: none !important; }
-button[title="Manage app"]       { display: none !important; }
-button[kind="headerNoSpacing"]   { display: none !important; }
-a[href*="streamlit.io"]          { display: none !important; }
-.viewerBadge_container__1QSob   { display: none !important; }
-.styles_viewerBadge__CvC9N      { display: none !important; }
-#GithubIcon                      { display: none !important; }
-.css-1dp5vir                     { display: none !important; }
-[data-testid="stAppViewBlockContainer"] ~ div { display: none !important; }
-div[class*="AppView"] > section > div[class*="block-container"] ~ div { display: none !important; }
+/* ── Footer / "Made with Streamlit" ──────────────────────── */
+footer                            { display:none !important; }
+#MainMenu                         { display:none !important; }
+.stDeployButton                   { display:none !important; }
+button[title="View App"]          { display:none !important; }
+button[title="Manage app"]        { display:none !important; }
+a[href*="streamlit.io"]           { display:none !important; }
 
-/* === SCROLL DISABLE — every layer locked === */
-html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    height: 100% !important;
-    width: 100% !important;
-}
-.stApp {
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    height: 100vh !important;
-    width: 100vw !important;
-}
-.main {
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    height: 100% !important;
-}
-[data-testid="stAppViewContainer"]     { overflow: hidden !important; }
-[data-testid="stAppViewBlockContainer"]{ overflow: hidden !important;
-                                         padding-top: 0 !important;
-                                         padding-bottom: 0 !important; }
+/* ── GitHub fork / "Created by" overlay ──────────────────── */
+[data-testid="stAppViewBlockContainer"] ~ div { display:none !important; }
+.viewerBadge_container__1QSob    { display:none !important; }
+.styles_viewerBadge__CvC9N       { display:none !important; }
+#GithubIcon                       { display:none !important; }
+.css-1dp5vir                      { display:none !important; }
+button[kind="headerNoSpacing"]    { display:none !important; }
+div[class*="AppView"] > section > div[class*="block-container"] ~ div { display:none !important; }
+
+/* ── Kill ALL default padding & margins ──────────────────── */
+html, body { margin:0 !important; padding:0 !important; overflow:hidden !important; }
+.stApp     { margin:0 !important; padding:0 !important; overflow:hidden !important; }
+.main      { margin:0 !important; padding:0 !important; overflow:hidden !important; }
+
 .main .block-container {
-    padding: 0 !important;
-    margin: 0 !important;
-    max-width: 100% !important;
-    width: 100% !important;
-    overflow: hidden !important;
+    padding:0 !important;
+    margin:0 !important;
+    max-width:100% !important;
+    width:100% !important;
 }
-/* Remove top gap Streamlit injects above first element */
-.main .block-container > div:first-child { margin-top: 0 !important; }
 
-/* === SIDEBAR === */
+/* Remove gap Streamlit adds above the first element */
+.main .block-container > div:first-child { margin-top:0 !important; }
+
+/* ── Sidebar ─────────────────────────────────────────────── */
 section[data-testid="stSidebar"] {
-    width: 260px !important;
-    background: linear-gradient(180deg, #0a0d12 0%, #0d1117 100%) !important;
-    border-right: 1px solid rgba(46,125,50,0.5) !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
+    width:260px !important;
+    background:linear-gradient(180deg,#0a0d12 0%,#0d1117 100%) !important;
+    border-right:1px solid rgba(46,125,50,0.5) !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
 }
 [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    padding: 0 16px 28px !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    padding:0 16px 28px !important;
 }
-[data-testid="stSidebar"] [data-testid="stElementToolbar"] { display: none !important; }
+[data-testid="stSidebar"] [data-testid="stElementToolbar"] { display:none !important; }
 
-/* === SIDEBAR NAV RADIO === */
-.stRadio > div { gap: 4px !important; width: 100% !important; flex-direction: column !important; }
+/* ── Nav radio ───────────────────────────────────────────── */
+.stRadio > div {
+    gap:4px !important; width:100% !important; flex-direction:column !important;
+}
 .stRadio label {
-    font-size: 12px !important; font-weight: 700 !important;
-    color: #81c784 !important; letter-spacing: 1px !important;
-    text-transform: uppercase !important;
-    background: transparent !important; border: none !important;
-    border-radius: 8px !important; padding: 10px 14px !important;
-    width: 100% !important; cursor: pointer !important;
-    transition: all 0.2s !important;
+    font-size:12px !important; font-weight:700 !important;
+    color:#81c784 !important; letter-spacing:1px !important;
+    text-transform:uppercase !important;
+    background:transparent !important; border:none !important;
+    border-radius:8px !important; padding:10px 14px !important;
+    width:100% !important; cursor:pointer !important; transition:all 0.2s !important;
 }
-.stRadio label:hover { background: rgba(76,175,80,0.12) !important; color: #fff !important; }
+.stRadio label:hover {
+    background:rgba(76,175,80,0.12) !important; color:#fff !important;
+}
 div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
-    background: rgba(46,125,50,0.22) !important;
-    border-left: 3px solid #4CAF50 !important;
-    color: #fff !important; padding-left: 11px !important;
+    background:rgba(46,125,50,0.22) !important;
+    border-left:3px solid #4CAF50 !important;
+    color:#fff !important; padding-left:11px !important;
 }
-.stRadio [data-baseweb="radio"] > div:first-child { display: none !important; }
-.stRadio [data-testid="stMarkdownContainer"] p { margin: 0 !important; }
+.stRadio [data-baseweb="radio"] > div:first-child { display:none !important; }
+.stRadio [data-testid="stMarkdownContainer"] p { margin:0 !important; }
 
-/* === LOGOUT BUTTON === */
+/* ── Logout button ───────────────────────────────────────── */
 [data-testid="stSidebar"] .stButton > button {
-    background: rgba(46,125,50,0.12) !important;
-    border: 1px solid rgba(76,175,80,0.3) !important;
-    color: #81c784 !important; border-radius: 10px !important;
-    width: 100% !important; font-size: 12px !important;
-    font-weight: 700 !important; letter-spacing: 1px !important;
-    text-transform: uppercase !important; padding: 10px !important;
-    transition: all 0.2s !important;
+    background:rgba(46,125,50,0.12) !important;
+    border:1px solid rgba(76,175,80,0.3) !important;
+    color:#81c784 !important; border-radius:10px !important;
+    width:100% !important; font-size:12px !important;
+    font-weight:700 !important; letter-spacing:1px !important;
+    text-transform:uppercase !important; padding:10px !important;
+    transition:all 0.2s !important;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
-    background: rgba(198,40,40,0.15) !important;
-    border-color: rgba(198,40,40,0.5) !important; color: #ef9a9a !important;
+    background:rgba(198,40,40,0.15) !important;
+    border-color:rgba(198,40,40,0.5) !important; color:#ef9a9a !important;
 }
 
-/* === METRIC CARDS === */
+/* ── Metric cards ────────────────────────────────────────── */
 div[data-testid="stMetric"] {
-    background: rgba(13,17,23,0.85) !important;
-    border: 1px solid rgba(76,175,80,0.3) !important;
-    border-radius: 12px !important; padding: 12px 8px !important;
-    text-align: center !important;
+    background:rgba(13,17,23,0.85) !important;
+    border:1px solid rgba(76,175,80,0.3) !important;
+    border-radius:12px !important; padding:12px 8px !important;
+    text-align:center !important;
 }
 div[data-testid="stMetricLabel"] {
-    font-weight: 700 !important; font-size: 10px !important;
-    color: #66bb6a !important; letter-spacing: 1.5px !important;
-    text-transform: uppercase !important; justify-content: center !important;
+    font-weight:700 !important; font-size:10px !important;
+    color:#66bb6a !important; letter-spacing:1.5px !important;
+    text-transform:uppercase !important; justify-content:center !important;
 }
 div[data-testid="stMetricValue"] {
-    font-size: 28px !important; font-weight: 900 !important;
-    color: #fff !important; margin-top: 2px !important;
+    font-size:28px !important; font-weight:900 !important;
+    color:#fff !important; margin-top:2px !important;
 }
 
-/* === DASHBOARD CUSTOM CARDS === */
+/* ── Custom dashboard cards ──────────────────────────────── */
 .cam-card {
-    background: rgba(13,17,23,0.9);
-    border: 1px solid rgba(46,125,50,0.4);
-    border-radius: 16px; padding: 14px;
+    background:rgba(13,17,23,0.9);
+    border:1px solid rgba(46,125,50,0.4);
+    border-radius:16px; padding:14px;
 }
 .section-title {
-    font-size: 11px; font-weight: 700; color: #66bb6a;
-    letter-spacing: 1.5px; text-transform: uppercase;
-    margin-bottom: 10px; margin-top: 0;
-    border-left: 3px solid #4CAF50; padding-left: 8px;
+    font-size:11px; font-weight:700; color:#66bb6a;
+    letter-spacing:1.5px; text-transform:uppercase;
+    margin-bottom:10px; margin-top:0;
+    border-left:3px solid #4CAF50; padding-left:8px;
 }
 .alert-item {
-    padding: 6px 10px;
-    background: rgba(183,28,28,0.12);
-    border: 1px solid rgba(183,28,28,0.3);
-    color: #ef9a9a; border-radius: 8px;
-    margin: 4px 0; font-size: 12px;
+    padding:6px 10px;
+    background:rgba(183,28,28,0.12);
+    border:1px solid rgba(183,28,28,0.3);
+    color:#ef9a9a; border-radius:8px;
+    margin:4px 0; font-size:12px;
 }
 .sched-badge {
-    display: inline-block;
-    background: rgba(21,101,192,0.2);
-    border: 1px solid rgba(21,101,192,0.5);
-    border-radius: 6px; padding: 2px 7px;
-    font-size: 10px; color: #90CAF9;
-    font-weight: 700; margin: 0 2px;
+    display:inline-block;
+    background:rgba(21,101,192,0.2);
+    border:1px solid rgba(21,101,192,0.5);
+    border-radius:6px; padding:2px 7px;
+    font-size:10px; color:#90CAF9;
+    font-weight:700; margin:0 2px;
 }
-.cam-meta { font-size: 10px; color: #66bb6a; margin-top: 6px; line-height: 1.6; }
+.cam-meta {
+    font-size:10px; color:#66bb6a;
+    margin-top:6px; line-height:1.6;
+}
 .drive-link {
-    display: inline-block; margin-top: 8px;
-    background: rgba(46,125,50,0.15);
-    border: 1px solid rgba(76,175,80,0.3);
-    border-radius: 8px; padding: 4px 10px;
-    color: #81c784; font-size: 11px; text-decoration: none;
+    display:inline-block; margin-top:8px;
+    background:rgba(46,125,50,0.15);
+    border:1px solid rgba(76,175,80,0.3);
+    border-radius:8px; padding:4px 10px;
+    color:#81c784; font-size:11px; text-decoration:none;
 }
 .cam-placeholder {
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    min-height: 260px;
-    background: rgba(46,125,50,0.04);
-    border: 2px dashed rgba(46,125,50,0.3);
-    border-radius: 12px; text-align: center; padding: 30px;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    min-height:260px;
+    background:rgba(46,125,50,0.04);
+    border:2px dashed rgba(46,125,50,0.3);
+    border-radius:12px; text-align:center; padding:30px;
 }
 
-/* === PULSE ANIMATION === */
+/* ── Pulse animation ─────────────────────────────────────── */
 @keyframes pulse {
-    0%,100% { box-shadow: 0 0 5px #4CAF50; }
-    50%      { box-shadow: 0 0 14px #4CAF50; opacity: 0.7; }
+    0%,100% { box-shadow:0 0 5px #4CAF50; }
+    50%      { box-shadow:0 0 14px #4CAF50; opacity:0.7; }
 }
 </style>
 """
-st.markdown(hide_st_style, unsafe_allow_html=True)
-
-# ============================================================
-# AUTO-REFRESH — placed BEFORE login check so it always fires,
-# keeping the WebSocket alive regardless of login state.
-# st_autorefresh does NOT wipe session_state (it re-runs via WS).
-# Combined with file-based session persistence above, the user
-# will NEVER be logged out unless they click Logout.
-# ============================================================
-st_autorefresh(interval=30_000, limit=None, key="dashboard_autorefresh")
+st.markdown(HIDE_ST_CHROME, unsafe_allow_html=True)
 
 # ============================================================
 # LOGIN PAGE
@@ -340,44 +285,45 @@ def login():
         f'box-shadow:0 0 28px rgba(76,175,80,0.5);"/></div>'
     ) if logo_b64 else ""
 
-    # CSS: plain string (no f-string to avoid {{ }} escape conflicts)
+    # CSS separately (no f-string — avoids {{ }} escape conflicts)
     st.markdown("""<style>
     [data-testid="stForm"] {
-        background: linear-gradient(160deg, rgba(27,94,32,0.65) 0%,
+        background:linear-gradient(160deg,rgba(27,94,32,0.65) 0%,
             rgba(46,125,50,0.55) 100%) !important;
-        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-        border-radius: 20px; border: 1px solid rgba(165,214,167,0.35);
-        box-shadow: 0 12px 40px rgba(0,0,0,0.35);
-        padding: 34px 44px 44px;
+        backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+        border-radius:20px; border:1px solid rgba(165,214,167,0.35);
+        box-shadow:0 12px 40px rgba(0,0,0,0.35);
+        padding:34px 44px 44px;
     }
     [data-testid="stForm"] input {
-        background: rgba(255,255,255,0.1) !important; color: #fff !important;
-        border: 1px solid rgba(165,214,167,0.45) !important;
-        border-radius: 10px !important; font-size: 14px !important;
+        background:rgba(255,255,255,0.1) !important; color:#fff !important;
+        border:1px solid rgba(165,214,167,0.45) !important;
+        border-radius:10px !important; font-size:14px !important;
     }
     [data-testid="stForm"] input::placeholder {
-        color: rgba(200,230,200,0.6) !important;
+        color:rgba(200,230,200,0.6) !important;
     }
     [data-testid="stForm"] button[kind="primaryFormSubmit"] {
-        background: linear-gradient(90deg,#2e7d32,#66bb6a) !important;
-        border: none !important; color: #fff !important;
-        font-weight: 700 !important; border-radius: 10px !important;
-        letter-spacing: 1.5px; font-size: 14px !important;
-        padding: 12px !important; margin-top: 4px !important;
+        background:linear-gradient(90deg,#2e7d32,#66bb6a) !important;
+        border:none !important; color:#fff !important;
+        font-weight:700 !important; border-radius:10px !important;
+        letter-spacing:1.5px; font-size:14px !important;
+        padding:12px !important; margin-top:4px !important;
     }
     .stTextInput label {
-        color: #c8e6c9 !important; font-weight: 600 !important;
-        font-size: 13px !important;
+        color:#c8e6c9 !important; font-weight:600 !important;
+        font-size:13px !important;
     }
     </style>""", unsafe_allow_html=True)
 
-    # Header + logo HTML (f-string only for logo_html — no CSS braces)
+    # Header HTML (f-string only for logo_html — no CSS braces)
     st.markdown(
-        f'<div style="display:flex;flex-direction:column;align-items:center;margin-top:52px;">'
+        f'<div style="display:flex;flex-direction:column;align-items:center;'
+        f'margin-top:52px;">'
         f'{logo_html}'
         f'<div style="text-align:center;font-size:38px;font-weight:900;color:#fff;'
-        f'letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,0.6);margin-bottom:6px;">'
-        f'AgriBot-AI</div>'
+        f'letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,0.6);'
+        f'margin-bottom:6px;">AgriBot-AI</div>'
         f'<div style="text-align:center;color:#81c784;font-size:13px;'
         f'letter-spacing:3px;text-transform:uppercase;margin-bottom:24px;">'
         f'Smart Farming &middot; Intelligent Monitoring</div>'
@@ -393,15 +339,21 @@ def login():
                 if email in USERS and USERS[email]["password"] == password:
                     st.session_state.logged_in = True
                     st.session_state.role      = USERS[email]["role"]
-                    session_save(USERS[email]["role"])   # persist to file
                     st.rerun()
                 else:
                     st.error("Invalid email or password")
 
-# If not logged in → show login and stop. Nothing below runs.
+# Show login if not authenticated — then STOP (never runs dashboard code)
 if not st.session_state.logged_in:
     login()
     st.stop()
+
+# ============================================================
+# AUTO-REFRESH — client-side JS every 30 s
+# Does NOT call st.rerun() directly → session_state is always preserved
+# The page only goes back to login if the user explicitly clicks Logout
+# ============================================================
+st_autorefresh(interval=30_000, key="dashboard_autorefresh")
 
 # ============================================================
 # DATA FUNCTIONS
@@ -547,7 +499,6 @@ with st.sidebar:
     </div>""", unsafe_allow_html=True)
 
     if st.button("Logout", use_container_width=True):
-        session_clear()                        # delete session file
         st.session_state.logged_in = False
         st.session_state.role      = None
         st.rerun()
@@ -567,6 +518,7 @@ HUM_LOW,  HUM_HIGH  = 50,  85
 # PAGE: LIVE DASHBOARD
 # ==============================================================
 if page == "DASHBOARD":
+    # ── Page title ─────────────────────────────────────────────
     st.markdown(
         '<div style="padding:10px 16px 4px;">'
         '<div style="font-size:22px;font-weight:900;color:#fff;line-height:1.2;">'
@@ -585,20 +537,25 @@ if page == "DASHBOARD":
     avg_ph   = float(latest['ph'].mean())
     avg_soil = float(latest['soil_moisture'].mean())
 
+    # ── 4 metric cards ─────────────────────────────────────────
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("TEMP",     f"{avg_temp:.1f} °C")
     m2.metric("HUMIDITY", f"{avg_hum:.0f} %")
     m3.metric("PH",       f"{avg_ph:.2f}")
     m4.metric("SOIL",     f"{avg_soil:.0f} %")
 
+    # ── Load latest image ──────────────────────────────────────
     img_data = get_latest_image()
 
+    # ── Main 2-column row ──────────────────────────────────────
     cam_col, right_col = st.columns([3, 2], gap="medium")
 
+    # LEFT — camera
     with cam_col:
         st.markdown('<div class="cam-card">', unsafe_allow_html=True)
         st.markdown('<div class="section-title">📷 Plant Health Feed</div>',
                     unsafe_allow_html=True)
+
         if img_data.get("url"):
             st.image(img_data["url"], use_container_width=True)
             pid_txt = f"🥬 Plant {img_data['plant_id']}" if img_data.get("plant_id") else ""
@@ -622,10 +579,13 @@ if page == "DASHBOARD":
                 '<span class="sched-badge">7:00 AM</span>'
                 '<span class="sched-badge">12:00 NN</span>'
                 '<span class="sched-badge">12:30 PM</span></div>'
-                '</div>', unsafe_allow_html=True)
+                '</div>',
+                unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
+    # RIGHT — AI + Alerts
     with right_col:
+        # Last updated
         if not latest.empty:
             last_ts = pd.to_datetime(latest['timestamp']).max()
             st.markdown(
@@ -633,6 +593,7 @@ if page == "DASHBOARD":
                 f'margin-bottom:8px;">🔄 Updated {last_ts.strftime("%H:%M:%S")}</div>',
                 unsafe_allow_html=True)
 
+        # AI Recommendation
         st.markdown('<div class="section-title">🤖 AI Health Recommendation</div>',
                     unsafe_allow_html=True)
         p1 = latest[latest['plant_id'] == 1]
@@ -652,6 +613,8 @@ if page == "DASHBOARD":
             st.warning("Awaiting sensor data or AI model...")
 
         st.markdown("<div style='margin:10px 0 2px;'></div>", unsafe_allow_html=True)
+
+        # Alerts
         st.markdown('<div class="section-title">🔔 Recent Alerts</div>',
                     unsafe_allow_html=True)
         alerts = []
@@ -669,6 +632,7 @@ if page == "DASHBOARD":
             alerts.append(f"🌡️ Temperature: {avg_temp:.1f}°C out of range")
         if avg_hum < HUM_LOW or avg_hum > HUM_HIGH:
             alerts.append(f"💧 Humidity: {avg_hum:.0f}% out of range")
+
         if alerts:
             for a in alerts[:6]:
                 st.markdown(f'<div class="alert-item">{a}</div>', unsafe_allow_html=True)
@@ -745,10 +709,10 @@ elif page == "LOGS":
     logs = get_historical_data(plant_id=None, hours=24)
     if not logs.empty:
         def classify(r):
-            if r['temp_c'] < TEMP_LOW or r['temp_c'] > TEMP_HIGH:               return "🌡️ Temp alert"
-            if r['humidity'] < HUM_LOW or r['humidity'] > HUM_HIGH:             return "💧 Humidity alert"
-            if r['ph'] < PH_LOW or r['ph'] > PH_HIGH:                           return "🧪 pH alert"
-            if r['soil_moisture'] < SOIL_DRY or r['soil_moisture'] > SOIL_WET:  return "🌱 Soil alert"
+            if r['temp_c'] < TEMP_LOW or r['temp_c'] > TEMP_HIGH:            return "🌡️ Temp alert"
+            if r['humidity'] < HUM_LOW or r['humidity'] > HUM_HIGH:          return "💧 Humidity alert"
+            if r['ph'] < PH_LOW or r['ph'] > PH_HIGH:                        return "🧪 pH alert"
+            if r['soil_moisture'] < SOIL_DRY or r['soil_moisture'] > SOIL_WET: return "🌱 Soil alert"
             return "Normal"
         logs['event'] = logs.apply(classify, axis=1)
         cols = ['timestamp','plant_id','temp_c','humidity','soil_moisture','ph','event']
@@ -778,4 +742,4 @@ elif page == "USERS":
     }))
     st.info("Future feature: add / remove users via database.")
 
-# ── No time.sleep / st.rerun() here — st_autorefresh handles data refresh ──
+# ── NO time.sleep / st.rerun() here — st_autorefresh handles it ──
