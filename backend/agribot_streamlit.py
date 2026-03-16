@@ -607,7 +607,7 @@ def show_login():
         f'letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,0.6);margin-bottom:4px;">'
         f'AgriBot-AI</div>'
         f'<div style="text-align:center;color:#81c784;font-size:12px;'
-        f'letter-spacing:3px;text-transform:uppercase;margin-bottom:-50px;">'
+        f'letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;">'
         f'Smart Farming &middot; Intelligent Monitoring</div>'
         f'</div>',
         unsafe_allow_html=True)
