@@ -597,23 +597,27 @@ def show_login():
         f'box-shadow:0 0 28px rgba(76,175,80,0.5);"/></div>'
     ) if logo_b64 else ""
 
-    # Use a single centered column, and inside it a flex container that fills the column height
+    # Centered column
     _, mid, _ = st.columns([1, 1.6, 1])
     with mid:
-        # This container uses the full column height (100vh) and centers content vertically
+        # Flex container that fills the column height and centers its children
         st.markdown(
             '<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">',
             unsafe_allow_html=True
         )
 
-        # Logo and title
+        # Logo
         st.markdown(logo_html, unsafe_allow_html=True)
+
+        # Title
         st.markdown(
             '<div style="text-align:center; font-size:34px; font-weight:900; color:#fff; '
             'letter-spacing:1px; text-shadow:0 2px 12px rgba(0,0,0,0.6); margin-bottom:4px;">'
             'AgriBot-AI</div>',
             unsafe_allow_html=True
         )
+
+        # Subtitle
         st.markdown(
             '<div style="text-align:center; color:#81c784; font-size:12px; '
             'letter-spacing:3px; text-transform:uppercase; margin-bottom:20px;">'
