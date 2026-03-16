@@ -376,7 +376,7 @@ div[data-testid="stMetricValue"] {
     transition: transform 0.2s, box-shadow 0.2s !important;
     box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
     width: auto !important;
-    transform: translate(100px, 50px);}
+}
 .landing-btn-wrapper button:hover {
     transform: scale(1.05) !important;
     box-shadow: 0 12px 32px rgba(76,175,80,0.7) !important;
@@ -547,7 +547,7 @@ USERS = {
 st_autorefresh(interval=30_000, limit=None, key="dashboard_autorefresh")
 
 # ============================================================
-# PAGE: LANDING
+# PAGE: LANDING (with adjusted button position)
 # ============================================================
 def show_landing():
     if ACTUAL_LANDING_BG:
@@ -566,8 +566,8 @@ def show_landing():
     # Center the button with a top margin to appear below the existing text on the background
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        # Adjust margin-top if needed (50vh–60vh works on 1024×600)
-        st.markdown("<div style='margin-top: 55vh;'></div>", unsafe_allow_html=True)
+        # Adjust margin-top if needed (try 50vh–65vh)
+        st.markdown("<div style='margin-top: 58vh;'></div>", unsafe_allow_html=True)
         st.markdown('<div class="landing-btn-wrapper">', unsafe_allow_html=True)
         if st.button("🚀  Let's Start", use_container_width=True, key="landing_btn"):
             st.session_state.page = "login"
