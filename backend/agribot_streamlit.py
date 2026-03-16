@@ -8,7 +8,7 @@ import base64
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, timedelta
 import plotly.express as px
-from streamlit_autorefresh import st_autorefresh
+from streamlit_autorefresh import st_autorefresh   # requires streamlit-autorefresh in requirements.txt
 
 # ============================================================
 # PATHS
@@ -30,7 +30,7 @@ if not os.path.exists(CREDENTIALS_FILE):
 
 SPREADSHEET_ID = "1mYScsUkoZn84FIoO_QMaku3gZT3Z9df72kPE3ray9-A"
 
-# ── Tab favicon ───────────────────────────────────────────────
+# Tab favicon
 _page_icon = "🌱"
 if ACTUAL_LOGO:
     try:
@@ -154,7 +154,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ============================================================
-# GLOBAL CSS (Ultra-clean, no scroll, hide everything)
+# GLOBAL CSS – ULTRA CLEAN, HIDE ALL STREAMLIT BRANDING
 # ============================================================
 st.markdown("""<style>
 /* ===== LIGHT / DARK MODE VARIABLES ===== */
@@ -178,26 +178,34 @@ st.markdown("""<style>
 }
 body { background-color: var(--bg-color); color: var(--text-color); }
 
-/* ===== HIDE EVERYTHING STREAMLIT ===== */
-header[data-testid="stHeader"],
-[data-testid="stToolbar"],
-footer,
-button[kind="headerNoSpacing"],
+/* ===== HIDE ALL STREAMLIT UI ELEMENTS ===== */
 #MainMenu,
+footer,
+header,
+[data-testid="stToolbar"],
 [data-testid="stDecoration"],
 [data-testid="stStatusWidget"],
-[data-testid="stSidebarUserContent"] + div,  /* the "Manage app" button area */
-[data-testid="collapsedControl"] {
+[data-testid="stSidebarUserContent"] + div,
+[data-testid="collapsedControl"],
+.stApp > header,
+.stApp > footer,
+div[data-testid="stBottomBlock"] > div:first-child,
+div[data-testid="stBottom"] > div:first-child,
+a[href*="streamlit"],
+button[kind="headerNoSpacing"],
+button[title="View All Apps"],
+button[title="Manage app"],
+[data-testid="stAppViewContainer"] > section > div:first-child > div:first-child {
     display: none !important;
 }
 
-/* ===== FIX MAIN CONTAINER TO FULL HEIGHT, NO SCROLL ===== */
+/* ===== MAIN CONTAINER – FULL SCREEN, NO PADDING, NO SCROLL ===== */
 .main .block-container {
     max-width: 100% !important;
-    padding: 0 !important;          /* remove any padding */
-    margin: 0 !important;            /* remove any margin */
-    height: 100vh !important;        /* full viewport height */
-    overflow: hidden !important;     /* no scrolling at all */
+    padding: 0 !important;
+    margin: 0 !important;
+    height: 100vh !important;
+    overflow: hidden !important;
     display: flex;
     flex-direction: column;
 }
@@ -213,6 +221,9 @@ section[data-testid="stSidebar"] {
     flex-direction: column !important;
     align-items: center !important;
     padding: 0 16px 28px !important;
+}
+[data-testid="stSidebar"] [data-testid="stElementToolbar"] {
+    display: none !important;
 }
 
 /* ===== METRIC CARDS ===== */
@@ -342,12 +353,12 @@ div[data-testid="stMetricValue"] {
 </style>""", unsafe_allow_html=True)
 
 # ============================================================
-# CLIENT-SIDE AUTO-REFRESH (every 30 seconds)
+# CLIENT‑SIDE AUTO‑REFRESH (every 30 seconds)
 # ============================================================
 st_autorefresh(interval=30000, key="auto_refresh")
 
 # ============================================================
-# DATA FUNCTIONS
+# DATA FUNCTIONS (unchanged – keep your existing functions here)
 # ============================================================
 @st.cache_resource
 def load_assets():
@@ -430,7 +441,7 @@ def get_latest_image() -> dict:
         return {}
 
 # ============================================================
-# SIDEBAR
+# SIDEBAR (unchanged – keep your existing sidebar code)
 # ============================================================
 sheet    = get_sheet()
 logo_b64 = file_to_b64(ACTUAL_LOGO)
@@ -527,218 +538,432 @@ def health_of(soil, ph):
 if page == "DASHBOARD":
     st.markdown("""
     <div style="margin-bottom:6px;">
-        <div style="font-size:26px;font-weight:900;color:#ffffff;
-                    letter-spacing:0.3px;line-height:1.2;">
-            Real-Time Monitoring</div>
-        <div style="font-size:13px;color:#66bb6a;letter-spacing:1px;margin-top:4px;">
-            Greenhouse Overview — AgriBot-AI Crop System</div>
-    </div>""", unsafe_allow_html=True)
+        <div style="font-size:26px;font-weight:900;900;color:#color:#ffffff;
+                    letterffffff;
+-spacing                    letter-spacing:0.3:0px;.3px;line-height:1line-height:1.2.2;">
+           ;">
+            Real-Time Monitoring Real-Time Monitoring</div>
+       </div>
+        <div style="font-size: <div style="font-size:13px13px;color;color:#:#66bb666bb6a;a;letter-spacing:letter-spacing:1px1px;margin-top:4px;margin-top:4px;">
+            Greenhouse Overview;">
+            Greenhouse Overview — Agri — AgriBot-AI CropBot-AI Crop System System</div>
+    </</div>
+    </div>""",div>""", unsafe_ unsafe_allow_html=True)
 
-    if latest.empty:
-        st.warning("No sensor data yet — waiting for the Pi...")
+    ifallow_html=True)
+
+    if latest.empty latest.empty:
+        st.warning("No sensor data yet:
+        st.warning("No sensor data yet — waiting for the — waiting for the Pi...")
+        Pi... st.stop")
         st.stop()
 
-    # Aggregate across all plants (greenhouse-level view)
-    avg_temp = float(latest['temp_c'].mean())
-    avg_hum  = float(latest['humidity'].mean())
+    # Aggregate()
+
+    # Aggregate across all plants ( across all plants (greenhousegreenhouse-level view)
+    avg_temp = float-level view)
+    avg_temp = float(latest(latest['temp['temp_c'].mean())
+_c'].mean())
+    avg_hum  =    avg_hum  = float(latest[' float(latest['humidityhumidity'].mean())
     avg_ph   = float(latest['ph'].mean())
-    avg_soil = float(latest['soil_moisture'].mean())
+   '].mean())
+    avg_ph   = float(latest['ph'].mean())
+    avg_ avg_soil =soil = float(latest[' float(latest['soil_moistsoil_moisture'].ure'].mean())
 
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("TEMP",     f"{avg_temp:.1f} °C")
-    m2.metric("HUMIDITY", f"{avg_hum:.0f} %")
-    m3.metric("PH",       f"{avg_ph:.2f}")
-    m4.metric("SOIL",     f"{avg_soil:.0f} %")
+mean())
 
-    st.markdown("<div style='margin:18px 0 6px;'></div>", unsafe_allow_html=True)
+    m    m1,1, m2, m m2, m3,3, m4 m4 = st.columns( = st.columns(4)
+4)
+    m1    m1.metric("TEMP",    .metric("TEMP",     f"{ f"{avg_tempavg_temp:.1f}:.1f} °C °C")
+   ")
+    m2.metric m2.metric("H("HUMIDITY", f"{avg_hum:.0f} %")
+    m3.metricUMIDITY", f"{avg_hum:.0f} %")
+    m3.metric("PH("PH",       f"{",       f"{avg_avg_ph:.2fph:.2f}")
+    m4}")
+    m4.metric("SO.metric("SOIL",IL",     f     f"{avg_soil"{avg_soil:.0:.0f}f} %")
+
+    st %")
+
+    st.markdown.markdown("<div("<div style=' style='margin:margin:18px 0 6px;18px 0 6px;'></div>", unsafe_allow_html=True)
+
+    with st.spinner("Loading latest capture..."'></div>", unsafe_allow_html=True)
 
     with st.spinner("Loading latest capture..."):
-        img_data = get_latest_image()
+        img_data):
+        img_data = get = get_latest_image()
 
-    cam_col, sensor_col = st.columns([3, 2], gap="large")
+    cam_latest_image()
+
+    cam_col, sensor_col_col, sensor_col = st.columns = st.columns([3,([3, 2 2], gap="large], gap="large")
+
+   ")
 
     with cam_col:
-        st.markdown('<div class="cam-card">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">📷 Plant Health Feed</div>', unsafe_allow_html=True)
+ with cam_col:
+        st.markdown('<div        st.markdown('<div class="cam-card class="cam-card">', unsafe_allow_html=True)
+        st.markdown('<div class="">', unsafe_allow_html=True)
+        st.markdown('<div class="section-titlesection-title">">📷 Plant📷 Plant Health Feed</div>', Health Feed</div>', unsafe_allow_html unsafe_allow_html=True)
 
-        if img_data.get("url"):
-            st.image(img_data["url"], use_container_width=True)
-            pid_txt = f"🥬 Plant {img_data['plant_id']}" if img_data.get("plant_id") else ""
-            ts_txt  = f"🕒 {img_data['timestamp']}"       if img_data.get("timestamp") else ""
+=True)
+
+        if        if img_data.get("url"):
+            st.image(img_data[" img_data.get("url"):
+            st.image(img_data["url"],url"], use_container use_container_width=True)
+           _width=True)
+            pid_txt = pid_t f"xt = f"🥬🥬 Plant {img_data Plant {img_data['plant['plant_id']_id']}" if}" if img_data img_data.get(".get("plant_id") else ""
+           plant_id") else ""
+            ts_txt  = f" ts_txt  = f"🕒 {img🕒 {img_data['_data['timestamp']timestamp']}"      }"       if img_data.get if img_data.get("timestamp") else ""
+            st.mark("timestamp") else ""
             st.markdown(
-                f'<div class="cam-meta">'
-                f'{pid_txt}&nbsp;&nbsp;{ts_txt}<br>'
-                f'Captured at '
-                f'<span class="sched-badge">7:00 AM</span>'
-                f'<span class="sched-badge">12:00 NN</span>'
-                f'<span class="sched-badge">12:30 PM</span>'
-                f'</div>'
-                f'<a href="{img_data["url"]}" target="_blank" class="drive-link">'
-                f'☁️ View in Google Drive ↗</a>',
+down(
+                f                f''<div class<div class="cam="cam-meta-meta">'
+">'
+                f'{pid                f'{pid_txt}&nbsp_txt}&nbsp;&nbsp;{;&nbsp;{ts_tts_txtxt}<br>'
+               }<br>'
+                f' f'Captured at '
+Captured at '
+                f'                f'<span class="s<span class="sched-bched-badge">7:adge">7:00 AM</span00 AM</span>'
+>'
+                f                f'<span class="sched-badge">'<span class="sched-badge">12:12:0000 NN</ NN</span>'
+span>'
+                f                f''<span class="sched-badge"><span class="sched-badge">12:30 PM</span12:30 PM</span>'
+>'
+                f'</                f'</div>'
+                f'<a href="{div>'
+                f'<a href="{img_dataimg_data["url"]}"["url"]}" target="_blank" class=" target="_blank" class="drive-link">'
+drive-link">'
+                f                f'☁️'☁️ View in Google Drive ↗</ View in Google Drive ↗</a>a>',
+                unsafe_',
                 unsafe_allow_html=True)
+        elseallow_html=True)
         else:
-            st.markdown(
-                '<div class="cam-placeholder">'
-                '<div style="font-size:54px;margin-bottom:16px;">📷</div>'
-                '<div style="font-size:15px;font-weight:700;color:#4CAF50;">No image yet</div>'
-                '<div style="font-size:12px;color:#2e7d32;margin-top:8px;">'
+           :
+            st.mark st.markdown(
+               down(
+                '<div class '<div class="cam="cam-placeholder">'
+-placeholder">'
+                '<div style="font                '<div style="font-size:54px;margin-bottom:16px;">📷</div>'
+                '<div-size:54px;margin-bottom:16px;">📷</div>'
+                '<div style=" style="font-size:15px;font-weight:700;color:#4CAF50;">No image yet</font-size:15px;font-weight:700;color:#4CAF50;">No image yet</div>'
+               div>'
+                '<div style=" '<div style="font-sizefont-size:12:12px;px;color:#color:#2e2e7d7d32;32;margin-top:8px;">margin-top:8px;">'
                 'Pi captures at '
-                '<span class="sched-badge">7:00 AM</span>'
+               '
+                'Pi captures at '
+                '<span '<span class="sched class="sched-badge">7:00-badge">7:00 AM</span>'
                 '<span class="sched-badge">12:00 NN</span>'
-                '<span class="sched-badge">05:00 PM</span></div>'
+                '<span AM</span>'
+                '<span class="sched-badge">12:00 NN</span>'
+                '<span class="sched class="sched-badge">05:00-badge">05:00 PM</span></div>'
+                '</div PM</span></div>'
                 '</div>',
+                unsafe>',
                 unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+       _allow_html=True)
+        st.mark st.markdown('down('</div</div>',>', unsafe_allow_html=True)
 
     with sensor_col:
-        if not latest.empty:
-            last_ts = pd.to_datetime(latest['timestamp']).max()
-            st.markdown(
-                f'<div style="text-align:right;font-size:11px;color:#388e3c;'
-                f'margin-bottom:12px;">🔄 Updated {last_ts.strftime("%H:%M:%S")}</div>',
-                unsafe_allow_html=True)
+        if not unsafe_allow_html=True)
 
-        st.markdown('<div class="section-title">🤖 AI Health Recommendation</div>', unsafe_allow_html=True)
-        p1 = latest[latest['plant_id'] == 1]
-        if not p1.empty and model and scaler:
+    with sensor_col:
+        if not latest.empty latest.empty:
+            last_:
+            last_ts = pd.tots = pd.to_datetime_datetime(latest(latest['timestamp']).['timestamp']).max()
+max()
+            st.markdown            st.markdown(
+                f'(
+                f'<div style="<div style="text-align:right;fonttext-align:right;font-size:-size:11px11px;color;color:#388e3:#388e3c;c;'
+                f'margin-bottom:12'
+                f'margin-bottom:12px;">🔄px;">🔄 Updated {last_ Updated {last_ts.strts.strftime("%H:%ftime("%H:%M:%S")}</divM:%S")}</div>',
+                unsafe>',
+                unsafe_allow_html=True_allow_html=True)
+
+        st.markdown('<div class)
+
+        st.markdown('<div class="section="section-title">-title">🤖🤖 AI Health AI Health Recommendation</ Recommendation</div>div>', unsafe_allow_html=True', unsafe_allow_html=True)
+       )
+        p1 = latest p1 = latest[latest[latest['plant['plant_id'] == _id'] == 1]
+1]
+        if not p1.empty and model and scal        if not p1.empty and model and scaler:
+            tryer:
             try:
-                feat = np.array([[float(p1.iloc[0]['temp_c']),
-                                  float(p1.iloc[0]['humidity']),
-                                  float(p1.iloc[0]['ph'])]])
-                pred = model.predict(scaler.transform(feat))[0]
+                feat = np.array:
+                feat = np.array([[float([[float(p1(p1.iloc.iloc[0]['temp[0]['temp_c']),
+                                 _c'] float(p),
+                                  float(p1.il1.ilococ[0]['[0]['humidityhumidity']),
+']),
+                                  float(p1                                  float(p1.iloc.iloc[0]['ph'])][0]['ph'])]])
+                pred = model.predict])
+                pred = model.predict(scaler.transform(feat))(scaler.transform(feat))[0]
+               [0]
                 if pred == -1:
-                    st.error("🚨 **ALERT** — Anomalous conditions detected in the greenhouse.")
-                else:
-                    st.success("✅ **HEALTHY** — Crop environment is optimal.")
-            except Exception as e:
-                st.info(f"AI model processing... ({e})")
+                    st.error("🚨 if pred == -1:
+                    st.error("🚨 **ALERT** — Anomalous **ALERT** — Anomalous conditions detected in the conditions detected in the greenhouse.")
+ greenhouse.")
+                else                else:
+                   :
+                    st.success("✅ **HEALTHY** — Crop environment st.success("✅ **HEALTHY** — Crop environment is optimal is optimal.")
+           .")
+            except Exception as e except Exception as e:
+               :
+                st.info(f"AI model processing... st.info(f"AI model processing... ({e ({e})")
+        else})")
         else:
-            st.warning("Awaiting sensor data or AI model...")
+           :
+            st.warning(" st.warning("Awaiting sensor data orAwaiting sensor data or AI model...")
 
-        st.markdown("<div style='margin:14px 0 4px;'></div>", unsafe_allow_html=True)
+ AI model...")
 
-        st.markdown('<div class="section-title">🔔 Recent Alerts</div>', unsafe_allow_html=True)
+        st        st.markdown("<div.markdown("<div style=' style='margin:14pxmargin: 0 414px 0 4px;'></div>",px;'></div>", unsafe_allow_html=True)
+
+        st.markdown unsafe_allow_html=True)
+
+        st.markdown('<div class="section-title('<div class="section-title">">🔔 Recent🔔 Recent Alerts</div>', Alerts</div>', unsafe_allow_html unsafe_allow_html=True)
         alerts = []
-        for _, plant in latest.iterrows():
-            pid  = int(plant['plant_id'])
-            soil = float(plant['soil_moisture'])
-            ph   = float(plant['ph'])
-            if soil < SOIL_DRY:
-                alerts.append(f"🌱 Plant {pid}: soil too dry ({soil:.0f}%)")
-            elif soil > SOIL_WET:
-                alerts.append(f"🌱 Plant {pid}: soil too wet ({soil:.0f}%)")
-            if ph < PH_LOW or ph > PH_HIGH:
-                alerts.append(f"🧪 Plant {pid}: pH out of range ({ph:.2f})")
-        if avg_temp < TEMP_LOW or avg_temp > TEMP_HIGH:
-            alerts.append(f"🌡️ Temperature: {avg_temp:.1f}°C out of range")
-        if avg_hum < HUM_LOW or avg_hum > HUM_HIGH:
+        for=True)
+        alerts = []
+        for _, plant _, plant in latest.iterrows():
+            pid  in latest.iterrows():
+            pid  = int(plant = int(plant['plant_id'])
+['plant_id'])
+            soil            soil = float(plant['soil = float(plant['soil_moisture_moisture'])
+            ph  '])
+            ph   = float = float(plant['ph(plant['ph'])
+            if soil'])
+            if soil < SO < SOIL_DRYIL_DRY:
+               :
+                alerts.append alerts.append(f"(f"🌱🌱 Plant {pid}: Plant {pid}: soil too dry ({ soil too dry ({soil:.0f}%)soil:.0f}%)")
+           ")
+            elif soil elif soil > SOIL_WET:
+ > SOIL_WET:
+                alerts                alerts.append(f".append(f"🌱 Plant🌱 Plant {pid}: soil {pid}: soil too wet ({soil too wet ({soil:.0f}:.0f}%)")
+%)")
+            if            if ph ph < PH_L < PH_LOW orOW or ph > ph > PH_H PH_HIGH:
+                alertsIGH:
+                alerts.append(f.append(f""🧪 Plant🧪 Plant {pid {pid}: pH}: pH out of out of range ({ range ({ph:.ph:.2f})")
+2f})")
+        if        if avg_temp < TEMP_L avg_temp < TEMP_LOW or avg_temp > TEMOW or avg_temp > TEMP_HIGH:
+            alertsP_HIGH:
+            alerts.append(f".append(f"🌡️ Temperature: {avg🌡️ Temperature: {avg_temp:.1f_temp:.1f}°}°C out of range")
+       C out of range")
+        if avg_hum < HUM if avg_hum < HUM_LOW_LOW or avg or avg_hum > HUM_HIGH:
+            alerts.append(f"💧 Humidity: {avg_hum:.0f}% out_hum > HUM_HIGH:
             alerts.append(f"💧 Humidity: {avg_hum:.0f}% out of range")
 
-        if alerts:
-            for a in alerts[:6]:
-                st.markdown(f'<div class="alert-item">{a}</div>', unsafe_allow_html=True)
-        else:
-            st.success("✅ All greenhouse parameters are within range.")
+        if alerts of range")
 
+        if alerts:
+           :
+            for a in alerts for a in alerts[:6[:6]:
+                st.mark]:
+                st.markdown(fdown(f'<div class'<div class="alert="alert-item">{-item">{a}</div>', unsafea}</div>', unsafe_allow_html=True_allow_html=True)
+       )
+        else:
+            else:
+            st.success st.success("("✅ All greenhouse parameters✅ All greenhouse parameters are within are within range.")
+
+# = range.")
+
+# ======================================================================================================================
+=====
+# PAGE: ANALYSIS# PAGE: ANALYSIS
+# =============================================================
 # ==============================================================
-# PAGE: ANALYSIS
-# ==============================================================
-elif page == "ANALYSIS":
+elif=
+elif page == "AN page == "ANALYSISALYSIS":
     st.markdown("""
     <div style="margin-bottom:18px;">
-        <div style="font-size:24px;font-weight:900;color:#fff;">Historical Trends</div>
-        <div style="font-size:13px;color:#66bb6a;letter-spacing:1px;margin-top:4px;">
-            Sensor data over time — per plant</div>
-    </div>""", unsafe_allow_html=True)
+       ":
+    st.markdown("""
+    <div style="margin-bottom:18px;">
+        <div style=" <div style="font-sizefont-size:24:24px;font-weightpx;font-weight:900;color:#fff:900;color:#fff;">Historical;">Historical Trends</div>
+ Trends</       div>
+        <div style <div style="font-size:="font-size:13px13px;color:#66bb6;color:#66bb6a;letter-spacing:1pxa;letter-spacing:1px;margin;margin-top:4px-top:4px;">
+           ;">
+            Sensor data over time — per plant</div Sensor data over time — per plant</div>
+    </div>>
+    </div>""", unsafe_allow_html""", unsafe_allow_html=True)
+
+    if not latest=True)
 
     if not latest.empty:
-        sc1, sc2, sc3 = st.columns([1, 1, 2])
+        sc1,.empty:
+        sc1, sc2 sc2, sc, sc3 = st.columns([13 = st.columns([1, 1,, 1, 2 2])
+        with sc1:
+            sensor_choice])
         with sc1:
             sensor_choice = st.selectbox("Sensor", [
-                "Temperature (°C)", "Humidity (%)", "pH", "Soil Moisture (%)"])
+                "Temperature (°C)", = st.selectbox("Sensor", [
+                "Temperature (°C)", "Humidity (%)", " "Humidity (%)", "pH", "Soil Moisture (%)"])
         with sc2:
-            plant_sel = st.selectbox("Plant", list(range(1, 11)))
-        with sc3:
-            time_range = st.selectbox("Time range", ["24 hours", "7 days", "30 days"])
-            hours = {"24 hours": 24, "7 days": 168, "30 days": 720}[time_range]
+            plant_sel = st.selectbox("pH", "Soil Moisture (%)"])
+        with sc2:
+            plant_sel = st.selectbox("Plant",Plant", list(range(1 list(range(1, , 11)))
+11)))
+        with        with sc3 sc3:
+           :
+            time_range time_range = st = st.selectbox.selectbox("Time("Time range", ["24 range", ["24 hours", hours", "7 days", "30 days"])
+ "7 days", "30 days"])
+            hours = {"24 hours            hours = {"24 hours": 24, "7": 24, "7 days": 168, " days": 168, "30 days30 days": ": 720}[time_range]
 
-        hist_df = get_historical_data(plant_id=plant_sel, hours=hours)
-        if not hist_df.empty:
+720}[time_range]
+
+               hist_df = get_historical hist_df = get_historical_data(_data(plant_id=plant_selplant_id=plant_sel, hours=, hours=hours)
+       hours)
+        if not if not hist_df hist_df.empty:
+            col.empty:
             col_map = {
-                "Temperature (°C)": ("temp_c",       "°C"),
-                "Humidity (%)":     ("humidity",      "%"),
+               _map = {
+                "Temperature (°C) "Temperature (°C)": ("temp": ("temp_c",       "°C_c",       "°C"),
+                "Hum"),
+                "Humidity (%)idity (%)":    ":     ("hum ("humidity",      "%idity",      "%"),
+               "),
                 "pH":               ("ph",            "pH"),
+                "Soil Moisture (%)":("soil_moisture "pH":               ("ph",            "pH"),
                 "Soil Moisture (%)":("soil_moisture", "%"),
+           ", "%"),
             }
-            y_col, y_label = col_map[sensor_choice]
-            fig = px.line(hist_df, x='timestamp', y=y_col,
-                          title=f"{sensor_choice} — Plant {plant_sel}")
-            fig.update_layout(yaxis_title=y_label,
-                              paper_bgcolor='rgba(0,0,0,0)',
-                              plot_bgcolor='rgba(13,17,23,0.85)',
-                              font_color='#a5d6a7',
-                              title_font_color='#ffffff')
-            st.plotly_chart(fig, use_container_width=True)
+            y_col }
+            y_col, y, y_label = col_map_label = col_map[sensor_choice[sensor_choice]
+            fig =]
+            fig = px.line px.line(hist_df, x='(hist_df, x='timestamp', y=y_col,
+timestamp', y=y                          title_col,
+                          title=f"{sensor_=f"{sensor_choicechoice} — Plant {plant_} — Plant {plant_sel}")
+sel}")
+            fig.update_layout            fig.update_layout(yaxis(yaxis_title=y_label,
+_title=y                              paper_label,
+                              paper_bg_bgcolor='rgba(0color='rgba(0,0,0,0,0,0)',
+,0)',
+                              plot                              plot_bg_bgcolor='color='rgbargba(13(13,17,17,23,23,0.85)',
+,0.85                              font)',
+                              font_color='_color='#a#a5d5d6a7',
+6a7',
+                              title_font_color='#ffffff                              title_font_color='#ffffff')
+            st.plot')
+            st.plotly_chly_chart(fart(fig, use_containerig, use_container_width=True_width=True)
 
-            if sensor_choice == "Soil Moisture (%)":
-                st.markdown('<div class="section-title">🌱 Current Soil — All Plants</div>',
-                            unsafe_allow_html=True)
-                bar = px.bar(latest.sort_values('plant_id'),
-                             x='plant_id', y='soil_moisture',
-                             color='soil_moisture', color_continuous_scale='Greens',
-                             labels={'plant_id': 'Plant', 'soil_moisture': 'Soil %'})
-                bar.update_layout(paper_bgcolor='rgba(0,0,0,0)',
-                                  plot_bgcolor='rgba(13,17,23,0.85)',
-                                  font_color='#a5d6a7')
-                st.plotly_chart(bar, use_container_width=True)
+            if sensor)
+
+            if sensor_choice == "_choice == "Soil MoistSoil Moisture (%)ure (%)":
+               ":
+                st.mark st.markdowndown('<div class="section('<div class-title">="section-title">🌱🌱 Current Soil — All Current Soil — All Plants</div> Plants</div>',
+                           ',
+                            unsafe_ unsafe_allow_htmlallow_html=True)
+=True)
+                bar = px                bar = px.bar(latest.bar(latest.sort_values.sort_values('plant_id'),
+('plant_id'),
+                             x                             x='plant='plant_id', y='_id', y='soil_msoil_moistoisture',
+ure',
+                             color='soil                             color='soil_moisture_moisture', color_continuous_scale='Greens',
+                             labels={'plant_id': 'Plant', 'soil_moisture':', color_continuous_scale='Greens',
+                             labels={'plant_id': 'Plant', 'soil_moisture': 'Soil 'Soil %' %'})
+               })
+                bar.update bar.update_layout(paper_b_layout(paper_bgcolor='rgbagcolor='rgba((0,0,0,0,0,0)',
+                                  plot_bgcolor0,0)',
+                                  plot_bgcolor='rg='rgba(ba(13,17,13,17,23,0.23,0.85)',
+                                  font_color85)',
+                                  font_color='#a5d6='#a5d6a7')
+               a7')
+                st.plot st.plotly_chart(ly_chart(bar, use_container_width=Truebar, use_container_width=True)
+       )
         else:
-            st.warning("No data for this plant in the selected time range.")
+            st else:
+            st.warning.warning("No data for this plant in the selected time range.")
+("No data for this plant in the selected time range.")
     else:
-        st.warning("No data available yet.")
+        st.w    else:
+        st.warning("arning("No data available yet.")
+
+#No data available yet.")
 
 # ==============================================================
 # PAGE: SYSTEM LOGS
 # ==============================================================
-elif page == "LOGS":
-    st.markdown("""
-    <div style="margin-bottom:18px;">
-        <div style="font-size:24px;font-weight:900;color:#fff;">System Logs</div>
-        <div style="font-size:13px;color:#66bb6a;letter-spacing:1px;margin-top:4px;">
-            Last 24 hours of sensor activity</div>
-    </div>""", unsafe_allow_html=True)
+elif page == " ==============================================================
+# PAGE: SYSTEM LOGS
+# ==============================================================
+elif page == "LOGSLOGS":
+   ":
+    st.mark st.markdown("down("""
+""
+    <div style    <div style="margin-bottom:18px="margin-bottom:18px;">
+        <div;">
+        <div style=" style="font-sizefont-size:24:24px;font-weightpx;font-weight:900:900;color:#fff;">System;color:#fff;">System Logs</div Logs</div>
+       >
+        <div style=" <div style="font-sizefont-size:13:13px;color:#66bb6a;letter-sppx;color:#66bb6a;letter-spacingacing:1px;margin-top:1px;margin-top:4px;">
+            Last:4px;">
+            Last 24 hours of sensor activity 24 hours of sensor activity</div>
+   </div>
+    </div>""", unsafe </div>""", unsafe_allow_html=True_allow_html=True)
 
-    logs = get_historical_data(plant_id=None, hours=24)
-    if not logs.empty:
-        def classify(r):
-            if r['temp_c'] < TEMP_LOW or r['temp_c'] > TEMP_HIGH:       return "🌡️ Temp alert"
-            if r['humidity'] < HUM_LOW or r['humidity'] > HUM_HIGH:     return "💧 Humidity alert"
-            if r['ph'] < PH_LOW or r['ph'] > PH_HIGH:                   return "🧪 pH alert"
-            if r['soil_moisture'] < SOIL_DRY or r['soil_moisture'] > SOIL_WET: return "🌱 Soil alert"
-            return "Normal"
-        logs['event'] = logs.apply(classify, axis=1)
-        cols = ['timestamp', 'plant_id', 'temp_c', 'humidity', 'soil_moisture', 'ph', 'event']
-        cfg  = {"timestamp": "Time", "plant_id": "Plant", "temp_c": "Temp (°C)",
-                "humidity": "Hum (%)", "soil_moisture": "Soil %", "ph": "pH", "event": "Event"}
-        if 'image_url' in logs.columns:
-            cols.insert(-1, 'image_url')
-            cfg['image_url'] = st.column_config.LinkColumn("📸 Image")
-        st.dataframe(logs[cols].tail(50), use_container_width=True,
-                     hide_index=True, column_config=cfg)
+   )
+
+    logs = logs = get_historical_data get_historical_data(plant(plant_id=None, hours_id=None, hours=24=24)
+   )
+    if if not logs.empty not logs.empty:
+       :
+        def def classify(r):
+            if r['temp_c'] < TEMP_LOW classify(r):
+            if r['temp_c'] < TEMP_LOW or r or r['temp['temp_c'] > TEMP_H_c'] > TEMP_HIGH:IGH:       return "       return "🌡️🌡️ Temp alert"
+            Temp alert"
+            if r['hum if r['humidity']idity'] < HUM < HUM_LOW_LOW or r or r['hum['humidity']idity'] > HUM > HUM_HIGH_HIGH:     return ":    💧 return "💧 Humidity alert Humidity alert"
+            if r"
+            if r['ph['ph']'] < PH_L < PH_LOW or r['OW or r['ph'] > PH_HIGHph'] > PH_HIGH:                   return "🧪:                   return "🧪 pH alert"
+            if r pH alert"
+            if r['soil_moisture['soil_moisture']'] < SOIL_DRY or r[' < SOIL_DRY or r['soil_moisture']soil_moisture'] > SO > SOIL_WIL_WET: return "🌱ET: return "🌱 Soil alert"
+ Soil alert"
+            return "            return "Normal"
+Normal"
+        logs['event        logs['event'] = logs.apply(class'] = logs.apply(classifyify, axis, axis=1=1)
+       )
+        cols = cols = ['timestamp ['timestamp', 'plant_id', 'temp_c', 'humidity', '', 'plant_id', 'temp_c', 'humidity', 'soil_moisture',soil_moisture', 'ph 'ph', 'event']
+', 'event']
+        cfg        cfg  = {"timestamp  = {"timestamp": "Time", "plant_id": "Plant", "temp_c": "": "Time", "plant_id": "Plant", "temp_c": "Temp (°Temp (°C)",
+                "C)",
+                "humhumidityidity": "Hum (%)": "Hum (%)", "soil_m", "oistsoil_moisture": "Soil %", "ph": "pH", "event": "Event"}
+ure": "Soil %", "ph": "pH", "event": "Event"}
+        if        if 'image_url' 'image_url' in logs.columns:
+            cols in logs.columns:
+            cols.insert(-1, 'image.insert(-1, 'image_url')
+            cfg['image_url')
+            cfg['image_url'] = st_url'] = st.column_config.L.column_config.LinkColumninkColumn("📸 Image")
+       ("📸 Image")
+        st.dataframe(log st.dataframe(logss[cols].tail(50),[cols].tail(50), use_container_width=True use_container_width=True,
+                    ,
+                     hide_index hide_index=True,=True, column_config column_config=cfg)
+   =cfg)
     else:
-        st.info("No logs available.")
+        st.info(" else:
+        st.info("No logsNo logs available.")
 
-# ==============================================================
-# PAGE: USER MANAGEMENT
-# ==============================================================
-elif page == "USERS":
-    st.markdown("""
-    <div style="margin-bottom:18px;">
-        <div style="font-size:24px;font-weight:900;color:#fff;">Admin Control Panel</div>
-        <div style="font-size:13px;color:#66bb6a;letter-spacing:1px;margin-top:4px;">
+ available.")
+
+# =========================================================# ==============================================================
+=====
+# PAGE: USER# PAGE: USER MANAGEMENT
+ MANAGEMENT
+# =========================================================# ==============================================================
+=====
+elif pageelif page == "USERS":
+    == "USERS":
+    st.mark st.markdown("down("""
+   ""
+    <div style="margin <div style="margin-bottom:-bottom:18px18px;">
+       ;">
+        <div <div style="font-size style="font-size:24px;:24font-weightpx;font-weight:900:900;color:#fff;">Admin;color:#fff;">Admin Control Panel Control Panel</div</div>
+       >
+        <div <div style="font-size style="font-size:13:13px;px;color:#66bbcolor:#66bb6a;letter-spacing:1px;margin-top:4px;">
             Registered user accounts</div>
     </div>""", unsafe_allow_html=True)
     st.table(pd.DataFrame({
-        "Username": ["admin@agribot.ai", "user@agribot.ai"],
-        "Role":     ["Administrator",    "Standard User"]
+6a;letter-spacing:1px;margin-top:4px;">
+            Registered user accounts</div>
+    </div>""", unsafe_allow_html=True)
+    st.table(pd.DataFrame({
+        "Username": ["        "Username": ["adminadmin@ag@agribot.airibot.ai", "user", "user@agribot@agribot.ai"],
+.ai"],
+        "Role":        "Role":     ["     ["AdministratorAdministrator",   ",    "Standard User"]
+    } "Standard User"]
     }))
-    st.info("Future feature: add / remove users via database.")
+   ))
+    st.info st.info("Future("Future feature: add / feature: add / remove users via database.")

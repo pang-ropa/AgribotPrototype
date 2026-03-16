@@ -6,3 +6,4 @@ oauth2client
 scikit-learn
 numpy
 plotly
+streamlit-autorefresh
