@@ -591,7 +591,7 @@ def show_login():
         margin-top: -60px;   /* <-- Change this to move everything up/down */
     }
     .login-bottom-spacer {
-        height: -50px;        /* <-- Change this to add extra space below the button */
+        height: 30px;        /* <-- Change this to add extra space below the button */
     }
     </style>""", unsafe_allow_html=True)
 
@@ -604,18 +604,20 @@ def show_login():
         f'box-shadow:0 0 28px rgba(76,175,80,0.5);"/></div>'
     ) if logo_b64 else ""
 
+    # Wrap logo and title in a container with adjustable top margin
     st.markdown(
-        f'<div style="display:flex;flex-direction:column;align-items:center;margin-top:-90px;">'
+        f'<div class="login-main-container" style="display:flex; flex-direction:column; align-items:center;">'
         f'{logo_html}'
-        f'<div style="text-align:center;font-size:34px;font-weight:900;color:#fff;'
-        f'letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,0.6);margin-bottom:4px;">'
+        f'<div style="text-align:center; font-size:34px; font-weight:900; color:#fff; '
+        f'letter-spacing:1px; text-shadow:0 2px 12px rgba(0,0,0,0.6); margin-bottom:4px;">'
         f'AgriBot-AI</div>'
-        f'<div style="text-align:center;color:#81c784;font-size:12px;'
-        f'letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;">'
+        f'<div style="text-align:center; color:#81c784; font-size:12px; '
+        f'letter-spacing:3px; text-transform:uppercase; margin-bottom:20px;">'
         f'Smart Farming &middot; Intelligent Monitoring</div>'
         f'</div>',
         unsafe_allow_html=True)
 
+    # Form in centered column
     _, mid, _ = st.columns([1, 1.6, 1])
     with mid:
         with st.form("login_form"):
@@ -631,15 +633,14 @@ def show_login():
                 else:
                     st.error("Invalid email or password")
 
-        st.markdown(
-            '<div style="text-align:center;margin-top:10px;">'
-            '<span style="font-size:11px;color:#388e3c;">← </span>'
-            '</div>', unsafe_allow_html=True)
+        # Back to landing button
         if st.button("← Back to Landing", use_container_width=True, key="back_btn"):
             st.session_state.page = "landing"
             st.rerun()
 
-         st.markdown('<div class="login-bottom-spacer"></div>', unsafe_allow_html=True)
+        # Spacer to add extra bottom space (adjust height in CSS)
+        st.markdown('<div class="login-bottom-spacer"></div>', unsafe_allow_html=True)
+
     st.stop()
 
 # ============================================================
