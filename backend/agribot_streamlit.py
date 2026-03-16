@@ -585,9 +585,10 @@ def show_login():
 
     st.markdown("""<style>
     section[data-testid="stSidebar"] { display: none !important; }
+                
     /* Adjust this value to change the bottom spacing of the login page */
     .login-footer {
-        margin-bottom: -1000px;  /* <-- Change this number to add/subtract bottom space */
+        margin-bottom: -1000vh;  /* <-- Change this number to add/subtract bottom space */
     }
     </style>""", unsafe_allow_html=True)
 
