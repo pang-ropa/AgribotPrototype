@@ -101,7 +101,6 @@ def login():
         f'box-shadow:0 0 28px rgba(76,175,80,0.5);"/></div>'
     ) if logo_b64 else ""
 
-    # Inject CSS separately (no f-string needed — no dynamic values)
     st.markdown("""<style>
     #MainMenu{visibility:hidden;}footer{visibility:hidden;}
     [data-testid="stForm"]{
@@ -125,7 +124,6 @@ def login():
     .stTextInput label{color:#c8e6c9!important;font-weight:600!important;font-size:13px!important;}
     </style>""", unsafe_allow_html=True)
 
-    # Inject header HTML separately (f-string only for logo_html — no CSS braces conflict)
     st.markdown(
         f'<div style="display:flex;flex-direction:column;align-items:center;margin-top:52px;">'
         f'{logo_html}'
@@ -156,135 +154,208 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ============================================================
-# GLOBAL CSS
+# GLOBAL CSS (with responsive, dark/light, hide branding, transitions)
 # ============================================================
 st.markdown("""<style>
-/* ── Core layout ─────────────────────────────────────────── */
-[data-testid="stHeader"]{background:transparent!important;}
-#MainMenu{visibility:hidden;}footer{visibility:hidden;}
-[data-testid="stDecoration"]{display:none;}
+/* ===== LIGHT / DARK MODE VARIABLES ===== */
+:root {
+    --bg-color: #ffffff;
+    --text-color: #000000;
+    --card-bg: rgba(46, 125, 50, 0.15);
+    --border-color: #4CAF50;
+    --sidebar-bg: #0a0d12;
+    --sidebar-text: #81c784;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #0E1117;
+        --text-color: #f0f0f0;
+        --card-bg: rgba(76, 175, 80, 0.2);
+        --border-color: #66bb6a;
+        --sidebar-bg: #0a0d12;
+        --sidebar-text: #66bb6a;
+    }
+}
+body { background-color: var(--bg-color); color: var(--text-color); }
 
-/* ── Sidebar ─────────────────────────────────────────────── */
-section[data-testid="stSidebar"]{
-    width:260px!important;
-    background:linear-gradient(180deg,#0a0d12 0%,#0d1117 100%)!important;
-    border-right:1px solid rgba(46,125,50,0.5)!important;
-}
-[data-testid="stSidebar"] [data-testid="stVerticalBlock"]{
-    display:flex!important;flex-direction:column!important;
-    align-items:center!important;padding:0 16px 28px!important;
-}
-[data-testid="stSidebar"] [data-testid="stElementToolbar"]{display:none!important;}
-
-/* ── Sidebar nav radio ───────────────────────────────────── */
-.stRadio>div{gap:4px!important;width:100%!important;flex-direction:column!important;}
-.stRadio label{
-    font-size:12px!important;font-weight:700!important;
-    color:#81c784!important;letter-spacing:1px!important;
-    text-transform:uppercase!important;
-    background:transparent!important;
-    border:none!important;border-radius:8px!important;
-    padding:10px 14px!important;width:100%!important;
-    cursor:pointer!important;transition:all 0.2s!important;
-}
-.stRadio label:hover{
-    background:rgba(76,175,80,0.12)!important;
-    color:#fff!important;
-}
-div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked){
-    background:rgba(46,125,50,0.22)!important;
-    border-left:3px solid #4CAF50!important;
-    color:#fff!important;padding-left:11px!important;
-}
-.stRadio [data-baseweb="radio"]>div:first-child{display:none!important;}
-.stRadio [data-testid="stMarkdownContainer"] p{margin:0!important;}
-
-/* ── Sidebar button (logout) ─────────────────────────────── */
-[data-testid="stSidebar"] .stButton>button{
-    background:rgba(46,125,50,0.12)!important;
-    border:1px solid rgba(76,175,80,0.3)!important;
-    color:#81c784!important;border-radius:10px!important;
-    width:100%!important;font-size:12px!important;
-    font-weight:700!important;letter-spacing:1px!important;
-    text-transform:uppercase!important;padding:10px!important;
-    transition:all 0.2s!important;
-}
-[data-testid="stSidebar"] .stButton>button:hover{
-    background:rgba(198,40,40,0.15)!important;
-    border-color:rgba(198,40,40,0.5)!important;
-    color:#ef9a9a!important;
+/* ===== HIDE STREAMLIT BRANDING ===== */
+header[data-testid="stHeader"],
+[data-testid="stToolbar"],
+footer,
+button[kind="headerNoSpacing"],
+#MainMenu,
+[data-testid="stDecoration"] {
+    display: none !important;
 }
 
-/* ── Metric cards ────────────────────────────────────────── */
-div[data-testid="stMetric"]{
-    background:rgba(13,17,23,0.85)!important;
-    border:1px solid rgba(76,175,80,0.3)!important;
-    border-radius:16px!important;padding:20px 16px!important;
-    text-align:center!important;
-}
-div[data-testid="stMetricLabel"]{
-    font-weight:700!important;font-size:11px!important;
-    color:#66bb6a!important;letter-spacing:2px!important;
-    text-transform:uppercase!important;justify-content:center!important;
-}
-div[data-testid="stMetricValue"]{
-    font-size:34px!important;font-weight:900!important;
-    color:#ffffff!important;margin-top:4px!important;
+/* ===== RESPONSIVE MAIN CONTAINER ===== */
+.main .block-container {
+    max-width: 100% !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
 }
 
-/* ── Custom cards ────────────────────────────────────────── */
-.cam-card{
-    background:rgba(13,17,23,0.9);
-    border:1px solid rgba(46,125,50,0.4);
-    border-radius:18px;padding:20px;
+/* ===== SIDEBAR (always fixed) ===== */
+section[data-testid="stSidebar"] {
+    width: 260px !important;
+    background: linear-gradient(180deg,#0a0d12 0%,#0d1117 100%) !important;
+    border-right: 1px solid rgba(46,125,50,0.5) !important;
 }
-.sensor-row{
-    background:rgba(13,17,23,0.85);
-    border:1px solid rgba(46,125,50,0.25);
-    border-radius:14px;padding:16px 18px;
-    margin-bottom:10px;display:flex;
-    align-items:center;justify-content:space-between;
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 0 16px 28px !important;
 }
-.s-label{font-size:11px;font-weight:700;color:#66bb6a;
-    text-transform:uppercase;letter-spacing:1.5px;margin-bottom:3px;}
-.s-val{font-size:26px;font-weight:900;color:#fff;line-height:1;}
-.s-unit{font-size:13px;color:#a5d6a7;margin-left:2px;}
-.s-ok  {font-size:11px;color:#4CAF50;margin-top:3px;}
-.s-warn{font-size:11px;color:#FF9800;margin-top:3px;}
-.s-bad {font-size:11px;color:#f44336;margin-top:3px;}
-.s-icon{font-size:26px;opacity:0.6;}
+[data-testid="stSidebar"] [data-testid="stElementToolbar"] {
+    display: none !important;
+}
 
-.section-title{
-    font-size:13px;font-weight:700;color:#66bb6a;
-    letter-spacing:2px;text-transform:uppercase;
-    margin-bottom:14px;margin-top:2px;
-    border-left:3px solid #4CAF50;padding-left:10px;
+/* ===== PAGE TRANSITION ANIMATION ===== */
+.page-transition {
+    animation: fadeIn 0.3s ease-in-out;
 }
-.alert-item{
-    padding:9px 14px;background:rgba(183,28,28,0.12);
-    border:1px solid rgba(183,28,28,0.3);
-    color:#ef9a9a;border-radius:10px;margin:5px 0;font-size:13px;
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
-.sched-badge{
-    display:inline-block;background:rgba(21,101,192,0.2);
-    border:1px solid rgba(21,101,192,0.5);border-radius:6px;
-    padding:2px 9px;font-size:11px;color:#90CAF9;
-    font-weight:700;margin:0 2px;
+
+/* ===== SCROLL CONTROL CLASSES ===== */
+/* Apply to the main content area (the block container) */
+.no-scroll .main .block-container {
+    height: calc(100vh - 100px);
+    overflow-y: hidden !important;
 }
-.cam-meta{font-size:11px;color:#66bb6a;margin-top:8px;line-height:1.7;}
-.drive-link{
-    display:inline-block;margin-top:10px;
-    background:rgba(46,125,50,0.15);
-    border:1px solid rgba(76,175,80,0.3);
-    border-radius:8px;padding:6px 12px;
-    color:#81c784;font-size:12px;text-decoration:none;
+.can-scroll .main .block-container {
+    height: calc(100vh - 100px);
+    overflow-y: auto !important;
 }
-.cam-placeholder{
-    display:flex;flex-direction:column;align-items:center;
-    justify-content:center;min-height:340px;
-    background:rgba(46,125,50,0.04);
-    border:2px dashed rgba(46,125,50,0.3);
-    border-radius:14px;text-align:center;padding:40px;
+
+/* ===== METRIC CARDS ===== */
+div[data-testid="stMetric"] {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 16px !important;
+    padding: 20px 16px !important;
+    text-align: center !important;
+}
+div[data-testid="stMetricLabel"] {
+    font-weight: 700 !important;
+    font-size: 11px !important;
+    color: #66bb6a !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    justify-content: center !important;
+}
+div[data-testid="stMetricValue"] {
+    font-size: 34px !important;
+    font-weight: 900 !important;
+    color: #ffffff !important;
+    margin-top: 4px !important;
+}
+
+/* ===== CUSTOM CARDS ===== */
+.cam-card {
+    background: rgba(13,17,23,0.9);
+    border: 1px solid rgba(46,125,50,0.4);
+    border-radius: 18px;
+    padding: 20px;
+}
+.sensor-row {
+    background: rgba(13,17,23,0.85);
+    border: 1px solid rgba(46,125,50,0.25);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.s-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #66bb6a;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 3px;
+}
+.s-val {
+    font-size: 26px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1;
+}
+.s-unit {
+    font-size: 13px;
+    color: #a5d6a7;
+    margin-left: 2px;
+}
+.s-ok { font-size: 11px; color: #4CAF50; margin-top: 3px; }
+.s-warn { font-size: 11px; color: #FF9800; margin-top: 3px; }
+.s-bad { font-size: 11px; color: #f44336; margin-top: 3px; }
+.s-icon { font-size: 26px; opacity: 0.6; }
+
+.section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #66bb6a;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    margin-top: 2px;
+    border-left: 3px solid #4CAF50;
+    padding-left: 10px;
+}
+.alert-item {
+    padding: 9px 14px;
+    background: rgba(183,28,28,0.12);
+    border: 1px solid rgba(183,28,28,0.3);
+    color: #ef9a9a;
+    border-radius: 10px;
+    margin: 5px 0;
+    font-size: 13px;
+}
+.sched-badge {
+    display: inline-block;
+    background: rgba(21,101,192,0.2);
+    border: 1px solid rgba(21,101,192,0.5);
+    border-radius: 6px;
+    padding: 2px 9px;
+    font-size: 11px;
+    color: #90CAF9;
+    font-weight: 700;
+    margin: 0 2px;
+}
+.cam-meta {
+    font-size: 11px;
+    color: #66bb6a;
+    margin-top: 8px;
+    line-height: 1.7;
+}
+.drive-link {
+    display: inline-block;
+    margin-top: 10px;
+    background: rgba(46,125,50,0.15);
+    border: 1px solid rgba(76,175,80,0.3);
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: #81c784;
+    font-size: 12px;
+    text-decoration: none;
+}
+.cam-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 340px;
+    background: rgba(46,125,50,0.04);
+    border: 2px dashed rgba(46,125,50,0.3);
+    border-radius: 14px;
+    text-align: center;
+    padding: 40px;
 }
 </style>""", unsafe_allow_html=True)
 
@@ -378,7 +449,6 @@ sheet    = get_sheet()
 logo_b64 = file_to_b64(ACTUAL_LOGO)
 
 with st.sidebar:
-    # Logo + branding
     st.markdown(f"""
     <div style="display:flex;flex-direction:column;align-items:center;
                 padding-top:32px;width:100%;margin-bottom:8px;">
@@ -409,21 +479,20 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     nav_opts = (
-        ["📡  Live Dashboard", "📈  Analysis",
-         "📜  System Logs",    "👥  User Management"]
+        ["  Live Dashboard", "  Analysis",
+         "  System Logs",    "  User Management"]
         if st.session_state.role == "admin"
-        else ["📡  Live Dashboard", "📈  Analysis"]
+        else ["  Live Dashboard", "  Analysis"]
     )
     raw_page = st.radio("", nav_opts, label_visibility="collapsed")
     page_map = {
-        "📡  Live Dashboard":  "DASHBOARD",
-        "📈  Analysis":        "ANALYSIS",
-        "📜  System Logs":     "LOGS",
-        "👥  User Management": "USERS",
+        "  Live Dashboard":  "DASHBOARD",
+        "  Analysis":        "ANALYSIS",
+        "  System Logs":     "LOGS",
+        "  User Management": "USERS",
     }
     page = page_map.get(raw_page, "DASHBOARD")
 
-    # System online indicator
     st.markdown("""
     <div style="display:flex;align-items:center;gap:10px;
                 background:rgba(46,125,50,0.1);border:1px solid rgba(46,125,50,0.3);
@@ -465,6 +534,15 @@ def health_of(soil, ph):
     if soil > SOIL_WET:               return "⚠️ Too Wet",   "#FF9800"
     return                                   "✅ Healthy",    "#4CAF50"
 
+# Determine scroll class based on page
+if page == "DASHBOARD":
+    scroll_class = "no-scroll"
+else:
+    scroll_class = "can-scroll"
+
+# Wrap main content with page-transition and scroll class
+st.markdown(f'<div class="page-transition {scroll_class}">', unsafe_allow_html=True)
+
 # ==============================================================
 # PAGE: LIVE DASHBOARD
 # ==============================================================
@@ -488,7 +566,6 @@ if page == "DASHBOARD":
     avg_ph   = float(latest['ph'].mean())
     avg_soil = float(latest['soil_moisture'].mean())
 
-    # ── 4 summary metric cards ─────────────────────────────────
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("TEMP",     f"{avg_temp:.1f} °C")
     m2.metric("HUMIDITY", f"{avg_hum:.0f} %")
@@ -497,20 +574,14 @@ if page == "DASHBOARD":
 
     st.markdown("<div style='margin:18px 0 6px;'></div>", unsafe_allow_html=True)
 
-    # ── Latest image (load once) ────────────────────────────────
     with st.spinner("Loading latest capture..."):
         img_data = get_latest_image()
 
-    # ══════════════════════════════════════════════════════════
-    # MAIN ROW: Camera image (left) | Sensor details (right)
-    # ══════════════════════════════════════════════════════════
     cam_col, sensor_col = st.columns([3, 2], gap="large")
 
-    # ── LEFT: latest captured image ───────────────────────────
     with cam_col:
         st.markdown('<div class="cam-card">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">📷 Plant Health Feed</div>',
-                    unsafe_allow_html=True)
+        st.markdown('<div class="section-title">📷 Plant Health Feed</div>', unsafe_allow_html=True)
 
         if img_data.get("url"):
             st.image(img_data["url"], use_container_width=True)
@@ -536,14 +607,12 @@ if page == "DASHBOARD":
                 'Pi captures at '
                 '<span class="sched-badge">7:00 AM</span>'
                 '<span class="sched-badge">12:00 NN</span>'
-                '<span class="sched-badge">12:30 PM</span></div>'
+                '<span class="sched-badge">05:00 PM</span></div>'
                 '</div>',
                 unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── RIGHT: AI recommendation + Alerts ────────────────────
     with sensor_col:
-        # Last updated timestamp
         if not latest.empty:
             last_ts = pd.to_datetime(latest['timestamp']).max()
             st.markdown(
@@ -551,9 +620,7 @@ if page == "DASHBOARD":
                 f'margin-bottom:12px;">🔄 Updated {last_ts.strftime("%H:%M:%S")}</div>',
                 unsafe_allow_html=True)
 
-        # AI Recommendation
-        st.markdown('<div class="section-title">🤖 AI Health Recommendation</div>',
-                    unsafe_allow_html=True)
+        st.markdown('<div class="section-title">🤖 AI Health Recommendation</div>', unsafe_allow_html=True)
         p1 = latest[latest['plant_id'] == 1]
         if not p1.empty and model and scaler:
             try:
@@ -572,9 +639,7 @@ if page == "DASHBOARD":
 
         st.markdown("<div style='margin:14px 0 4px;'></div>", unsafe_allow_html=True)
 
-        # Recent Alerts
-        st.markdown('<div class="section-title">🔔 Recent Alerts</div>',
-                    unsafe_allow_html=True)
+        st.markdown('<div class="section-title">🔔 Recent Alerts</div>', unsafe_allow_html=True)
         alerts = []
         for _, plant in latest.iterrows():
             pid  = int(plant['plant_id'])
@@ -699,6 +764,9 @@ elif page == "USERS":
         "Role":     ["Administrator",    "Standard User"]
     }))
     st.info("Future feature: add / remove users via database.")
+
+# Close the wrapper div
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================
 # AUTO-REFRESH every 30 s
