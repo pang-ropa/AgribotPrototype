@@ -5,10 +5,10 @@ import gspread
 import numpy as np
 import os
 import base64
-import time
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, timedelta
 import plotly.express as px
+from streamlit_autorefresh import st_autorefresh
 
 # ============================================================
 # PATHS
@@ -154,7 +154,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ============================================================
-# GLOBAL CSS (with responsive, dark/light, hide branding, transitions)
+# GLOBAL CSS (Ultra-clean, no scroll, hide everything)
 # ============================================================
 st.markdown("""<style>
 /* ===== LIGHT / DARK MODE VARIABLES ===== */
@@ -178,26 +178,31 @@ st.markdown("""<style>
 }
 body { background-color: var(--bg-color); color: var(--text-color); }
 
-/* ===== HIDE STREAMLIT BRANDING ===== */
+/* ===== HIDE EVERYTHING STREAMLIT ===== */
 header[data-testid="stHeader"],
 [data-testid="stToolbar"],
 footer,
 button[kind="headerNoSpacing"],
 #MainMenu,
-[data-testid="stDecoration"] {
+[data-testid="stDecoration"],
+[data-testid="stStatusWidget"],
+[data-testid="stSidebarUserContent"] + div,  /* the "Manage app" button area */
+[data-testid="collapsedControl"] {
     display: none !important;
 }
 
-/* ===== RESPONSIVE MAIN CONTAINER ===== */
+/* ===== FIX MAIN CONTAINER TO FULL HEIGHT, NO SCROLL ===== */
 .main .block-container {
     max-width: 100% !important;
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
+    padding: 0 !important;          /* remove any padding */
+    margin: 0 !important;            /* remove any margin */
+    height: 100vh !important;        /* full viewport height */
+    overflow: hidden !important;     /* no scrolling at all */
+    display: flex;
+    flex-direction: column;
 }
 
-/* ===== SIDEBAR (always fixed) ===== */
+/* ===== SIDEBAR ===== */
 section[data-testid="stSidebar"] {
     width: 260px !important;
     background: linear-gradient(180deg,#0a0d12 0%,#0d1117 100%) !important;
@@ -208,29 +213,6 @@ section[data-testid="stSidebar"] {
     flex-direction: column !important;
     align-items: center !important;
     padding: 0 16px 28px !important;
-}
-[data-testid="stSidebar"] [data-testid="stElementToolbar"] {
-    display: none !important;
-}
-
-/* ===== PAGE TRANSITION ANIMATION ===== */
-.page-transition {
-    animation: fadeIn 0.3s ease-in-out;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* ===== SCROLL CONTROL CLASSES ===== */
-/* Apply to the main content area (the block container) */
-.no-scroll .main .block-container {
-    height: calc(100vh - 100px);
-    overflow-y: hidden !important;
-}
-.can-scroll .main .block-container {
-    height: calc(100vh - 100px);
-    overflow-y: auto !important;
 }
 
 /* ===== METRIC CARDS ===== */
@@ -360,6 +342,11 @@ div[data-testid="stMetricValue"] {
 </style>""", unsafe_allow_html=True)
 
 # ============================================================
+# CLIENT-SIDE AUTO-REFRESH (every 30 seconds)
+# ============================================================
+st_autorefresh(interval=30000, key="auto_refresh")
+
+# ============================================================
 # DATA FUNCTIONS
 # ============================================================
 @st.cache_resource
@@ -479,17 +466,17 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     nav_opts = (
-        ["  Live Dashboard", "  Analysis",
-         "  System Logs",    "  User Management"]
+        ["📡  Live Dashboard", "📈  Analysis",
+         "📜  System Logs",    "👥  User Management"]
         if st.session_state.role == "admin"
-        else ["  Live Dashboard", "  Analysis"]
+        else ["📡  Live Dashboard", "📈  Analysis"]
     )
     raw_page = st.radio("", nav_opts, label_visibility="collapsed")
     page_map = {
-        "  Live Dashboard":  "DASHBOARD",
-        "  Analysis":        "ANALYSIS",
-        "  System Logs":     "LOGS",
-        "  User Management": "USERS",
+        "📡  Live Dashboard":  "DASHBOARD",
+        "📈  Analysis":        "ANALYSIS",
+        "📜  System Logs":     "LOGS",
+        "👥  User Management": "USERS",
     }
     page = page_map.get(raw_page, "DASHBOARD")
 
@@ -533,15 +520,6 @@ def health_of(soil, ph):
     if soil < SOIL_DRY:               return "⚠️ Too Dry",   "#FF9800"
     if soil > SOIL_WET:               return "⚠️ Too Wet",   "#FF9800"
     return                                   "✅ Healthy",    "#4CAF50"
-
-# Determine scroll class based on page
-if page == "DASHBOARD":
-    scroll_class = "no-scroll"
-else:
-    scroll_class = "can-scroll"
-
-# Wrap main content with page-transition and scroll class
-st.markdown(f'<div class="page-transition {scroll_class}">', unsafe_allow_html=True)
 
 # ==============================================================
 # PAGE: LIVE DASHBOARD
@@ -764,12 +742,3 @@ elif page == "USERS":
         "Role":     ["Administrator",    "Standard User"]
     }))
     st.info("Future feature: add / remove users via database.")
-
-# Close the wrapper div
-st.markdown('</div>', unsafe_allow_html=True)
-
-# ============================================================
-# AUTO-REFRESH every 30 s
-# ============================================================
-time.sleep(30)
-st.rerun()
