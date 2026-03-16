@@ -8,7 +8,7 @@ import base64
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, timedelta
 import plotly.express as px
-from streamlit_autorefresh import st_autorefresh   # add to requirements.txt
+from streamlit_autorefresh import st_autorefresh
 
 # ============================================================
 # PATHS
@@ -30,7 +30,7 @@ if not os.path.exists(CREDENTIALS_FILE):
 
 SPREADSHEET_ID = "1mYScsUkoZn84FIoO_QMaku3gZT3Z9df72kPE3ray9-A"
 
-# Tab favicon
+# ── Tab favicon ───────────────────────────────────────────────
 _page_icon = "🌱"
 if ACTUAL_LOGO:
     try:
@@ -73,65 +73,259 @@ def set_background(path: str):
         return
     mime = "image/png" if path.endswith(".png") else "image/jpeg"
     st.markdown(f"""<style>
-    .stApp{{background-image:url("data:{mime};base64,{b64}");
-            background-size:cover;background-position:center;
-            background-repeat:no-repeat;background-attachment:fixed;}}
-    .stApp::before{{content:"";position:fixed;inset:0;
-            background:rgba(0,0,0,0.52);z-index:0;pointer-events:none;}}
+    .stApp{{
+        background-image:url("data:{mime};base64,{b64}");
+        background-size:cover;background-position:center;
+        background-repeat:no-repeat;background-attachment:fixed;
+    }}
+    .stApp::before{{
+        content:"";position:fixed;inset:0;
+        background:rgba(0,0,0,0.52);z-index:0;pointer-events:none;
+    }}
     </style>""", unsafe_allow_html=True)
 
 # ============================================================
-# LOGIN
+# SESSION STATE — initialise once, never reset on rerun
 # ============================================================
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "role" not in st.session_state:
+    st.session_state.role = None
+
 USERS = {
     "admin@agribot.ai": {"password": "admin123", "role": "admin"},
     "user@agribot.ai":  {"password": "user123",  "role": "user"},
 }
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-    st.session_state.role      = None
 
+# ============================================================
+# GLOBAL CHROME-REMOVAL CSS (runs on every page, before login too)
+# Hides Streamlit toolbar, fork button, deploy button, footer,
+# manage-app overlay, and all whitespace padding.
+# ============================================================
+HIDE_ST_CHROME = """
+<style>
+/* ── Streamlit top bar & decorations ─────────────────────── */
+[data-testid="stHeader"]          { display:none !important; }
+[data-testid="stToolbar"]         { display:none !important; }
+[data-testid="stDecoration"]      { display:none !important; }
+[data-testid="stStatusWidget"]    { display:none !important; }
+[data-testid="collapsedControl"]  { display:none !important; }
+header[data-testid="stHeader"]    { display:none !important; }
+
+/* ── Footer / "Made with Streamlit" ──────────────────────── */
+footer                            { display:none !important; }
+#MainMenu                         { display:none !important; }
+.stDeployButton                   { display:none !important; }
+button[title="View App"]          { display:none !important; }
+button[title="Manage app"]        { display:none !important; }
+a[href*="streamlit.io"]           { display:none !important; }
+
+/* ── GitHub fork / "Created by" overlay ──────────────────── */
+[data-testid="stAppViewBlockContainer"] ~ div { display:none !important; }
+.viewerBadge_container__1QSob    { display:none !important; }
+.styles_viewerBadge__CvC9N       { display:none !important; }
+#GithubIcon                       { display:none !important; }
+.css-1dp5vir                      { display:none !important; }
+button[kind="headerNoSpacing"]    { display:none !important; }
+div[class*="AppView"] > section > div[class*="block-container"] ~ div { display:none !important; }
+
+/* ── Kill ALL default padding & margins ──────────────────── */
+html, body { margin:0 !important; padding:0 !important; overflow:hidden !important; }
+.stApp     { margin:0 !important; padding:0 !important; overflow:hidden !important; }
+.main      { margin:0 !important; padding:0 !important; overflow:hidden !important; }
+
+.main .block-container {
+    padding:0 !important;
+    margin:0 !important;
+    max-width:100% !important;
+    width:100% !important;
+}
+
+/* Remove gap Streamlit adds above the first element */
+.main .block-container > div:first-child { margin-top:0 !important; }
+
+/* ── Sidebar ─────────────────────────────────────────────── */
+section[data-testid="stSidebar"] {
+    width:260px !important;
+    background:linear-gradient(180deg,#0a0d12 0%,#0d1117 100%) !important;
+    border-right:1px solid rgba(46,125,50,0.5) !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+}
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    padding:0 16px 28px !important;
+}
+[data-testid="stSidebar"] [data-testid="stElementToolbar"] { display:none !important; }
+
+/* ── Nav radio ───────────────────────────────────────────── */
+.stRadio > div {
+    gap:4px !important; width:100% !important; flex-direction:column !important;
+}
+.stRadio label {
+    font-size:12px !important; font-weight:700 !important;
+    color:#81c784 !important; letter-spacing:1px !important;
+    text-transform:uppercase !important;
+    background:transparent !important; border:none !important;
+    border-radius:8px !important; padding:10px 14px !important;
+    width:100% !important; cursor:pointer !important; transition:all 0.2s !important;
+}
+.stRadio label:hover {
+    background:rgba(76,175,80,0.12) !important; color:#fff !important;
+}
+div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
+    background:rgba(46,125,50,0.22) !important;
+    border-left:3px solid #4CAF50 !important;
+    color:#fff !important; padding-left:11px !important;
+}
+.stRadio [data-baseweb="radio"] > div:first-child { display:none !important; }
+.stRadio [data-testid="stMarkdownContainer"] p { margin:0 !important; }
+
+/* ── Logout button ───────────────────────────────────────── */
+[data-testid="stSidebar"] .stButton > button {
+    background:rgba(46,125,50,0.12) !important;
+    border:1px solid rgba(76,175,80,0.3) !important;
+    color:#81c784 !important; border-radius:10px !important;
+    width:100% !important; font-size:12px !important;
+    font-weight:700 !important; letter-spacing:1px !important;
+    text-transform:uppercase !important; padding:10px !important;
+    transition:all 0.2s !important;
+}
+[data-testid="stSidebar"] .stButton > button:hover {
+    background:rgba(198,40,40,0.15) !important;
+    border-color:rgba(198,40,40,0.5) !important; color:#ef9a9a !important;
+}
+
+/* ── Metric cards ────────────────────────────────────────── */
+div[data-testid="stMetric"] {
+    background:rgba(13,17,23,0.85) !important;
+    border:1px solid rgba(76,175,80,0.3) !important;
+    border-radius:12px !important; padding:12px 8px !important;
+    text-align:center !important;
+}
+div[data-testid="stMetricLabel"] {
+    font-weight:700 !important; font-size:10px !important;
+    color:#66bb6a !important; letter-spacing:1.5px !important;
+    text-transform:uppercase !important; justify-content:center !important;
+}
+div[data-testid="stMetricValue"] {
+    font-size:28px !important; font-weight:900 !important;
+    color:#fff !important; margin-top:2px !important;
+}
+
+/* ── Custom dashboard cards ──────────────────────────────── */
+.cam-card {
+    background:rgba(13,17,23,0.9);
+    border:1px solid rgba(46,125,50,0.4);
+    border-radius:16px; padding:14px;
+}
+.section-title {
+    font-size:11px; font-weight:700; color:#66bb6a;
+    letter-spacing:1.5px; text-transform:uppercase;
+    margin-bottom:10px; margin-top:0;
+    border-left:3px solid #4CAF50; padding-left:8px;
+}
+.alert-item {
+    padding:6px 10px;
+    background:rgba(183,28,28,0.12);
+    border:1px solid rgba(183,28,28,0.3);
+    color:#ef9a9a; border-radius:8px;
+    margin:4px 0; font-size:12px;
+}
+.sched-badge {
+    display:inline-block;
+    background:rgba(21,101,192,0.2);
+    border:1px solid rgba(21,101,192,0.5);
+    border-radius:6px; padding:2px 7px;
+    font-size:10px; color:#90CAF9;
+    font-weight:700; margin:0 2px;
+}
+.cam-meta {
+    font-size:10px; color:#66bb6a;
+    margin-top:6px; line-height:1.6;
+}
+.drive-link {
+    display:inline-block; margin-top:8px;
+    background:rgba(46,125,50,0.15);
+    border:1px solid rgba(76,175,80,0.3);
+    border-radius:8px; padding:4px 10px;
+    color:#81c784; font-size:11px; text-decoration:none;
+}
+.cam-placeholder {
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    min-height:260px;
+    background:rgba(46,125,50,0.04);
+    border:2px dashed rgba(46,125,50,0.3);
+    border-radius:12px; text-align:center; padding:30px;
+}
+
+/* ── Pulse animation ─────────────────────────────────────── */
+@keyframes pulse {
+    0%,100% { box-shadow:0 0 5px #4CAF50; }
+    50%      { box-shadow:0 0 14px #4CAF50; opacity:0.7; }
+}
+</style>
+"""
+st.markdown(HIDE_ST_CHROME, unsafe_allow_html=True)
+
+# ============================================================
+# LOGIN PAGE
+# ============================================================
 def login():
     set_background(ACTUAL_BG)
     logo_b64  = file_to_b64(ACTUAL_LOGO)
     logo_html = (
         f'<div style="display:flex;justify-content:center;margin-bottom:20px;">'
-        f'<img src="data:image/png;base64,{logo_b64}" style="width:120px;height:120px;'
-        f'border-radius:50%;border:3px solid #4CAF50;object-fit:cover;'
+        f'<img src="data:image/png;base64,{logo_b64}" '
+        f'style="width:120px;height:120px;border-radius:50%;'
+        f'border:3px solid #4CAF50;object-fit:cover;'
         f'box-shadow:0 0 28px rgba(76,175,80,0.5);"/></div>'
     ) if logo_b64 else ""
 
+    # CSS separately (no f-string — avoids {{ }} escape conflicts)
     st.markdown("""<style>
-    #MainMenu{visibility:hidden;}footer{visibility:hidden;}
-    [data-testid="stForm"]{
-        background:linear-gradient(160deg,rgba(27,94,32,0.65) 0%,rgba(46,125,50,0.55) 100%)!important;
-        backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-        border-radius:20px;border:1px solid rgba(165,214,167,0.35);
-        box-shadow:0 12px 40px rgba(0,0,0,0.35);padding:34px 44px 44px;
+    [data-testid="stForm"] {
+        background:linear-gradient(160deg,rgba(27,94,32,0.65) 0%,
+            rgba(46,125,50,0.55) 100%) !important;
+        backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+        border-radius:20px; border:1px solid rgba(165,214,167,0.35);
+        box-shadow:0 12px 40px rgba(0,0,0,0.35);
+        padding:34px 44px 44px;
     }
-    [data-testid="stForm"] input{
-        background:rgba(255,255,255,0.1)!important;color:#fff!important;
-        border:1px solid rgba(165,214,167,0.45)!important;border-radius:10px!important;
-        font-size:14px!important;
+    [data-testid="stForm"] input {
+        background:rgba(255,255,255,0.1) !important; color:#fff !important;
+        border:1px solid rgba(165,214,167,0.45) !important;
+        border-radius:10px !important; font-size:14px !important;
     }
-    [data-testid="stForm"] input::placeholder{color:rgba(200,230,200,0.6)!important;}
-    [data-testid="stForm"] button[kind="primaryFormSubmit"]{
-        background:linear-gradient(90deg,#2e7d32,#66bb6a)!important;
-        border:none!important;color:#fff!important;font-weight:700!important;
-        border-radius:10px!important;letter-spacing:1.5px;font-size:14px!important;
-        padding:12px!important;margin-top:4px!important;
+    [data-testid="stForm"] input::placeholder {
+        color:rgba(200,230,200,0.6) !important;
     }
-    .stTextInput label{color:#c8e6c9!important;font-weight:600!important;font-size:13px!important;}
+    [data-testid="stForm"] button[kind="primaryFormSubmit"] {
+        background:linear-gradient(90deg,#2e7d32,#66bb6a) !important;
+        border:none !important; color:#fff !important;
+        font-weight:700 !important; border-radius:10px !important;
+        letter-spacing:1.5px; font-size:14px !important;
+        padding:12px !important; margin-top:4px !important;
+    }
+    .stTextInput label {
+        color:#c8e6c9 !important; font-weight:600 !important;
+        font-size:13px !important;
+    }
     </style>""", unsafe_allow_html=True)
 
+    # Header HTML (f-string only for logo_html — no CSS braces)
     st.markdown(
-        f'<div style="display:flex;flex-direction:column;align-items:center;margin-top:52px;">'
+        f'<div style="display:flex;flex-direction:column;align-items:center;'
+        f'margin-top:52px;">'
         f'{logo_html}'
         f'<div style="text-align:center;font-size:38px;font-weight:900;color:#fff;'
-        f'letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,0.6);margin-bottom:6px;">'
-        f'AgriBot-AI</div>'
-        f'<div style="text-align:center;color:#81c784;font-size:13px;letter-spacing:3px;'
-        f'text-transform:uppercase;margin-bottom:24px;">'
+        f'letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,0.6);'
+        f'margin-bottom:6px;">AgriBot-AI</div>'
+        f'<div style="text-align:center;color:#81c784;font-size:13px;'
+        f'letter-spacing:3px;text-transform:uppercase;margin-bottom:24px;">'
         f'Smart Farming &middot; Intelligent Monitoring</div>'
         f'</div>',
         unsafe_allow_html=True)
@@ -149,244 +343,20 @@ def login():
                 else:
                     st.error("Invalid email or password")
 
+# Show login if not authenticated — then STOP (never runs dashboard code)
 if not st.session_state.logged_in:
     login()
     st.stop()
 
 # ============================================================
-# CSS – OPTIMISED FOR 1024×600, FLEX‑BASED, NO SCROLL
+# AUTO-REFRESH — client-side JS every 30 s
+# Does NOT call st.rerun() directly → session_state is always preserved
+# The page only goes back to login if the user explicitly clicks Logout
 # ============================================================
-st.markdown("""<style>
-/* ===== LIGHT / DARK MODE VARIABLES ===== */
-:root {
-    --bg-color: #ffffff;
-    --text-color: #000000;
-    --card-bg: rgba(46, 125, 50, 0.15);
-    --border-color: #4CAF50;
-    --sidebar-bg: #0a0d12;
-    --sidebar-text: #81c784;
-}
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg-color: #0E1117;
-        --text-color: #f0f0f0;
-        --card-bg: rgba(76, 175, 80, 0.2);
-        --border-color: #66bb6a;
-        --sidebar-bg: #0a0d12;
-        --sidebar-text: #66bb6a;
-    }
-}
-body { background-color: var(--bg-color); color: var(--text-color); }
-
-/* ===== HIDE ALL STREAMLIT UI ELEMENTS ===== */
-#MainMenu,
-footer,
-header,
-[data-testid="stToolbar"],
-[data-testid="stDecoration"],
-[data-testid="stStatusWidget"],
-[data-testid="stSidebarUserContent"] + div,
-[data-testid="collapsedControl"],
-.stApp > header,
-.stApp > footer,
-div[data-testid="stBottomBlock"] > div:first-child,
-div[data-testid="stBottom"] > div:first-child,
-a[href*="streamlit"],
-button[kind="headerNoSpacing"],
-button[title="View All Apps"],
-button[title="Manage app"],
-[data-testid="stAppViewContainer"] > section > div:first-child > div:first-child {
-    display: none !important;
-}
-
-/* ===== MAIN CONTAINER – FLEX COLUMN, FULL HEIGHT ===== */
-.main .block-container {
-    max-width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    height: 100vh !important;
-    overflow: hidden !important;
-    display: flex;
-    flex-direction: column;
-}
-
-/* ===== SIDEBAR – FIXED WIDTH ===== */
-section[data-testid="stSidebar"] {
-    width: 260px !important;
-    background: linear-gradient(180deg,#0a0d12 0%,#0d1117 100%) !important;
-    border-right: 1px solid rgba(46,125,50,0.5) !important;
-    overflow-y: auto !important;
-}
-[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    padding: 0 16px 28px !important;
-}
-
-/* ===== TITLE SECTION – FIXED HEIGHT ===== */
-/* The title divs are inside markdown, we can control them via margins */
-.main .block-container > div:first-child {
-    flex-shrink: 0;  /* don't shrink */
-}
-
-/* ===== METRIC CARDS – COMPACT ===== */
-div[data-testid="stMetric"] {
-    background: var(--card-bg) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: 12px !important;
-    padding: 12px 8px !important;
-    text-align: center !important;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-div[data-testid="stMetricLabel"] {
-    font-weight: 700 !important;
-    font-size: 10px !important;
-    color: #66bb6a !important;
-    letter-spacing: 1.5px !important;
-    text-transform: uppercase !important;
-    justify-content: center !important;
-}
-div[data-testid="stMetricValue"] {
-    font-size: min(28px, 5vh) !important;
-    font-weight: 900 !important;
-    color: #ffffff !important;
-    margin-top: 2px !important;
-}
-
-/* ===== CUSTOM CARDS ===== */
-.cam-card {
-    background: rgba(13,17,23,0.9);
-    border: 1px solid rgba(46,125,50,0.4);
-    border-radius: 16px;
-    padding: 16px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-.cam-card img {
-    max-height: 35vh !important;
-    object-fit: contain;
-}
-.sensor-row {
-    background: rgba(13,17,23,0.85);
-    border: 1px solid rgba(46,125,50,0.25);
-    border-radius: 12px;
-    padding: 12px 14px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.s-label {
-    font-size: 10px;
-    font-weight: 700;
-    color: #66bb6a;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 2px;
-}
-.s-val {
-    font-size: min(22px, 4vh);
-    font-weight: 900;
-    color: #fff;
-    line-height: 1;
-}
-.s-unit {
-    font-size: 12px;
-    color: #a5d6a7;
-    margin-left: 2px;
-}
-.s-ok { font-size: 10px; color: #4CAF50; margin-top: 2px; }
-.s-warn { font-size: 10px; color: #FF9800; margin-top: 2px; }
-.s-bad { font-size: 10px; color: #f44336; margin-top: 2px; }
-.s-icon { font-size: 22px; opacity: 0.6; }
-
-.section-title {
-    font-size: 12px;
-    font-weight: 700;
-    color: #66bb6a;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-    margin-top: 0;
-    border-left: 3px solid #4CAF50;
-    padding-left: 8px;
-}
-.alert-item {
-    padding: 6px 10px;
-    background: rgba(183,28,28,0.12);
-    border: 1px solid rgba(183,28,28,0.3);
-    color: #ef9a9a;
-    border-radius: 8px;
-    margin: 4px 0;
-    font-size: 12px;
-}
-.sched-badge {
-    display: inline-block;
-    background: rgba(21,101,192,0.2);
-    border: 1px solid rgba(21,101,192,0.5);
-    border-radius: 6px;
-    padding: 2px 7px;
-    font-size: 10px;
-    color: #90CAF9;
-    font-weight: 700;
-    margin: 0 2px;
-}
-.cam-meta {
-    font-size: 10px;
-    color: #66bb6a;
-    margin-top: 6px;
-    line-height: 1.6;
-}
-.drive-link {
-    display: inline-block;
-    margin-top: 8px;
-    background: rgba(46,125,50,0.15);
-    border: 1px solid rgba(76,175,80,0.3);
-    border-radius: 8px;
-    padding: 4px 10px;
-    color: #81c784;
-    font-size: 11px;
-    text-decoration: none;
-}
-.cam-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 300px;
-    background: rgba(46,125,50,0.04);
-    border: 2px dashed rgba(46,125,50,0.3);
-    border-radius: 12px;
-    text-align: center;
-    padding: 30px;
-}
-
-/* ===== ENSURE MAIN ROW TAKES REMAINING SPACE ===== */
-.main .block-container > .stHorizontalBlock {
-    flex: 1 !important;
-    overflow: hidden !important;
-}
-.stHorizontalBlock {
-    height: 100%;
-}
-[data-testid="column"] {
-    overflow-y: hidden !important;
-    height: 100%;
-}
-</style>""", unsafe_allow_html=True)
+st_autorefresh(interval=30_000, key="dashboard_autorefresh")
 
 # ============================================================
-# CLIENT‑SIDE AUTO‑REFRESH (every 30 seconds)
-# ============================================================
-st_autorefresh(interval=30000, key="auto_refresh")
-
-# ============================================================
-# DATA FUNCTIONS (unchanged)
+# DATA FUNCTIONS
 # ============================================================
 @st.cache_resource
 def load_assets():
@@ -447,7 +417,6 @@ def get_historical_data(plant_id=None, hours=24):
 
 @st.cache_data(ttl=30)
 def get_latest_image() -> dict:
-    """Returns {url, plant_id, timestamp} for the single most recent captured image."""
     if sheet is None:
         return {}
     try:
@@ -469,40 +438,39 @@ def get_latest_image() -> dict:
         return {}
 
 # ============================================================
-# SIDEBAR (unchanged)
+# SIDEBAR
 # ============================================================
 sheet    = get_sheet()
 logo_b64 = file_to_b64(ACTUAL_LOGO)
 
 with st.sidebar:
-    st.markdown(f"""
-    <div style="display:flex;flex-direction:column;align-items:center;
-                padding-top:32px;width:100%;margin-bottom:8px;">
-        <div style="padding:4px;border-radius:50%;
-                    background:linear-gradient(145deg,#388e3c,#1b5e20);
-                    box-shadow:0 0 20px rgba(76,175,80,0.3);margin-bottom:14px;">
-            <img src="data:image/png;base64,{logo_b64}"
-                 style="border-radius:50%;width:110px;height:110px;
-                        display:block;object-fit:cover;background:#0a0d12;"/>
-        </div>
-        <div style="font-size:19px;font-weight:900;color:#4CAF50;
-                    letter-spacing:0.5px;margin-bottom:2px;">AgriBot-AI</div>
-        <div style="font-size:9px;color:#388e3c;letter-spacing:3px;
-                    text-transform:uppercase;margin-bottom:10px;">
-            Crop Monitoring System</div>
-        <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;
-                    text-transform:uppercase;padding:4px 14px;border-radius:20px;
-                    background:rgba(46,125,50,0.15);border:1px solid rgba(76,175,80,0.25);
-                    color:#66bb6a;">
-            {'👑 Administrator' if st.session_state.role == 'admin' else '🌿 Field User'}
-        </div>
-    </div>
-    <div style="width:55%;height:1px;background:linear-gradient(90deg,transparent,
-                rgba(76,175,80,0.4),transparent);margin:14px auto 18px;"></div>
-    <div style="font-size:9px;font-weight:700;color:#2e7d32;letter-spacing:3px;
-                text-transform:uppercase;width:100%;padding:0 4px;
-                margin-bottom:8px;">Navigation</div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="display:flex;flex-direction:column;align-items:center;'
+        f'padding-top:28px;width:100%;margin-bottom:8px;">'
+        f'<div style="padding:4px;border-radius:50%;'
+        f'background:linear-gradient(145deg,#388e3c,#1b5e20);'
+        f'box-shadow:0 0 20px rgba(76,175,80,0.3);margin-bottom:14px;">'
+        f'<img src="data:image/png;base64,{logo_b64}" '
+        f'style="border-radius:50%;width:100px;height:100px;'
+        f'display:block;object-fit:cover;background:#0a0d12;"/>'
+        f'</div>'
+        f'<div style="font-size:18px;font-weight:900;color:#4CAF50;'
+        f'letter-spacing:0.5px;margin-bottom:2px;">AgriBot-AI</div>'
+        f'<div style="font-size:9px;color:#388e3c;letter-spacing:3px;'
+        f'text-transform:uppercase;margin-bottom:8px;">Crop Monitoring System</div>'
+        f'<div style="font-size:9px;font-weight:700;letter-spacing:1.5px;'
+        f'text-transform:uppercase;padding:3px 12px;border-radius:20px;'
+        f'background:rgba(46,125,50,0.15);border:1px solid rgba(76,175,80,0.25);'
+        f'color:#66bb6a;">'
+        f'{"👑 Administrator" if st.session_state.role == "admin" else "🌿 Field User"}'
+        f'</div></div>'
+        f'<div style="width:55%;height:1px;background:linear-gradient(90deg,'
+        f'transparent,rgba(76,175,80,0.4),transparent);'
+        f'margin:12px auto 16px;"></div>'
+        f'<div style="font-size:9px;font-weight:700;color:#2e7d32;'
+        f'letter-spacing:3px;text-transform:uppercase;width:100%;'
+        f'padding:0 4px;margin-bottom:8px;">Navigation</div>',
+        unsafe_allow_html=True)
 
     nav_opts = (
         ["📡  Live Dashboard", "📈  Analysis",
@@ -523,17 +491,12 @@ with st.sidebar:
     <div style="display:flex;align-items:center;gap:10px;
                 background:rgba(46,125,50,0.1);border:1px solid rgba(46,125,50,0.3);
                 border-radius:10px;padding:10px 14px;width:100%;
-                margin:16px 0 10px;box-sizing:border-box;">
+                margin:14px 0 10px;box-sizing:border-box;">
         <div style="width:8px;height:8px;background:#4CAF50;border-radius:50%;
-                    box-shadow:0 0 8px #4CAF50;animation:pulse 2s infinite;
-                    flex-shrink:0;"></div>
+                    animation:pulse 2s infinite;flex-shrink:0;"></div>
         <span style="font-size:11px;font-weight:700;color:#66bb6a;
                      letter-spacing:2px;text-transform:uppercase;">System Online</span>
-    </div>
-    <style>
-    @keyframes pulse{0%,100%{box-shadow:0 0 5px #4CAF50;}
-                     50%{box-shadow:0 0 14px #4CAF50;opacity:0.7;}}
-    </style>""", unsafe_allow_html=True)
+    </div>""", unsafe_allow_html=True)
 
     if st.button("Logout", use_container_width=True):
         st.session_state.logged_in = False
@@ -546,72 +509,63 @@ with st.sidebar:
 model,  scaler = load_assets()
 latest         = get_latest_readings()
 
-PH_LOW,   PH_HIGH   = 5.5,  6.5
-SOIL_DRY, SOIL_WET  = 30,   80
-TEMP_LOW, TEMP_HIGH = 15,   30
-HUM_LOW,  HUM_HIGH  = 50,   85
-
-def sensor_cls(val, lo, hi):
-    return "s-ok" if lo <= val <= hi else ("s-bad" if val < lo * 0.7 or val > hi * 1.3 else "s-warn")
-
-def health_of(soil, ph):
-    if ph < PH_LOW or ph > PH_HIGH:  return "🔴 pH Alert",  "#f44336"
-    if soil < SOIL_DRY:               return "⚠️ Too Dry",   "#FF9800"
-    if soil > SOIL_WET:               return "⚠️ Too Wet",   "#FF9800"
-    return                                   "✅ Healthy",    "#4CAF50"
+PH_LOW,   PH_HIGH   = 5.5, 6.5
+SOIL_DRY, SOIL_WET  = 30,  80
+TEMP_LOW, TEMP_HIGH = 15,  30
+HUM_LOW,  HUM_HIGH  = 50,  85
 
 # ==============================================================
 # PAGE: LIVE DASHBOARD
 # ==============================================================
 if page == "DASHBOARD":
-    st.markdown("""
-    <div style="margin-bottom:4px; flex-shrink:0;">
-        <div style="font-size:22px;font-weight:900;color:#ffffff;
-                    letter-spacing:0.3px;line-height:1.2;">
-            Real-Time Monitoring</div>
-        <div style="font-size:11px;color:#66bb6a;letter-spacing:1px;margin-top:2px;">
-            Greenhouse Overview — AgriBot-AI Crop System</div>
-    </div>""", unsafe_allow_html=True)
+    # ── Page title ─────────────────────────────────────────────
+    st.markdown(
+        '<div style="padding:10px 16px 4px;">'
+        '<div style="font-size:22px;font-weight:900;color:#fff;line-height:1.2;">'
+        'Real-Time Monitoring</div>'
+        '<div style="font-size:11px;color:#66bb6a;letter-spacing:1px;margin-top:2px;">'
+        'Greenhouse Overview — AgriBot-AI Crop System</div>'
+        '</div>',
+        unsafe_allow_html=True)
 
     if latest.empty:
         st.warning("No sensor data yet — waiting for the Pi...")
         st.stop()
 
-    # Aggregate across all plants (greenhouse-level view)
     avg_temp = float(latest['temp_c'].mean())
     avg_hum  = float(latest['humidity'].mean())
     avg_ph   = float(latest['ph'].mean())
     avg_soil = float(latest['soil_moisture'].mean())
 
+    # ── 4 metric cards ─────────────────────────────────────────
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("TEMP",     f"{avg_temp:.1f} °C")
     m2.metric("HUMIDITY", f"{avg_hum:.0f} %")
     m3.metric("PH",       f"{avg_ph:.2f}")
     m4.metric("SOIL",     f"{avg_soil:.0f} %")
 
-    st.markdown("<div style='margin:12px 0 4px;'></div>", unsafe_allow_html=True)
+    # ── Load latest image ──────────────────────────────────────
+    img_data = get_latest_image()
 
-    with st.spinner("Loading latest capture..."):
-        img_data = get_latest_image()
+    # ── Main 2-column row ──────────────────────────────────────
+    cam_col, right_col = st.columns([3, 2], gap="medium")
 
-    cam_col, sensor_col = st.columns([3, 2], gap="medium")
-
+    # LEFT — camera
     with cam_col:
         st.markdown('<div class="cam-card">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">📷 Plant Health Feed</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">📷 Plant Health Feed</div>',
+                    unsafe_allow_html=True)
 
         if img_data.get("url"):
             st.image(img_data["url"], use_container_width=True)
             pid_txt = f"🥬 Plant {img_data['plant_id']}" if img_data.get("plant_id") else ""
             ts_txt  = f"🕒 {img_data['timestamp']}"       if img_data.get("timestamp") else ""
             st.markdown(
-                f'<div class="cam-meta">'
-                f'{pid_txt}&nbsp;&nbsp;{ts_txt}<br>'
+                f'<div class="cam-meta">{pid_txt}&nbsp;&nbsp;{ts_txt}<br>'
                 f'Captured at '
                 f'<span class="sched-badge">7:00 AM</span>'
                 f'<span class="sched-badge">12:00 NN</span>'
-                f'<span class="sched-badge">12:30 PM</span>'
-                f'</div>'
+                f'<span class="sched-badge">12:30 PM</span></div>'
                 f'<a href="{img_data["url"]}" target="_blank" class="drive-link">'
                 f'☁️ View in Google Drive ↗</a>',
                 unsafe_allow_html=True)
@@ -624,12 +578,14 @@ if page == "DASHBOARD":
                 'Pi captures at '
                 '<span class="sched-badge">7:00 AM</span>'
                 '<span class="sched-badge">12:00 NN</span>'
-                '<span class="sched-badge">05:00 PM</span></div>'
+                '<span class="sched-badge">12:30 PM</span></div>'
                 '</div>',
                 unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    with sensor_col:
+    # RIGHT — AI + Alerts
+    with right_col:
+        # Last updated
         if not latest.empty:
             last_ts = pd.to_datetime(latest['timestamp']).max()
             st.markdown(
@@ -637,7 +593,9 @@ if page == "DASHBOARD":
                 f'margin-bottom:8px;">🔄 Updated {last_ts.strftime("%H:%M:%S")}</div>',
                 unsafe_allow_html=True)
 
-        st.markdown('<div class="section-title">🤖 AI Health Recommendation</div>', unsafe_allow_html=True)
+        # AI Recommendation
+        st.markdown('<div class="section-title">🤖 AI Health Recommendation</div>',
+                    unsafe_allow_html=True)
         p1 = latest[latest['plant_id'] == 1]
         if not p1.empty and model and scaler:
             try:
@@ -656,7 +614,9 @@ if page == "DASHBOARD":
 
         st.markdown("<div style='margin:10px 0 2px;'></div>", unsafe_allow_html=True)
 
-        st.markdown('<div class="section-title">🔔 Recent Alerts</div>', unsafe_allow_html=True)
+        # Alerts
+        st.markdown('<div class="section-title">🔔 Recent Alerts</div>',
+                    unsafe_allow_html=True)
         alerts = []
         for _, plant in latest.iterrows():
             pid  = int(plant['plant_id'])
@@ -683,12 +643,12 @@ if page == "DASHBOARD":
 # PAGE: ANALYSIS
 # ==============================================================
 elif page == "ANALYSIS":
-    st.markdown("""
-    <div style="margin-bottom:12px; flex-shrink:0;">
-        <div style="font-size:22px;font-weight:900;color:#fff;">Historical Trends</div>
-        <div style="font-size:11px;color:#66bb6a;letter-spacing:1px;margin-top:2px;">
-            Sensor data over time — per plant</div>
-    </div>""", unsafe_allow_html=True)
+    st.markdown(
+        '<div style="padding:10px 16px 8px;">'
+        '<div style="font-size:22px;font-weight:900;color:#fff;">Historical Trends</div>'
+        '<div style="font-size:11px;color:#66bb6a;letter-spacing:1px;margin-top:2px;">'
+        'Sensor data over time — per plant</div></div>',
+        unsafe_allow_html=True)
 
     if not latest.empty:
         sc1, sc2, sc3 = st.columns([1, 1, 2])
@@ -716,7 +676,7 @@ elif page == "ANALYSIS":
                               paper_bgcolor='rgba(0,0,0,0)',
                               plot_bgcolor='rgba(13,17,23,0.85)',
                               font_color='#a5d6a7',
-                              title_font_color='#ffffff')
+                              title_font_color='#fff')
             st.plotly_chart(fig, use_container_width=True)
 
             if sensor_choice == "Soil Moisture (%)":
@@ -739,25 +699,25 @@ elif page == "ANALYSIS":
 # PAGE: SYSTEM LOGS
 # ==============================================================
 elif page == "LOGS":
-    st.markdown("""
-    <div style="margin-bottom:12px; flex-shrink:0;">
-        <div style="font-size:22px;font-weight:900;color:#fff;">System Logs</div>
-        <div style="font-size:11px;color:#66bb6a;letter-spacing:1px;margin-top:2px;">
-            Last 24 hours of sensor activity</div>
-    </div>""", unsafe_allow_html=True)
+    st.markdown(
+        '<div style="padding:10px 16px 8px;">'
+        '<div style="font-size:22px;font-weight:900;color:#fff;">System Logs</div>'
+        '<div style="font-size:11px;color:#66bb6a;letter-spacing:1px;margin-top:2px;">'
+        'Last 24 hours of sensor activity</div></div>',
+        unsafe_allow_html=True)
 
     logs = get_historical_data(plant_id=None, hours=24)
     if not logs.empty:
         def classify(r):
-            if r['temp_c'] < TEMP_LOW or r['temp_c'] > TEMP_HIGH:       return "🌡️ Temp alert"
-            if r['humidity'] < HUM_LOW or r['humidity'] > HUM_HIGH:     return "💧 Humidity alert"
-            if r['ph'] < PH_LOW or r['ph'] > PH_HIGH:                   return "🧪 pH alert"
+            if r['temp_c'] < TEMP_LOW or r['temp_c'] > TEMP_HIGH:            return "🌡️ Temp alert"
+            if r['humidity'] < HUM_LOW or r['humidity'] > HUM_HIGH:          return "💧 Humidity alert"
+            if r['ph'] < PH_LOW or r['ph'] > PH_HIGH:                        return "🧪 pH alert"
             if r['soil_moisture'] < SOIL_DRY or r['soil_moisture'] > SOIL_WET: return "🌱 Soil alert"
             return "Normal"
         logs['event'] = logs.apply(classify, axis=1)
-        cols = ['timestamp', 'plant_id', 'temp_c', 'humidity', 'soil_moisture', 'ph', 'event']
-        cfg  = {"timestamp": "Time", "plant_id": "Plant", "temp_c": "Temp (°C)",
-                "humidity": "Hum (%)", "soil_moisture": "Soil %", "ph": "pH", "event": "Event"}
+        cols = ['timestamp','plant_id','temp_c','humidity','soil_moisture','ph','event']
+        cfg  = {"timestamp":"Time","plant_id":"Plant","temp_c":"Temp (°C)",
+                "humidity":"Hum (%)","soil_moisture":"Soil %","ph":"pH","event":"Event"}
         if 'image_url' in logs.columns:
             cols.insert(-1, 'image_url')
             cfg['image_url'] = st.column_config.LinkColumn("📸 Image")
@@ -770,14 +730,16 @@ elif page == "LOGS":
 # PAGE: USER MANAGEMENT
 # ==============================================================
 elif page == "USERS":
-    st.markdown("""
-    <div style="margin-bottom:12px; flex-shrink:0;">
-        <div style="font-size:22px;font-weight:900;color:#fff;">Admin Control Panel</div>
-        <div style="font-size:11px;color:#66bb6a;letter-spacing:1px;margin-top:2px;">
-            Registered user accounts</div>
-    </div>""", unsafe_allow_html=True)
+    st.markdown(
+        '<div style="padding:10px 16px 8px;">'
+        '<div style="font-size:22px;font-weight:900;color:#fff;">Admin Control Panel</div>'
+        '<div style="font-size:11px;color:#66bb6a;letter-spacing:1px;margin-top:2px;">'
+        'Registered user accounts</div></div>',
+        unsafe_allow_html=True)
     st.table(pd.DataFrame({
         "Username": ["admin@agribot.ai", "user@agribot.ai"],
         "Role":     ["Administrator",    "Standard User"]
     }))
     st.info("Future feature: add / remove users via database.")
+
+# ── NO time.sleep / st.rerun() here — st_autorefresh handles it ──
