@@ -330,16 +330,16 @@ div[data-testid="stMetricValue"] {
 
 /* ── 11. PLOTLY CHART HEIGHT FIX ────────────────────────────── */
 .js-plotly-plot, .plotly, .plot-container {
-    max-height: 220px !important;
+    max-height: 210px !important;
 }
 [data-testid="stPlotlyChart"] {
-    height: 220px !important;
+    height: 210px !important;
     overflow: hidden !important;
 }
 
 /* ── 12. DATAFRAME HEIGHT FIX ───────────────────────────────── */
 [data-testid="stDataFrame"] {
-    max-height: 320px !important;
+    max-height: 300px !important;
     overflow-y: auto !important;
 }
 
@@ -364,26 +364,64 @@ div[data-testid="stMetricValue"] {
     margin-bottom: 2px !important;
 }
 
-/* ── 15. LANDING PAGE BUTTON ────────────────────────────────── */
+/* ── 15. LANDING PAGE FULL-SCREEN CENTERED BUTTON ───────────── */
+.landing-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    pointer-events: none; /* let background show through */
+}
+.landing-overlay > * {
+    pointer-events: auto; /* but the button itself is clickable */
+}
 .landing-btn-wrapper button {
     background: linear-gradient(135deg, #2e7d32, #66bb6a) !important;
     border: 2px solid rgba(255,255,255,0.3) !important;
     border-radius: 50px !important;
     color: white !important;
-    font-size: 22px !important;
+    font-size: 24px !important;
     font-weight: 700 !important;
-    padding: 14px 52px !important;
+    padding: 16px 56px !important;
     cursor: pointer !important;
     letter-spacing: 2px !important;
     text-transform: uppercase !important;
-    min-height: 60px !important;
+    min-height: 64px !important;
     transition: transform 0.2s, box-shadow 0.2s !important;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4) !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
     width: auto !important;
 }
 .landing-btn-wrapper button:hover {
     transform: scale(1.05) !important;
-    box-shadow: 0 12px 28px rgba(76,175,80,0.6) !important;
+    box-shadow: 0 12px 32px rgba(76,175,80,0.7) !important;
+}
+.landing-title {
+    font-size: 52px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 2px;
+    text-shadow: 0 4px 24px rgba(0,0,0,0.7);
+    margin-bottom: 8px;
+    text-align: center;
+}
+.landing-sub {
+    font-size: 14px;
+    color: #81c784;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 48px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+/* Hide sidebar on landing page */
+.landing-page section[data-testid="stSidebar"] {
+    display: none !important;
 }
 
 /* ── 16. LOGIN FORM ─────────────────────────────────────────── */
@@ -435,6 +473,16 @@ div[data-testid="stMetricValue"] {
 /* ── 18. COLUMNS GAP REDUCTION ──────────────────────────────── */
 [data-testid="column"] {
     padding: 0 4px !important;
+}
+
+/* ── 19. MAIN DASHBOARD FLEX LAYOUT ─────────────────────────── */
+.main .block-container {
+    display: flex;
+    flex-direction: column;
+}
+.main .block-container > [data-testid="stVerticalBlock"] {
+    flex: 1;
+    overflow: hidden;
 }
 </style>
 """
@@ -538,7 +586,7 @@ USERS = {
 st_autorefresh(interval=30_000, limit=None, key="dashboard_autorefresh")
 
 # ============================================================
-# PAGE: LANDING
+# PAGE: LANDING (cleaned layout, no spacer, reliable button)
 # ============================================================
 def show_landing():
     if ACTUAL_LANDING_BG:
@@ -547,57 +595,28 @@ def show_landing():
         st.markdown("""<style>.stApp { background: #0a0d12 !important; }</style>""",
                     unsafe_allow_html=True)
 
-    # Vertically and horizontally centred "Let's Start" button
+    # Full-screen overlay with centered button
     st.markdown("""
     <style>
-    /* On the landing page the sidebar is hidden */
+    /* Hide sidebar on landing page */
     section[data-testid="stSidebar"] { display: none !important; }
-
-    /* Full-screen centering container */
-    .landing-center {
-        position: fixed;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 10;
-    }
-    .landing-title {
-        font-size: 52px;
-        font-weight: 900;
-        color: #fff;
-        letter-spacing: 2px;
-        text-shadow: 0 4px 24px rgba(0,0,0,0.7);
-        margin-bottom: 6px;
-        text-align: center;
-    }
-    .landing-sub {
-        font-size: 14px;
-        color: #81c784;
-        letter-spacing: 4px;
-        text-transform: uppercase;
-        text-align: center;
-        margin-bottom: 48px;
-        text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-    }
     </style>
-    <div class="landing-center">
+    <div class="landing-overlay">
         <div class="landing-title">🌱 AgriBot-AI</div>
         <div class="landing-sub">Smart Farming · Intelligent Monitoring</div>
+        <div class="landing-btn-wrapper"></div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Streamlit button placed in the centre via column trick
-    _, mid, _ = st.columns([2, 1, 2])
-    with mid:
-        # Push button down to vertical centre (roughly)
-        st.markdown("<div style='height:320px'></div>", unsafe_allow_html=True)
-        st.markdown('<div class="landing-btn-wrapper">', unsafe_allow_html=True)
+    # Place the actual Streamlit button inside the wrapper using columns trick
+    # (Streamlit button cannot be inside raw HTML, so we use a minimal column layout)
+    cols = st.columns([2, 1, 2])
+    with cols[1]:
+        # Add a bit of top margin to align with the overlay
+        st.markdown("<div style='margin-top:45vh;'></div>", unsafe_allow_html=True)
         if st.button("🚀  Let's Start", use_container_width=True, key="landing_btn"):
             st.session_state.page = "login"
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
     st.stop()
 
