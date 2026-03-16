@@ -54,8 +54,7 @@ st.set_page_config(
 )
 
 # ============================================================
-# KIOSK CSS — eliminates ALL scrolling, top padding, and
-# white space. Targets every Streamlit internal container.
+# KIOSK CSS — eliminates ALL scrolling, top padding, and white space
 # ============================================================
 KIOSK_CSS = """
 <style>
@@ -197,7 +196,6 @@ section[data-testid="stSidebar"] {
     width: 100% !important;
     cursor: pointer !important;
     transition: all 0.2s !important;
-    /* Minimum 44px touch target */
     min-height: 40px !important;
     display: flex !important;
     align-items: center !important;
@@ -364,42 +362,14 @@ div[data-testid="stMetricValue"] {
     margin-bottom: 2px !important;
 }
 
-/* ── 15. LANDING PAGE FULL-SCREEN CENTERED BUTTON ───────────── */
-.landing-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+/* ── 15. LANDING PAGE CENTERING ─────────────────────────────── */
+.landing-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
-    pointer-events: none; /* let background show through */
-}
-.landing-overlay > * {
-    pointer-events: auto; /* but the button itself is clickable */
-}
-.landing-btn-wrapper button {
-    background: linear-gradient(135deg, #2e7d32, #66bb6a) !important;
-    border: 2px solid rgba(255,255,255,0.3) !important;
-    border-radius: 50px !important;
-    color: white !important;
-    font-size: 24px !important;
-    font-weight: 700 !important;
-    padding: 16px 56px !important;
-    cursor: pointer !important;
-    letter-spacing: 2px !important;
-    text-transform: uppercase !important;
-    min-height: 64px !important;
-    transition: transform 0.2s, box-shadow 0.2s !important;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
-    width: auto !important;
-}
-.landing-btn-wrapper button:hover {
-    transform: scale(1.05) !important;
-    box-shadow: 0 12px 32px rgba(76,175,80,0.7) !important;
+    height: 100vh;
+    width: 100%;
 }
 .landing-title {
     font-size: 52px;
@@ -566,10 +536,8 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = saved.get("logged_in", False)
     st.session_state.role      = saved.get("role", None)
 
-# "page" drives the multi-page flow:
-# "landing" → "login" → "dashboard"
+# "page" drives the multi-page flow: "landing" → "login" → "dashboard"
 if "page" not in st.session_state:
-    # If already logged in (e.g. after a server restart), jump straight to dashboard
     if st.session_state.logged_in:
         st.session_state.page = "dashboard"
     else:
@@ -586,7 +554,7 @@ USERS = {
 st_autorefresh(interval=30_000, limit=None, key="dashboard_autorefresh")
 
 # ============================================================
-# PAGE: LANDING (cleaned layout, no spacer, reliable button)
+# PAGE: LANDING (simplified, reliable button)
 # ============================================================
 def show_landing():
     if ACTUAL_LANDING_BG:
@@ -595,29 +563,23 @@ def show_landing():
         st.markdown("""<style>.stApp { background: #0a0d12 !important; }</style>""",
                     unsafe_allow_html=True)
 
-    # Full-screen overlay with centered button
+    # Hide sidebar and show centered content
     st.markdown("""
     <style>
-    /* Hide sidebar on landing page */
     section[data-testid="stSidebar"] { display: none !important; }
     </style>
-    <div class="landing-overlay">
+    <div class="landing-container">
         <div class="landing-title">🌱 AgriBot-AI</div>
         <div class="landing-sub">Smart Farming · Intelligent Monitoring</div>
-        <div class="landing-btn-wrapper"></div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Place the actual Streamlit button inside the wrapper using columns trick
-    # (Streamlit button cannot be inside raw HTML, so we use a minimal column layout)
-    cols = st.columns([2, 1, 2])
-    with cols[1]:
-        # Add a bit of top margin to align with the overlay
-        st.markdown("<div style='margin-top:45vh;'></div>", unsafe_allow_html=True)
+    # Place button in a centered column
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
         if st.button("🚀  Let's Start", use_container_width=True, key="landing_btn"):
             st.session_state.page = "login"
             st.rerun()
-
     st.stop()
 
 # ============================================================
@@ -1007,7 +969,7 @@ elif page == "ANALYSIS":
             fig = px.line(hist_df, x='timestamp', y=y_col,
                           title=f"{sensor_choice} — Plant {plant_sel}")
             fig.update_layout(
-                height=210,           # ← fixed height keeps it in-screen
+                height=210,           # fixed height keeps it in-screen
                 margin=dict(t=32, b=20, l=30, r=10),
                 yaxis_title=y_label,
                 paper_bgcolor='rgba(0,0,0,0)',
@@ -1077,7 +1039,6 @@ elif page == "LOGS":
             cols.insert(-1, 'image_url')
             cfg['image_url'] = st.column_config.LinkColumn("📸 Image")
 
-        # height=300 keeps table within the 600px screen
         st.dataframe(logs[cols].tail(50), use_container_width=True,
                      hide_index=True, height=300, column_config=cfg)
     else:
