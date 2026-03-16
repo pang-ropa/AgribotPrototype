@@ -86,8 +86,6 @@ html, body {
     height: 100vh !important;
 }
 
-/* THE KEY FIX: this inner container is what Streamlit uses
-   to push content down — force it to the very top */
 [data-testid="stAppViewBlockContainer"] {
     overflow: hidden !important;
     padding: 0 !important;
@@ -119,15 +117,15 @@ section.main > div {
     overflow: hidden !important;
     height: 100vh !important;
     max-height: 100vh !important;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Remove ANY first-child margin Streamlit injects */
 .main .block-container > div:first-child {
     margin-top: 0 !important;
     padding-top: 0 !important;
 }
 
-/* Streamlit's internal vertical block */
 [data-testid="stVerticalBlock"] {
     gap: 4px !important;
 }
@@ -440,8 +438,9 @@ div[data-testid="stMetricValue"] {
     50%      { box-shadow: 0 0 14px #4CAF50; opacity: 0.7; }
 }
 
-/* ── 18. COLUMNS GAP REDUCTION ──────────────────────────────── */
+/* ── 18. COLUMNS FILL HEIGHT ────────────────────────────────── */
 [data-testid="column"] {
+    height: 100%;
     padding: 0 4px !important;
 }
 
@@ -554,7 +553,7 @@ USERS = {
 st_autorefresh(interval=30_000, limit=None, key="dashboard_autorefresh")
 
 # ============================================================
-# PAGE: LANDING (simplified, reliable button)
+# PAGE: LANDING
 # ============================================================
 def show_landing():
     if ACTUAL_LANDING_BG:
