@@ -637,6 +637,7 @@ def show_login():
 
         # Add a footer with adjustable bottom margin
         st.markdown('<div class="login-footer"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:-90px;">', unsafe_allow_html=True)
 
     st.stop()
 
