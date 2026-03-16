@@ -563,12 +563,11 @@ def show_landing():
     </style>
     """, unsafe_allow_html=True)
 
-    # Center the button with a top margin to appear below the existing text on the background
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        # Adjust margin-top if needed (try 55vh–65vh)
+    # Use columns to place button on the left, leaving space on the right
+    col1, col2 = st.columns([1, 10])   # Adjust the ratio to control left offset
+    with col1:
+        # Add the same top margin to keep vertical position
         st.markdown("<div style='margin-top: 30vh;'></div>", unsafe_allow_html=True)
-        st.markdown("<div style='margin-left: -45vh;'></div>", unsafe_allow_html=True)
         st.markdown('<div class="landing-btn-wrapper">', unsafe_allow_html=True)
         if st.button("🚀  Let's Start", use_container_width=True, key="landing_btn"):
             st.session_state.page = "login"
