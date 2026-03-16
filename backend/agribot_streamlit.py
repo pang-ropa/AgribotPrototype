@@ -553,7 +553,7 @@ def show_landing():
     if ACTUAL_LANDING_BG:
         set_background(ACTUAL_LANDING_BG)
     else:
-        st.markdown("""<style>.stApp { background: #0a0d12 !important; }</style>""",
+        st.markdown("""<style>.stApp { background: transparent !important; }</style>""",
                     unsafe_allow_html=True)
 
     # Hide sidebar on landing page
