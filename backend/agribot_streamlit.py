@@ -564,7 +564,7 @@ def show_landing():
     """, unsafe_allow_html=True)
 
     # Use columns to place button on the left, leaving space on the right
-    col1, col2 = st.columns([1, 10])   # Adjust the ratio to control left offset
+    col1, col2 = st.columns([3, 10])   # Adjust the ratio to control left offset
     with col1:
         # Add the same top margin to keep vertical position
         st.markdown("<div style='margin-top: 30vh;'></div>", unsafe_allow_html=True)
