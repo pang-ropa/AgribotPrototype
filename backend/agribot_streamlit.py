@@ -360,32 +360,26 @@ div[data-testid="stMetricValue"] {
     margin-bottom: 2px !important;
 }
 
-/* ── 15. LANDING PAGE CENTERING ─────────────────────────────── */
-.landing-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    width: 100%;
+/* ── 15. LANDING PAGE BUTTON ────────────────────────────────── */
+.landing-btn-wrapper button {
+    background: linear-gradient(135deg, #2e7d32, #66bb6a) !important;
+    border: 2px solid rgba(255,255,255,0.3) !important;
+    border-radius: 50px !important;
+    color: white !important;
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    padding: 16px 56px !important;
+    cursor: pointer !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    min-height: 64px !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+    width: auto !important;
 }
-.landing-title {
-    font-size: 52px;
-    font-weight: 900;
-    color: #fff;
-    letter-spacing: 2px;
-    text-shadow: 0 4px 24px rgba(0,0,0,0.7);
-    margin-bottom: 8px;
-    text-align: center;
-}
-.landing-sub {
-    font-size: 14px;
-    color: #81c784;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    text-align: center;
-    margin-bottom: 48px;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+.landing-btn-wrapper button:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 12px 32px rgba(76,175,80,0.7) !important;
 }
 /* Hide sidebar on landing page */
 .landing-page section[data-testid="stSidebar"] {
@@ -562,23 +556,24 @@ def show_landing():
         st.markdown("""<style>.stApp { background: #0a0d12 !important; }</style>""",
                     unsafe_allow_html=True)
 
-    # Hide sidebar and show centered content
+    # Hide sidebar on landing page
     st.markdown("""
     <style>
     section[data-testid="stSidebar"] { display: none !important; }
     </style>
-    <div class="landing-container">
-        <div class="landing-title">🌱 AgriBot-AI</div>
-        <div class="landing-sub">Smart Farming · Intelligent Monitoring</div>
-    </div>
     """, unsafe_allow_html=True)
 
-    # Place button in a centered column
+    # Center the button with a top margin to appear below the existing text on the background
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
+        # Adjust margin-top if needed (50vh–60vh works on 1024×600)
+        st.markdown("<div style='margin-top: 55vh;'></div>", unsafe_allow_html=True)
+        st.markdown('<div class="landing-btn-wrapper">', unsafe_allow_html=True)
         if st.button("🚀  Let's Start", use_container_width=True, key="landing_btn"):
             st.session_state.page = "login"
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
     st.stop()
 
 # ============================================================
