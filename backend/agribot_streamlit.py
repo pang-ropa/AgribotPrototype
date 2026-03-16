@@ -590,8 +590,8 @@ def show_login():
     .login-main-container {
         margin-top: -60px;   /* <-- Change this to move everything up/down */
     }
-    .login-margin-bottom {
-        height: -1000px;        /* <-- Change this to add extra space below the button */
+    .login-bottom-spacer {
+        height: 30px;        /* <-- Change this to add extra space below the button */
     }
     </style>""", unsafe_allow_html=True)
 
