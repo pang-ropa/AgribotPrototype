@@ -550,12 +550,20 @@ st_autorefresh(interval=30_000, limit=None, key="dashboard_autorefresh")
 # PAGE: LANDING (with adjusted button position)
 # ============================================================
 def show_landing():
-    set_background(ACTUAL_LANDING_BG)
-   
-    # Hide sidebar on landing page
+    if ACTUAL_LANDING_BG:
+        set_background(ACTUAL_LANDING_BG)
+    else:
+        st.markdown("""<style>.stApp { background: #0a0d12 !important; }</style>""",
+                    unsafe_allow_html=True)
+
+    # Remove the dark overlay for the landing page
     st.markdown("""
     <style>
     section[data-testid="stSidebar"] { display: none !important; }
+    /* Disable the semi-transparent overlay added by set_background */
+    .stApp::before {
+        display: none !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
