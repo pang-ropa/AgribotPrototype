@@ -550,12 +550,8 @@ st_autorefresh(interval=30_000, limit=None, key="dashboard_autorefresh")
 # PAGE: LANDING (with adjusted button position)
 # ============================================================
 def show_landing():
-    if ACTUAL_LANDING_BG:
-        set_background(ACTUAL_LANDING_BG)
-    else:
-        st.markdown("""<style>.stApp { background: transparent !important; }</style>""",
-                    unsafe_allow_html=True)
-
+    set_background(ACTUAL_LANDING_BG)
+   
     # Hide sidebar on landing page
     st.markdown("""
     <style>
@@ -570,7 +566,7 @@ def show_landing():
         st.markdown("<div style='margin-top: 30vh;'></div>", unsafe_allow_html=True)
         st.markdown("<div style='margin-left: -45vh;'></div>", unsafe_allow_html=True)
         st.markdown('<div class="landing-btn-wrapper">', unsafe_allow_html=True)
-        if st.button("🚀  Let's Start", use_container_width=True, key="landing_btn"):
+        if st.button("Let's Start", use_container_width=True, key="landing_btn"):
             st.session_state.page = "login"
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
