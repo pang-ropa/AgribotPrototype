@@ -585,6 +585,10 @@ def show_login():
 
     st.markdown("""<style>
     section[data-testid="stSidebar"] { display: none !important; }
+    /* Adjust this value to change the bottom spacing of the login page */
+    .login-footer {
+        margin-bottom: 30px;  /* <-- Change this number to add/subtract bottom space */
+    }
     </style>""", unsafe_allow_html=True)
 
     logo_b64  = file_to_b64(ACTUAL_LOGO)
@@ -598,7 +602,6 @@ def show_login():
 
     st.markdown(
         f'<div style="display:flex;flex-direction:column;align-items:center;margin-top:-90px;">'
-        f'<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:-60px;">'
         f'{logo_html}'
         f'<div style="text-align:center;font-size:34px;font-weight:900;color:#fff;'
         f'letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,0.6);margin-bottom:4px;">'
@@ -631,6 +634,9 @@ def show_login():
         if st.button("← Back to Landing", use_container_width=True, key="back_btn"):
             st.session_state.page = "landing"
             st.rerun()
+
+        # Add a footer with adjustable bottom margin
+        st.markdown('<div class="login-footer"></div>', unsafe_allow_html=True)
 
     st.stop()
 
