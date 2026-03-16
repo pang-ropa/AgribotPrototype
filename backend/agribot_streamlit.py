@@ -12,7 +12,7 @@ import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
 
 # ============================================================
-# PATHS
+# PATHS (unchanged)
 # ============================================================
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH  = os.path.join(SCRIPT_DIR, "agribotailogo.png")
@@ -54,21 +54,21 @@ st.set_page_config(
 )
 
 # ============================================================
-# KIOSK CSS — eliminates ALL scrolling, top padding, and white space
+# OPTIMIZED CSS FOR 7-INCH DISPLAY (larger fonts, tighter spacing)
 # ============================================================
-KIOSK_CSS = """
+OPTIMIZED_CSS = """
 <style>
-/* ── 1. KILL ALL SCROLL at every level ─────────────────────── */
+/* ── 1. BASE ───────────────────────────────────────────────── */
 html, body {
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;
     height: 100% !important;
     width: 100% !important;
-    font-size: 13px;
+    font-size: 14px !important;  /* increased base font */
 }
 
-/* ── 2. ROOT APP WRAPPER ────────────────────────────────────── */
+/* ── 2. ROOT APP ──────────────────────────────────────────── */
 .stApp {
     margin: 0 !important;
     padding: 0 !important;
@@ -78,7 +78,7 @@ html, body {
     max-height: 100vh !important;
 }
 
-/* ── 3. STRIP EVERY INTERNAL CONTAINER TOP OFFSET ──────────── */
+/* ── 3. REMOVE ALL STREAMLIT OFFSETS ──────────────────────── */
 [data-testid="stAppViewContainer"] {
     overflow: hidden !important;
     padding: 0 !important;
@@ -95,7 +95,6 @@ html, body {
     max-height: 100vh !important;
 }
 
-/* ── 4. MAIN CONTENT AREA ───────────────────────────────────── */
 .main {
     margin: 0 !important;
     padding: 0 !important;
@@ -130,7 +129,7 @@ section.main > div {
     gap: 4px !important;
 }
 
-/* ── 5. HIDE ALL STREAMLIT CHROME ───────────────────────────── */
+/* ── 4. HIDE STREAMLIT CHROME ─────────────────────────────── */
 #MainMenu,
 footer,
 header,
@@ -152,10 +151,10 @@ a[href*="streamlit.io"],
     visibility: hidden !important;
 }
 
-/* ── 6. SIDEBAR ─────────────────────────────────────────────── */
+/* ── 5. SIDEBAR ────────────────────────────────────────────── */
 section[data-testid="stSidebar"] {
-    width: 220px !important;
-    min-width: 220px !important;
+    width: 230px !important;          /* slightly wider for better readability */
+    min-width: 230px !important;
     background: linear-gradient(180deg, #0a0d12 0%, #0d1117 100%) !important;
     border-right: 1px solid rgba(46,125,50,0.5) !important;
     overflow-y: auto !important;
@@ -175,14 +174,14 @@ section[data-testid="stSidebar"] {
     display: none !important;
 }
 
-/* ── 7. SIDEBAR NAV RADIO ───────────────────────────────────── */
+/* ── 6. SIDEBAR NAVIGATION RADIO ───────────────────────────── */
 .stRadio > div {
     gap: 2px !important;
     width: 100% !important;
     flex-direction: column !important;
 }
 .stRadio label {
-    font-size: 11px !important;
+    font-size: 13px !important;       /* increased from 11px */
     font-weight: 700 !important;
     color: #81c784 !important;
     letter-spacing: 0.8px !important;
@@ -194,7 +193,7 @@ section[data-testid="stSidebar"] {
     width: 100% !important;
     cursor: pointer !important;
     transition: all 0.2s !important;
-    min-height: 40px !important;
+    min-height: 44px !important;
     display: flex !important;
     align-items: center !important;
 }
@@ -211,19 +210,19 @@ div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
 .stRadio [data-baseweb="radio"] > div:first-child { display: none !important; }
 .stRadio [data-testid="stMarkdownContainer"] p { margin: 0 !important; }
 
-/* ── 8. LOGOUT BUTTON ───────────────────────────────────────── */
+/* ── 7. LOGOUT BUTTON ──────────────────────────────────────── */
 [data-testid="stSidebar"] .stButton > button {
     background: rgba(46,125,50,0.12) !important;
     border: 1px solid rgba(76,175,80,0.3) !important;
     color: #81c784 !important;
     border-radius: 10px !important;
     width: 100% !important;
-    font-size: 11px !important;
+    font-size: 13px !important;       /* increased from 11px */
     font-weight: 700 !important;
     letter-spacing: 1px !important;
     text-transform: uppercase !important;
     padding: 10px !important;
-    min-height: 44px !important;
+    min-height: 48px !important;      /* slightly taller for touch */
     transition: all 0.2s !important;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
@@ -232,7 +231,7 @@ div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
     color: #ef9a9a !important;
 }
 
-/* ── 9. METRIC CARDS ────────────────────────────────────────── */
+/* ── 8. METRIC CARDS ───────────────────────────────────────── */
 div[data-testid="stMetric"] {
     background: rgba(13,17,23,0.85) !important;
     border: 1px solid rgba(76,175,80,0.3) !important;
@@ -242,20 +241,20 @@ div[data-testid="stMetric"] {
 }
 div[data-testid="stMetricLabel"] {
     font-weight: 700 !important;
-    font-size: 9px !important;
+    font-size: 11px !important;       /* increased from 9px */
     color: #66bb6a !important;
     letter-spacing: 1.2px !important;
     text-transform: uppercase !important;
     justify-content: center !important;
 }
 div[data-testid="stMetricValue"] {
-    font-size: 22px !important;
+    font-size: 24px !important;       /* increased from 22px */
     font-weight: 900 !important;
     color: #fff !important;
     margin-top: 1px !important;
 }
 
-/* ── 10. DASHBOARD CUSTOM CARDS ─────────────────────────────── */
+/* ── 9. DASHBOARD CUSTOM CARDS ─────────────────────────────── */
 .cam-card {
     background: rgba(13,17,23,0.9);
     border: 1px solid rgba(46,125,50,0.4);
@@ -264,7 +263,7 @@ div[data-testid="stMetricValue"] {
     height: 100%;
 }
 .section-title {
-    font-size: 10px;
+    font-size: 12px !important;       /* increased from 10px */
     font-weight: 700;
     color: #66bb6a;
     letter-spacing: 1.2px;
@@ -275,27 +274,27 @@ div[data-testid="stMetricValue"] {
     padding-left: 7px;
 }
 .alert-item {
-    padding: 4px 8px;
+    padding: 6px 10px;                /* slightly larger padding */
     background: rgba(183,28,28,0.12);
     border: 1px solid rgba(183,28,28,0.3);
     color: #ef9a9a;
-    border-radius: 6px;
-    margin: 3px 0;
-    font-size: 11px;
+    border-radius: 8px;
+    margin: 4px 0;
+    font-size: 13px !important;       /* increased from 11px */
 }
 .sched-badge {
     display: inline-block;
     background: rgba(21,101,192,0.2);
     border: 1px solid rgba(21,101,192,0.5);
     border-radius: 5px;
-    padding: 1px 5px;
-    font-size: 9px;
+    padding: 2px 6px;
+    font-size: 10px !important;       /* increased from 9px */
     color: #90CAF9;
     font-weight: 700;
     margin: 0 2px;
 }
 .cam-meta {
-    font-size: 9px;
+    font-size: 10px !important;       /* increased from 9px */
     color: #66bb6a;
     margin-top: 4px;
     line-height: 1.5;
@@ -306,9 +305,9 @@ div[data-testid="stMetricValue"] {
     background: rgba(46,125,50,0.15);
     border: 1px solid rgba(76,175,80,0.3);
     border-radius: 7px;
-    padding: 3px 8px;
+    padding: 4px 10px;                /* larger touch target */
     color: #81c784;
-    font-size: 10px;
+    font-size: 11px !important;       /* increased from 10px */
     text-decoration: none;
 }
 .cam-placeholder {
@@ -324,7 +323,7 @@ div[data-testid="stMetricValue"] {
     padding: 20px;
 }
 
-/* ── 11. PLOTLY CHART HEIGHT FIX ────────────────────────────── */
+/* ── 10. PLOTLY CHART HEIGHT (unchanged) ───────────────────── */
 .js-plotly-plot, .plotly, .plot-container {
     max-height: 210px !important;
 }
@@ -333,34 +332,40 @@ div[data-testid="stMetricValue"] {
     overflow: hidden !important;
 }
 
-/* ── 12. DATAFRAME HEIGHT FIX ───────────────────────────────── */
+/* ── 11. DATAFRAME ─────────────────────────────────────────── */
 [data-testid="stDataFrame"] {
     max-height: 300px !important;
     overflow-y: auto !important;
+    font-size: 13px !important;       /* larger table text */
 }
 
-/* ── 13. STREAMLIT ALERTS COMPACT ───────────────────────────── */
+/* ── 12. STREAMLIT ALERTS ──────────────────────────────────── */
 [data-testid="stAlert"] {
-    padding: 6px 10px !important;
-    font-size: 11px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
     border-radius: 8px !important;
-    margin: 3px 0 !important;
+    margin: 4px 0 !important;
 }
 
-/* ── 14. SELECTBOX & FORM INPUTS COMPACT ────────────────────── */
+/* ── 13. SELECTBOX & INPUTS ────────────────────────────────── */
 [data-testid="stSelectbox"] {
     margin-bottom: 4px !important;
 }
 [data-baseweb="select"] {
-    min-height: 36px !important;
+    min-height: 42px !important;      /* taller for touch */
 }
 .stSelectbox label {
-    font-size: 10px !important;
+    font-size: 12px !important;
     color: #66bb6a !important;
     margin-bottom: 2px !important;
 }
+.stTextInput label {
+    color: #c8e6c9 !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;      /* increased from 12px */
+}
 
-/* ── 15. LANDING PAGE BUTTON ────────────────────────────────── */
+/* ── 14. LANDING PAGE BUTTON ───────────────────────────────── */
 .landing-btn-wrapper button {
     background: linear-gradient(135deg, #2e7d32, #66bb6a) !important;
     border: 2px solid rgba(255,255,255,0.3) !important;
@@ -368,7 +373,7 @@ div[data-testid="stMetricValue"] {
     color: white !important;
     font-size: 24px !important;
     font-weight: 700 !important;
-    padding: 16px 56px !important;
+    padding: 14px 48px !important;    /* slightly smaller to fit left */
     cursor: pointer !important;
     letter-spacing: 2px !important;
     text-transform: uppercase !important;
@@ -386,7 +391,7 @@ div[data-testid="stMetricValue"] {
     display: none !important;
 }
 
-/* ── 16. LOGIN FORM ─────────────────────────────────────────── */
+/* ── 15. LOGIN FORM ────────────────────────────────────────── */
 [data-testid="stForm"] {
     background: linear-gradient(160deg,
         rgba(27,94,32,0.65) 0%, rgba(46,125,50,0.55) 100%) !important;
@@ -402,8 +407,8 @@ div[data-testid="stMetricValue"] {
     color: #fff !important;
     border: 1px solid rgba(165,214,167,0.45) !important;
     border-radius: 10px !important;
-    font-size: 14px !important;
-    min-height: 44px !important;
+    font-size: 16px !important;       /* larger for touch */
+    min-height: 48px !important;
 }
 [data-testid="stForm"] input::placeholder {
     color: rgba(200,230,200,0.6) !important;
@@ -415,30 +420,25 @@ div[data-testid="stMetricValue"] {
     font-weight: 700 !important;
     border-radius: 10px !important;
     letter-spacing: 1.5px;
-    font-size: 14px !important;
+    font-size: 16px !important;       /* larger */
     padding: 12px !important;
-    min-height: 48px !important;
+    min-height: 52px !important;
     margin-top: 4px !important;
 }
-.stTextInput label {
-    color: #c8e6c9 !important;
-    font-weight: 600 !important;
-    font-size: 12px !important;
-}
 
-/* ── 17. PULSE ANIMATION ────────────────────────────────────── */
+/* ── 16. PULSE ANIMATION ───────────────────────────────────── */
 @keyframes pulse {
     0%,100% { box-shadow: 0 0 5px #4CAF50; }
     50%      { box-shadow: 0 0 14px #4CAF50; opacity: 0.7; }
 }
 
-/* ── 18. COLUMNS FILL HEIGHT ────────────────────────────────── */
+/* ── 17. COLUMNS FILL HEIGHT ───────────────────────────────── */
 [data-testid="column"] {
     height: 100%;
     padding: 0 4px !important;
 }
 
-/* ── 19. MAIN DASHBOARD FLEX LAYOUT ─────────────────────────── */
+/* ── 18. MAIN DASHBOARD FLEX LAYOUT ────────────────────────── */
 .main .block-container {
     display: flex;
     flex-direction: column;
@@ -449,10 +449,10 @@ div[data-testid="stMetricValue"] {
 }
 </style>
 """
-st.markdown(KIOSK_CSS, unsafe_allow_html=True)
+st.markdown(OPTIMIZED_CSS, unsafe_allow_html=True)
 
 # ============================================================
-# HELPERS
+# HELPERS (unchanged)
 # ============================================================
 def file_to_b64(path: str) -> str:
     try:
@@ -496,7 +496,7 @@ def set_background(path: str):
     </style>""", unsafe_allow_html=True)
 
 # ============================================================
-# PERSISTENT SESSION
+# PERSISTENT SESSION (unchanged)
 # ============================================================
 def session_save(role: str):
     try:
@@ -522,14 +522,13 @@ def session_clear():
         pass
 
 # ============================================================
-# SESSION STATE — restore from file on cold start
+# SESSION STATE (unchanged)
 # ============================================================
 if "logged_in" not in st.session_state:
     saved = session_load()
     st.session_state.logged_in = saved.get("logged_in", False)
     st.session_state.role      = saved.get("role", None)
 
-# "page" drives the multi-page flow: "landing" → "login" → "dashboard"
 if "page" not in st.session_state:
     if st.session_state.logged_in:
         st.session_state.page = "dashboard"
@@ -541,13 +540,10 @@ USERS = {
     "user@agribot.ai":  {"password": "user123",  "role": "user"},
 }
 
-# ============================================================
-# AUTO-REFRESH — keeps WebSocket alive
-# ============================================================
 st_autorefresh(interval=30_000, limit=None, key="dashboard_autorefresh")
 
 # ============================================================
-# PAGE: LANDING (with adjusted button position)
+# PAGE: LANDING (clean left-aligned button, no negative margins)
 # ============================================================
 def show_landing():
     if ACTUAL_LANDING_BG:
@@ -556,23 +552,18 @@ def show_landing():
         st.markdown("""<style>.stApp { background: #0a0d12 !important; }</style>""",
                     unsafe_allow_html=True)
 
-    # Remove the dark overlay for the landing page
+    # Remove overlay and hide sidebar
     st.markdown("""
     <style>
     section[data-testid="stSidebar"] { display: none !important; }
-    /* Disable the semi-transparent overlay added by set_background */
-    .stApp::before {
-        display: none !important;
-    }
+    .stApp::before { display: none !important; }
     </style>
     """, unsafe_allow_html=True)
 
-    # Center the button with a top margin to appear below the existing text on the background
-    col1, col2, col3 = st.columns([3, 2, 9])
-    with col2:
-        # Adjust margin-top if needed (try 55vh–65vh)
-        st.markdown("<div style='margin-top: 30vh;'></div>", unsafe_allow_html=True)
-        st.markdown("<div style='margin-left: -45vh;'></div>", unsafe_allow_html=True)
+    # Place button on the left with vertical margin
+    col1, col2 = st.columns([1, 5])   # Narrow left column for button
+    with col1:
+        st.markdown("<div style='margin-top: 58vh;'></div>", unsafe_allow_html=True)
         st.markdown('<div class="landing-btn-wrapper">', unsafe_allow_html=True)
         if st.button("Let's Start", use_container_width=True, key="landing_btn"):
             st.session_state.page = "login"
@@ -582,12 +573,11 @@ def show_landing():
     st.stop()
 
 # ============================================================
-# PAGE: LOGIN
+# PAGE: LOGIN (unchanged)
 # ============================================================
 def show_login():
     set_background(ACTUAL_BG)
 
-    # Hide sidebar on login page
     st.markdown("""<style>
     section[data-testid="stSidebar"] { display: none !important; }
     </style>""", unsafe_allow_html=True)
@@ -628,7 +618,6 @@ def show_login():
                 else:
                     st.error("Invalid email or password")
 
-        # Back to landing link
         st.markdown(
             '<div style="text-align:center;margin-top:10px;">'
             '<span style="font-size:11px;color:#388e3c;">← </span>'
@@ -640,7 +629,7 @@ def show_login():
     st.stop()
 
 # ============================================================
-# MAIN FLOW: route by st.session_state.page
+# MAIN FLOW (unchanged)
 # ============================================================
 if st.session_state.page == "landing":
     show_landing()
@@ -648,14 +637,12 @@ if st.session_state.page == "landing":
 if st.session_state.page == "login":
     show_login()
 
-# ── Past this point we are on the Dashboard ─────────────────
-# Extra guard: if somehow page == "dashboard" but not logged in, send to login
 if not st.session_state.logged_in:
     st.session_state.page = "login"
     st.rerun()
 
 # ============================================================
-# DATA FUNCTIONS
+# DATA FUNCTIONS (unchanged)
 # ============================================================
 @st.cache_resource
 def load_assets():
@@ -816,10 +803,9 @@ TEMP_LOW, TEMP_HIGH = 15,  30
 HUM_LOW,  HUM_HIGH  = 50,  85
 
 # ============================================================
-# PAGE: LIVE DASHBOARD
+# PAGE: LIVE DASHBOARD (unchanged)
 # ============================================================
 if page == "DASHBOARD":
-    # Compact page header
     st.markdown(
         '<div style="padding:6px 12px 2px;">'
         '<div style="font-size:18px;font-weight:900;color:#fff;line-height:1.2;">'
@@ -838,7 +824,6 @@ if page == "DASHBOARD":
     avg_ph   = float(latest['ph'].mean())
     avg_soil = float(latest['soil_moisture'].mean())
 
-    # 4 metric cards — compact
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("TEMP",     f"{avg_temp:.1f} °C")
     m2.metric("HUMIDITY", f"{avg_hum:.0f} %")
@@ -854,7 +839,6 @@ if page == "DASHBOARD":
         st.markdown('<div class="section-title">📷 Plant Health Feed</div>',
                     unsafe_allow_html=True)
         if img_data.get("url"):
-            # Fixed height so image never pushes layout out of bounds
             st.markdown(
                 f'<img src="{img_data["url"]}" '
                 f'style="width:100%;max-height:230px;object-fit:cover;'
@@ -935,7 +919,7 @@ if page == "DASHBOARD":
             st.success("✅ All parameters in range.")
 
 # ============================================================
-# PAGE: ANALYSIS
+# PAGE: ANALYSIS (unchanged)
 # ============================================================
 elif page == "ANALYSIS":
     st.markdown(
@@ -968,7 +952,7 @@ elif page == "ANALYSIS":
             fig = px.line(hist_df, x='timestamp', y=y_col,
                           title=f"{sensor_choice} — Plant {plant_sel}")
             fig.update_layout(
-                height=210,           # fixed height keeps it in-screen
+                height=210,
                 margin=dict(t=32, b=20, l=30, r=10),
                 yaxis_title=y_label,
                 paper_bgcolor='rgba(0,0,0,0)',
@@ -1000,7 +984,7 @@ elif page == "ANALYSIS":
         st.warning("No data available yet.")
 
 # ============================================================
-# PAGE: SYSTEM LOGS
+# PAGE: SYSTEM LOGS (unchanged)
 # ============================================================
 elif page == "LOGS":
     st.markdown(
@@ -1044,7 +1028,7 @@ elif page == "LOGS":
         st.info("No logs available.")
 
 # ============================================================
-# PAGE: USER MANAGEMENT
+# PAGE: USER MANAGEMENT (unchanged)
 # ============================================================
 elif page == "USERS":
     st.markdown(
