@@ -585,10 +585,13 @@ def show_login():
 
     st.markdown("""<style>
     section[data-testid="stSidebar"] { display: none !important; }
-                
-    /* Adjust this value to change the bottom spacing of the login page */
-    .login-footer {
-        margin-bottom: -1000vh;  /* <-- Change this number to add/subtract bottom space */
+
+    /* Adjust these values to control vertical spacing */
+    .login-main-container {
+        margin-top: -60px;   /* <-- Change this to move everything up/down */
+    }
+    .login-bottom-spacer {
+        height: -50px;        /* <-- Change this to add extra space below the button */
     }
     </style>""", unsafe_allow_html=True)
 
@@ -636,9 +639,7 @@ def show_login():
             st.session_state.page = "landing"
             st.rerun()
 
-        # Add a footer with adjustable bottom margin
-        st.markdown('<div class="login-footer"></div>', unsafe_allow_html=True)
-
+         st.markdown('<div class="login-bottom-spacer"></div>', unsafe_allow_html=True)
     st.stop()
 
 # ============================================================
