@@ -587,7 +587,7 @@ def show_login():
     section[data-testid="stSidebar"] { display: none !important; }
     /* Adjust this value to change the bottom spacing of the login page */
     .login-footer {
-        margin-bottom: -500px;  /* <-- Change this number to add/subtract bottom space */
+        margin-bottom: -1000px;  /* <-- Change this number to add/subtract bottom space */
     }
     </style>""", unsafe_allow_html=True)
 
@@ -636,11 +636,7 @@ def show_login():
             st.rerun()
 
         # Add a footer with adjustable bottom margin
-        st.markdown(
-        f'<div class="login-footer:" style="display:flex;flex-direction:column;align-items:center;margin-bottom:10px;">'
-        f'<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:-90px;">'
-        f'</div>', unsafe_allow_html=True)
-        
+        st.markdown('<div class="login-footer"></div>', unsafe_allow_html=True)
 
     st.stop()
 
