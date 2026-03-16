@@ -566,7 +566,7 @@ def show_landing():
     # Center the button with a top margin to appear below the existing text on the background
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        # Adjust margin-top if needed (try 50vh–65vh)
+        # Adjust margin-top if needed (try 55vh–65vh)
         st.markdown("<div style='margin-top: 58vh;'></div>", unsafe_allow_html=True)
         st.markdown('<div class="landing-btn-wrapper">', unsafe_allow_html=True)
         if st.button("🚀  Let's Start", use_container_width=True, key="landing_btn"):
