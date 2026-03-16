@@ -568,7 +568,7 @@ def show_landing():
     with col2:
         # Adjust margin-top if needed (try 55vh–65vh)
         st.markdown("<div style='margin-top: 30vh;'></div>", unsafe_allow_html=True)
-        st.markdown("<div style='margin-left: -15vh;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-left: -45vh;'></div>", unsafe_allow_html=True)
         st.markdown('<div class="landing-btn-wrapper">', unsafe_allow_html=True)
         if st.button("🚀  Let's Start", use_container_width=True, key="landing_btn"):
             st.session_state.page = "login"
