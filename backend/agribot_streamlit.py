@@ -597,7 +597,7 @@ def show_login():
     ) if logo_b64 else ""
 
     st.markdown(
-        f'<div style="display:flex;flex-direction:column;align-items:center;margin-top:-100px;">'
+        f'<div style="display:flex;flex-direction:column;align-items:center;margin-top:-150px;">'
         f'{logo_html}'
         f'<div style="text-align:center;font-size:34px;font-weight:900;color:#fff;'
         f'letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,0.6);margin-bottom:4px;">'
