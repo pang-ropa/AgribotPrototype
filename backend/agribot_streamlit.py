@@ -376,6 +376,8 @@ div[data-testid="stMetricValue"] {
     transition: transform 0.2s, box-shadow 0.2s !important;
     box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
     width: auto !important;
+    translate Y : -10px;
+    translate X : -50%;
 }
 .landing-btn-wrapper button:hover {
     transform: scale(1.05) !important;
