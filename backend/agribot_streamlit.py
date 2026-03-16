@@ -8,7 +8,7 @@ import base64
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, timedelta
 import plotly.express as px
-from streamlit_autorefresh import st_autorefresh   # ensure in requirements.txt
+from streamlit_autorefresh import st_autorefresh   # add to requirements.txt
 
 # ============================================================
 # PATHS
@@ -154,7 +154,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ============================================================
-# GLOBAL CSS – ULTRA CLEAN, HIDE ALL STREAMLIT BRANDING
+# GLOBAL CSS – ULTRA CLEAN, HIDE ALL STREAMLIT, FIXED SIZE
 # ============================================================
 st.markdown("""<style>
 /* ===== LIGHT / DARK MODE VARIABLES ===== */
@@ -199,7 +199,7 @@ button[title="Manage app"],
     display: none !important;
 }
 
-/* ===== MAIN CONTAINER – FULL SCREEN, NO PADDING, NO SCROLL ===== */
+/* ===== MAIN CONTAINER – FULL VIEWPORT, NO PADDING, NO SCROLL ===== */
 .main .block-container {
     max-width: 100% !important;
     padding: 0 !important;
@@ -210,11 +210,17 @@ button[title="Manage app"],
     flex-direction: column;
 }
 
+/* Ensure all inner containers also respect no scroll */
+[data-testid="column"] {
+    overflow-y: hidden !important;
+}
+
 /* ===== SIDEBAR ===== */
 section[data-testid="stSidebar"] {
     width: 260px !important;
     background: linear-gradient(180deg,#0a0d12 0%,#0d1117 100%) !important;
     border-right: 1px solid rgba(46,125,50,0.5) !important;
+    overflow-y: auto !important;  /* allow sidebar scroll if needed, but main stays fixed */
 }
 [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
     display: flex !important;
@@ -226,13 +232,17 @@ section[data-testid="stSidebar"] {
     display: none !important;
 }
 
-/* ===== METRIC CARDS ===== */
+/* ===== METRIC CARDS – scale nicely ===== */
 div[data-testid="stMetric"] {
     background: var(--card-bg) !important;
     border: 1px solid var(--border-color) !important;
     border-radius: 16px !important;
     padding: 20px 16px !important;
     text-align: center !important;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 div[data-testid="stMetricLabel"] {
     font-weight: 700 !important;
@@ -243,18 +253,25 @@ div[data-testid="stMetricLabel"] {
     justify-content: center !important;
 }
 div[data-testid="stMetricValue"] {
-    font-size: 34px !important;
+    font-size: min(34px, 5vh) !important;  /* responsive font */
     font-weight: 900 !important;
     color: #ffffff !important;
     margin-top: 4px !important;
 }
 
-/* ===== CUSTOM CARDS ===== */
+/* ===== CUSTOM CARDS (camera, etc.) ===== */
 .cam-card {
     background: rgba(13,17,23,0.9);
     border: 1px solid rgba(46,125,50,0.4);
     border-radius: 18px;
     padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.cam-card img {
+    max-height: 40vh !important;
+    object-fit: contain;
 }
 .sensor-row {
     background: rgba(13,17,23,0.85);
@@ -275,7 +292,7 @@ div[data-testid="stMetricValue"] {
     margin-bottom: 3px;
 }
 .s-val {
-    font-size: 26px;
+    font-size: min(26px, 4vh);
     font-weight: 900;
     color: #fff;
     line-height: 1;
@@ -358,7 +375,7 @@ div[data-testid="stMetricValue"] {
 st_autorefresh(interval=30000, key="auto_refresh")
 
 # ============================================================
-# DATA FUNCTIONS
+# DATA FUNCTIONS (same as before)
 # ============================================================
 @st.cache_resource
 def load_assets():
