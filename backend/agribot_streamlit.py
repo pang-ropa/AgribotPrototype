@@ -601,13 +601,13 @@ def show_login():
     ) if logo_b64 else ""
 
     st.markdown(
-        f'<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:50vh; margin-top: -50px; margin-bottom: -100px;">'
+        f'<div style="display:flex;flex-direction:column;align-items:center;margin-top:-90px;">'
         f'{logo_html}'
         f'<div style="text-align:center;font-size:34px;font-weight:900;color:#fff;'
         f'letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,0.6);margin-bottom:4px;">'
         f'AgriBot-AI</div>'
         f'<div style="text-align:center;color:#81c784;font-size:12px;'
-        f'letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;">'
+        f'letter-spacing:3px;text-transform:uppercase;margin-bottom:200px;">'
         f'Smart Farming &middot; Intelligent Monitoring</div>'
         f'</div>',
         unsafe_allow_html=True)
