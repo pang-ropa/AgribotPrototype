@@ -81,7 +81,7 @@ def set_background(path: str):
     </style>""", unsafe_allow_html=True)
 
 # ============================================================
-# LOGIN
+# LOGIN (unchanged – keep as is)
 # ============================================================
 USERS = {
     "admin@agribot.ai": {"password": "admin123", "role": "admin"},
@@ -154,7 +154,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ============================================================
-# GLOBAL CSS – ULTRA CLEAN, HIDE ALL STREAMLIT, FIXED SIZE
+# OPTIMISED CSS FOR 7-INCH 1024×600 LCD (compact, no scroll)
 # ============================================================
 st.markdown("""<style>
 /* ===== LIGHT / DARK MODE VARIABLES ===== */
@@ -199,7 +199,7 @@ button[title="Manage app"],
     display: none !important;
 }
 
-/* ===== MAIN CONTAINER – FULL VIEWPORT, NO PADDING, NO SCROLL ===== */
+/* ===== MAIN CONTAINER – EXACT VIEWPORT FIT ===== */
 .main .block-container {
     max-width: 100% !important;
     padding: 0 !important;
@@ -210,17 +210,12 @@ button[title="Manage app"],
     flex-direction: column;
 }
 
-/* Ensure all inner containers also respect no scroll */
-[data-testid="column"] {
-    overflow-y: hidden !important;
-}
-
-/* ===== SIDEBAR ===== */
+/* ===== SIDEBAR – FIXED WIDTH ===== */
 section[data-testid="stSidebar"] {
     width: 260px !important;
     background: linear-gradient(180deg,#0a0d12 0%,#0d1117 100%) !important;
     border-right: 1px solid rgba(46,125,50,0.5) !important;
-    overflow-y: auto !important;  /* allow sidebar scroll if needed, but main stays fixed */
+    overflow-y: auto !important;  /* allow scrolling if sidebar content overflows (but it shouldn't) */
 }
 [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
     display: flex !important;
@@ -228,16 +223,13 @@ section[data-testid="stSidebar"] {
     align-items: center !important;
     padding: 0 16px 28px !important;
 }
-[data-testid="stSidebar"] [data-testid="stElementToolbar"] {
-    display: none !important;
-}
 
-/* ===== METRIC CARDS – scale nicely ===== */
+/* ===== METRIC CARDS – COMPACT ===== */
 div[data-testid="stMetric"] {
     background: var(--card-bg) !important;
     border: 1px solid var(--border-color) !important;
-    border-radius: 16px !important;
-    padding: 20px 16px !important;
+    border-radius: 12px !important;
+    padding: 12px 8px !important;   /* reduced padding for small screen */
     text-align: center !important;
     height: 100%;
     display: flex;
@@ -246,113 +238,113 @@ div[data-testid="stMetric"] {
 }
 div[data-testid="stMetricLabel"] {
     font-weight: 700 !important;
-    font-size: 11px !important;
+    font-size: 10px !important;      /* slightly smaller */
     color: #66bb6a !important;
-    letter-spacing: 2px !important;
+    letter-spacing: 1.5px !important;
     text-transform: uppercase !important;
     justify-content: center !important;
 }
 div[data-testid="stMetricValue"] {
-    font-size: min(34px, 5vh) !important;  /* responsive font */
+    font-size: min(28px, 5vh) !important;  /* responsive */
     font-weight: 900 !important;
     color: #ffffff !important;
-    margin-top: 4px !important;
+    margin-top: 2px !important;
 }
 
-/* ===== CUSTOM CARDS (camera, etc.) ===== */
+/* ===== CUSTOM CARDS ===== */
 .cam-card {
     background: rgba(13,17,23,0.9);
     border: 1px solid rgba(46,125,50,0.4);
-    border-radius: 18px;
-    padding: 20px;
+    border-radius: 16px;
+    padding: 16px;
     height: 100%;
     display: flex;
     flex-direction: column;
 }
 .cam-card img {
-    max-height: 40vh !important;
+    max-height: 35vh !important;      /* limit image height */
     object-fit: contain;
 }
 .sensor-row {
     background: rgba(13,17,23,0.85);
     border: 1px solid rgba(46,125,50,0.25);
-    border-radius: 14px;
-    padding: 16px 18px;
-    margin-bottom: 10px;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
 .s-label {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     color: #66bb6a;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-bottom: 3px;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
 }
 .s-val {
-    font-size: min(26px, 4vh);
+    font-size: min(22px, 4vh);
     font-weight: 900;
     color: #fff;
     line-height: 1;
 }
 .s-unit {
-    font-size: 13px;
+    font-size: 12px;
     color: #a5d6a7;
     margin-left: 2px;
 }
-.s-ok { font-size: 11px; color: #4CAF50; margin-top: 3px; }
-.s-warn { font-size: 11px; color: #FF9800; margin-top: 3px; }
-.s-bad { font-size: 11px; color: #f44336; margin-top: 3px; }
-.s-icon { font-size: 26px; opacity: 0.6; }
+.s-ok { font-size: 10px; color: #4CAF50; margin-top: 2px; }
+.s-warn { font-size: 10px; color: #FF9800; margin-top: 2px; }
+.s-bad { font-size: 10px; color: #f44336; margin-top: 2px; }
+.s-icon { font-size: 22px; opacity: 0.6; }
 
 .section-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     color: #66bb6a;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
-    margin-bottom: 14px;
-    margin-top: 2px;
+    margin-bottom: 10px;
+    margin-top: 0;
     border-left: 3px solid #4CAF50;
-    padding-left: 10px;
+    padding-left: 8px;
 }
 .alert-item {
-    padding: 9px 14px;
+    padding: 6px 10px;
     background: rgba(183,28,28,0.12);
     border: 1px solid rgba(183,28,28,0.3);
     color: #ef9a9a;
-    border-radius: 10px;
-    margin: 5px 0;
-    font-size: 13px;
+    border-radius: 8px;
+    margin: 4px 0;
+    font-size: 12px;
 }
 .sched-badge {
     display: inline-block;
     background: rgba(21,101,192,0.2);
     border: 1px solid rgba(21,101,192,0.5);
     border-radius: 6px;
-    padding: 2px 9px;
-    font-size: 11px;
+    padding: 2px 7px;
+    font-size: 10px;
     color: #90CAF9;
     font-weight: 700;
     margin: 0 2px;
 }
 .cam-meta {
-    font-size: 11px;
+    font-size: 10px;
     color: #66bb6a;
-    margin-top: 8px;
-    line-height: 1.7;
+    margin-top: 6px;
+    line-height: 1.6;
 }
 .drive-link {
     display: inline-block;
-    margin-top: 10px;
+    margin-top: 8px;
     background: rgba(46,125,50,0.15);
     border: 1px solid rgba(76,175,80,0.3);
     border-radius: 8px;
-    padding: 6px 12px;
+    padding: 4px 10px;
     color: #81c784;
-    font-size: 12px;
+    font-size: 11px;
     text-decoration: none;
 }
 .cam-placeholder {
@@ -360,12 +352,22 @@ div[data-testid="stMetricValue"] {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 340px;
+    min-height: 300px;
     background: rgba(46,125,50,0.04);
     border: 2px dashed rgba(46,125,50,0.3);
-    border-radius: 14px;
+    border-radius: 12px;
     text-align: center;
-    padding: 40px;
+    padding: 30px;
+}
+
+/* ===== REDUCE GAP BETWEEN COLUMNS ===== */
+[data-testid="column"] {
+    gap: 1rem !important;
+}
+
+/* ===== ENSURE NO INNER SCROLL ===== */
+[data-testid="column"] {
+    overflow-y: hidden !important;
 }
 </style>""", unsafe_allow_html=True)
 
@@ -375,7 +377,7 @@ div[data-testid="stMetricValue"] {
 st_autorefresh(interval=30000, key="auto_refresh")
 
 # ============================================================
-# DATA FUNCTIONS (same as before)
+# DATA FUNCTIONS (unchanged)
 # ============================================================
 @st.cache_resource
 def load_assets():
@@ -458,7 +460,7 @@ def get_latest_image() -> dict:
         return {}
 
 # ============================================================
-# SIDEBAR
+# SIDEBAR (unchanged)
 # ============================================================
 sheet    = get_sheet()
 logo_b64 = file_to_b64(ACTUAL_LOGO)
@@ -554,11 +556,11 @@ def health_of(soil, ph):
 # ==============================================================
 if page == "DASHBOARD":
     st.markdown("""
-    <div style="margin-bottom:6px;">
-        <div style="font-size:26px;font-weight:900;color:#ffffff;
+    <div style="margin-bottom:4px;">
+        <div style="font-size:22px;font-weight:900;color:#ffffff;
                     letter-spacing:0.3px;line-height:1.2;">
             Real-Time Monitoring</div>
-        <div style="font-size:13px;color:#66bb6a;letter-spacing:1px;margin-top:4px;">
+        <div style="font-size:11px;color:#66bb6a;letter-spacing:1px;margin-top:2px;">
             Greenhouse Overview — AgriBot-AI Crop System</div>
     </div>""", unsafe_allow_html=True)
 
@@ -578,12 +580,12 @@ if page == "DASHBOARD":
     m3.metric("PH",       f"{avg_ph:.2f}")
     m4.metric("SOIL",     f"{avg_soil:.0f} %")
 
-    st.markdown("<div style='margin:18px 0 6px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin:12px 0 4px;'></div>", unsafe_allow_html=True)
 
     with st.spinner("Loading latest capture..."):
         img_data = get_latest_image()
 
-    cam_col, sensor_col = st.columns([3, 2], gap="large")
+    cam_col, sensor_col = st.columns([3, 2], gap="medium")
 
     with cam_col:
         st.markdown('<div class="cam-card">', unsafe_allow_html=True)
@@ -607,9 +609,9 @@ if page == "DASHBOARD":
         else:
             st.markdown(
                 '<div class="cam-placeholder">'
-                '<div style="font-size:54px;margin-bottom:16px;">📷</div>'
-                '<div style="font-size:15px;font-weight:700;color:#4CAF50;">No image yet</div>'
-                '<div style="font-size:12px;color:#2e7d32;margin-top:8px;">'
+                '<div style="font-size:48px;margin-bottom:12px;">📷</div>'
+                '<div style="font-size:14px;font-weight:700;color:#4CAF50;">No image yet</div>'
+                '<div style="font-size:11px;color:#2e7d32;margin-top:6px;">'
                 'Pi captures at '
                 '<span class="sched-badge">7:00 AM</span>'
                 '<span class="sched-badge">12:00 NN</span>'
@@ -622,8 +624,8 @@ if page == "DASHBOARD":
         if not latest.empty:
             last_ts = pd.to_datetime(latest['timestamp']).max()
             st.markdown(
-                f'<div style="text-align:right;font-size:11px;color:#388e3c;'
-                f'margin-bottom:12px;">🔄 Updated {last_ts.strftime("%H:%M:%S")}</div>',
+                f'<div style="text-align:right;font-size:10px;color:#388e3c;'
+                f'margin-bottom:8px;">🔄 Updated {last_ts.strftime("%H:%M:%S")}</div>',
                 unsafe_allow_html=True)
 
         st.markdown('<div class="section-title">🤖 AI Health Recommendation</div>', unsafe_allow_html=True)
@@ -635,15 +637,15 @@ if page == "DASHBOARD":
                                   float(p1.iloc[0]['ph'])]])
                 pred = model.predict(scaler.transform(feat))[0]
                 if pred == -1:
-                    st.error("🚨 **ALERT** — Anomalous conditions detected in the greenhouse.")
+                    st.error("🚨 **ALERT** — Anomalous conditions detected.")
                 else:
-                    st.success("✅ **HEALTHY** — Crop environment is optimal.")
+                    st.success("✅ **HEALTHY** — Environment optimal.")
             except Exception as e:
                 st.info(f"AI model processing... ({e})")
         else:
             st.warning("Awaiting sensor data or AI model...")
 
-        st.markdown("<div style='margin:14px 0 4px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin:10px 0 2px;'></div>", unsafe_allow_html=True)
 
         st.markdown('<div class="section-title">🔔 Recent Alerts</div>', unsafe_allow_html=True)
         alerts = []
@@ -669,13 +671,13 @@ if page == "DASHBOARD":
             st.success("✅ All greenhouse parameters are within range.")
 
 # ==============================================================
-# PAGE: ANALYSIS
+# PAGE: ANALYSIS (unchanged except possibly layout)
 # ==============================================================
 elif page == "ANALYSIS":
     st.markdown("""
-    <div style="margin-bottom:18px;">
-        <div style="font-size:24px;font-weight:900;color:#fff;">Historical Trends</div>
-        <div style="font-size:13px;color:#66bb6a;letter-spacing:1px;margin-top:4px;">
+    <div style="margin-bottom:12px;">
+        <div style="font-size:22px;font-weight:900;color:#fff;">Historical Trends</div>
+        <div style="font-size:11px;color:#66bb6a;letter-spacing:1px;margin-top:2px;">
             Sensor data over time — per plant</div>
     </div>""", unsafe_allow_html=True)
 
@@ -725,13 +727,13 @@ elif page == "ANALYSIS":
         st.warning("No data available yet.")
 
 # ==============================================================
-# PAGE: SYSTEM LOGS
+# PAGE: SYSTEM LOGS (unchanged)
 # ==============================================================
 elif page == "LOGS":
     st.markdown("""
-    <div style="margin-bottom:18px;">
-        <div style="font-size:24px;font-weight:900;color:#fff;">System Logs</div>
-        <div style="font-size:13px;color:#66bb6a;letter-spacing:1px;margin-top:4px;">
+    <div style="margin-bottom:12px;">
+        <div style="font-size:22px;font-weight:900;color:#fff;">System Logs</div>
+        <div style="font-size:11px;color:#66bb6a;letter-spacing:1px;margin-top:2px;">
             Last 24 hours of sensor activity</div>
     </div>""", unsafe_allow_html=True)
 
@@ -756,13 +758,13 @@ elif page == "LOGS":
         st.info("No logs available.")
 
 # ==============================================================
-# PAGE: USER MANAGEMENT
+# PAGE: USER MANAGEMENT (unchanged)
 # ==============================================================
 elif page == "USERS":
     st.markdown("""
-    <div style="margin-bottom:18px;">
-        <div style="font-size:24px;font-weight:900;color:#fff;">Admin Control Panel</div>
-        <div style="font-size:13px;color:#66bb6a;letter-spacing:1px;margin-top:4px;">
+    <div style="margin-bottom:12px;">
+        <div style="font-size:22px;font-weight:900;color:#fff;">Admin Control Panel</div>
+        <div style="font-size:11px;color:#66bb6a;letter-spacing:1px;margin-top:2px;">
             Registered user accounts</div>
     </div>""", unsafe_allow_html=True)
     st.table(pd.DataFrame({
