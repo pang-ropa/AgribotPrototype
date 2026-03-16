@@ -583,9 +583,12 @@ def show_landing():
 def show_login():
     set_background(ACTUAL_BG)
 
-    # Hide sidebar
     st.markdown("""<style>
     section[data-testid="stSidebar"] { display: none !important; }
+    /* Adjust this value to change the bottom spacing of the login page */
+    .login-footer {
+        margin-bottom: -500px;  /* <-- Change this number to add/subtract bottom space */
+    }
     </style>""", unsafe_allow_html=True)
 
     logo_b64  = file_to_b64(ACTUAL_LOGO)
@@ -597,20 +600,18 @@ def show_login():
         f'box-shadow:0 0 28px rgba(76,175,80,0.5);"/></div>'
     ) if logo_b64 else ""
 
-    # Main container: full viewport height, flex column, centered vertically
     st.markdown(
-        f'<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh;">'
+        f'<div style="display:flex;flex-direction:column;align-items:center;margin-top:-90px;">'
         f'{logo_html}'
-        f'<div style="text-align:center; font-size:34px; font-weight:900; color:#fff; '
-        f'letter-spacing:1px; text-shadow:0 2px 12px rgba(0,0,0,0.6); margin-bottom:4px;">'
+        f'<div style="text-align:center;font-size:34px;font-weight:900;color:#fff;'
+        f'letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,0.6);margin-bottom:4px;">'
         f'AgriBot-AI</div>'
-        f'<div style="text-align:center; color:#81c784; font-size:12px; '
-        f'letter-spacing:3px; text-transform:uppercase; margin-bottom:20px;">'
+        f'<div style="text-align:center;color:#81c784;font-size:12px;'
+        f'letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;">'
         f'Smart Farming &middot; Intelligent Monitoring</div>'
         f'</div>',
         unsafe_allow_html=True)
 
-    # Form placed in a centered column (already centered via columns)
     _, mid, _ = st.columns([1, 1.6, 1])
     with mid:
         with st.form("login_form"):
@@ -626,10 +627,20 @@ def show_login():
                 else:
                     st.error("Invalid email or password")
 
-        # Back to landing button
+        st.markdown(
+            '<div style="text-align:center;margin-top:10px;">'
+            '<span style="font-size:11px;color:#388e3c;">← </span>'
+            '</div>', unsafe_allow_html=True)
         if st.button("← Back to Landing", use_container_width=True, key="back_btn"):
             st.session_state.page = "landing"
             st.rerun()
+
+        # Add a footer with adjustable bottom margin
+        st.markdown(
+        f'<div class="login-footer">'
+        f'<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:-90px;">'
+        f'</div>', unsafe_allow_html=True)
+        
 
     st.stop()
 
