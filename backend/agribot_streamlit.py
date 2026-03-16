@@ -598,7 +598,7 @@ def show_login():
     ) if logo_b64 else ""
 
     # Centered column
-    _, mid, _ = st.columns([1, 1.6, 1])
+    _, mid, _ = st.columns([1, 1.20, 1])
     with mid:
         # Flex container that fills the column height and centers its children
         st.markdown(
