@@ -586,12 +586,9 @@ def show_login():
     st.markdown("""<style>
     section[data-testid="stSidebar"] { display: none !important; }
 
-    /* Adjust these values to control vertical spacing */
+    /* Adjust this value to move the whole login block up/down */
     .login-main-container {
-        margin-top: -60px;   /* <-- Change this to move everything up/down */
-    }
-    .login-bottom-spacer {
-        height: -100px;        /* <-- Change this to add extra space below the button */
+        margin-top: -600px;   /* ← change this number (e.g., -80, -100) */
     }
     </style>""", unsafe_allow_html=True)
 
@@ -604,7 +601,6 @@ def show_login():
         f'box-shadow:0 0 28px rgba(76,175,80,0.5);"/></div>'
     ) if logo_b64 else ""
 
-    # Wrap logo and title in a container with adjustable top margin
     st.markdown(
         f'<div class="login-main-container" style="display:flex; flex-direction:column; align-items:center;">'
         f'{logo_html}'
@@ -617,7 +613,6 @@ def show_login():
         f'</div>',
         unsafe_allow_html=True)
 
-    # Form in centered column
     _, mid, _ = st.columns([1, 1.6, 1])
     with mid:
         with st.form("login_form"):
@@ -633,13 +628,9 @@ def show_login():
                 else:
                     st.error("Invalid email or password")
 
-        # Back to landing button
         if st.button("← Back to Landing", use_container_width=True, key="back_btn"):
             st.session_state.page = "landing"
             st.rerun()
-
-        # Spacer to add extra bottom space (adjust height in CSS)
-        st.markdown('<div class="login-bottom-spacer"></div>', unsafe_allow_html=True)
 
     st.stop()
 
