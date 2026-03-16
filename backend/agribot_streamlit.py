@@ -552,18 +552,23 @@ def show_landing():
         st.markdown("""<style>.stApp { background: #0a0d12 !important; }</style>""",
                     unsafe_allow_html=True)
 
-    # Remove overlay and hide sidebar
+    # Remove the dark overlay for the landing page
     st.markdown("""
     <style>
     section[data-testid="stSidebar"] { display: none !important; }
-    .stApp::before { display: none !important; }
+    /* Disable the semi-transparent overlay added by set_background */
+    .stApp::before {
+        display: none !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-    # Place button on the left with vertical margin
-    col1, col2 = st.columns([1, 5])   # Narrow left column for button
-    with col1:
-        st.markdown("<div style='margin-top: 58vh;'></div>", unsafe_allow_html=True)
+    # Center the button with a top margin to appear below the existing text on the background
+    col1, col2, col3 = st.columns([3, 2, 9])
+    with col2:
+        # Adjust margin-top if needed (try 55vh–65vh)
+        st.markdown("<div style='margin-top: 30vh;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-left: -45vh;'></div>", unsafe_allow_html=True)
         st.markdown('<div class="landing-btn-wrapper">', unsafe_allow_html=True)
         if st.button("Let's Start", use_container_width=True, key="landing_btn"):
             st.session_state.page = "login"
@@ -592,7 +597,7 @@ def show_login():
     ) if logo_b64 else ""
 
     st.markdown(
-        f'<div style="display:flex;flex-direction:column;align-items:center;margin-top:40px;">'
+        f'<div style="display:flex;flex-direction:column;align-items:center;margin-top:15px;">'
         f'{logo_html}'
         f'<div style="text-align:center;font-size:34px;font-weight:900;color:#fff;'
         f'letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,0.6);margin-bottom:4px;">'
