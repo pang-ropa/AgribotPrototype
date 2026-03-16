@@ -81,7 +81,7 @@ def set_background(path: str):
     </style>""", unsafe_allow_html=True)
 
 # ============================================================
-# LOGIN (unchanged – keep as is)
+# LOGIN
 # ============================================================
 USERS = {
     "admin@agribot.ai": {"password": "admin123", "role": "admin"},
@@ -154,7 +154,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ============================================================
-# OPTIMISED CSS FOR 7-INCH 1024×600 LCD (compact, no scroll)
+# CSS – OPTIMISED FOR 1024×600, FLEX‑BASED, NO SCROLL
 # ============================================================
 st.markdown("""<style>
 /* ===== LIGHT / DARK MODE VARIABLES ===== */
@@ -199,7 +199,7 @@ button[title="Manage app"],
     display: none !important;
 }
 
-/* ===== MAIN CONTAINER – EXACT VIEWPORT FIT ===== */
+/* ===== MAIN CONTAINER – FLEX COLUMN, FULL HEIGHT ===== */
 .main .block-container {
     max-width: 100% !important;
     padding: 0 !important;
@@ -215,7 +215,7 @@ section[data-testid="stSidebar"] {
     width: 260px !important;
     background: linear-gradient(180deg,#0a0d12 0%,#0d1117 100%) !important;
     border-right: 1px solid rgba(46,125,50,0.5) !important;
-    overflow-y: auto !important;  /* allow scrolling if sidebar content overflows (but it shouldn't) */
+    overflow-y: auto !important;
 }
 [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
     display: flex !important;
@@ -224,12 +224,18 @@ section[data-testid="stSidebar"] {
     padding: 0 16px 28px !important;
 }
 
+/* ===== TITLE SECTION – FIXED HEIGHT ===== */
+/* The title divs are inside markdown, we can control them via margins */
+.main .block-container > div:first-child {
+    flex-shrink: 0;  /* don't shrink */
+}
+
 /* ===== METRIC CARDS – COMPACT ===== */
 div[data-testid="stMetric"] {
     background: var(--card-bg) !important;
     border: 1px solid var(--border-color) !important;
     border-radius: 12px !important;
-    padding: 12px 8px !important;   /* reduced padding for small screen */
+    padding: 12px 8px !important;
     text-align: center !important;
     height: 100%;
     display: flex;
@@ -238,14 +244,14 @@ div[data-testid="stMetric"] {
 }
 div[data-testid="stMetricLabel"] {
     font-weight: 700 !important;
-    font-size: 10px !important;      /* slightly smaller */
+    font-size: 10px !important;
     color: #66bb6a !important;
     letter-spacing: 1.5px !important;
     text-transform: uppercase !important;
     justify-content: center !important;
 }
 div[data-testid="stMetricValue"] {
-    font-size: min(28px, 5vh) !important;  /* responsive */
+    font-size: min(28px, 5vh) !important;
     font-weight: 900 !important;
     color: #ffffff !important;
     margin-top: 2px !important;
@@ -262,7 +268,7 @@ div[data-testid="stMetricValue"] {
     flex-direction: column;
 }
 .cam-card img {
-    max-height: 35vh !important;      /* limit image height */
+    max-height: 35vh !important;
     object-fit: contain;
 }
 .sensor-row {
@@ -360,14 +366,17 @@ div[data-testid="stMetricValue"] {
     padding: 30px;
 }
 
-/* ===== REDUCE GAP BETWEEN COLUMNS ===== */
-[data-testid="column"] {
-    gap: 1rem !important;
+/* ===== ENSURE MAIN ROW TAKES REMAINING SPACE ===== */
+.main .block-container > .stHorizontalBlock {
+    flex: 1 !important;
+    overflow: hidden !important;
 }
-
-/* ===== ENSURE NO INNER SCROLL ===== */
+.stHorizontalBlock {
+    height: 100%;
+}
 [data-testid="column"] {
     overflow-y: hidden !important;
+    height: 100%;
 }
 </style>""", unsafe_allow_html=True)
 
@@ -556,7 +565,7 @@ def health_of(soil, ph):
 # ==============================================================
 if page == "DASHBOARD":
     st.markdown("""
-    <div style="margin-bottom:4px;">
+    <div style="margin-bottom:4px; flex-shrink:0;">
         <div style="font-size:22px;font-weight:900;color:#ffffff;
                     letter-spacing:0.3px;line-height:1.2;">
             Real-Time Monitoring</div>
@@ -671,11 +680,11 @@ if page == "DASHBOARD":
             st.success("✅ All greenhouse parameters are within range.")
 
 # ==============================================================
-# PAGE: ANALYSIS (unchanged except possibly layout)
+# PAGE: ANALYSIS
 # ==============================================================
 elif page == "ANALYSIS":
     st.markdown("""
-    <div style="margin-bottom:12px;">
+    <div style="margin-bottom:12px; flex-shrink:0;">
         <div style="font-size:22px;font-weight:900;color:#fff;">Historical Trends</div>
         <div style="font-size:11px;color:#66bb6a;letter-spacing:1px;margin-top:2px;">
             Sensor data over time — per plant</div>
@@ -727,11 +736,11 @@ elif page == "ANALYSIS":
         st.warning("No data available yet.")
 
 # ==============================================================
-# PAGE: SYSTEM LOGS (unchanged)
+# PAGE: SYSTEM LOGS
 # ==============================================================
 elif page == "LOGS":
     st.markdown("""
-    <div style="margin-bottom:12px;">
+    <div style="margin-bottom:12px; flex-shrink:0;">
         <div style="font-size:22px;font-weight:900;color:#fff;">System Logs</div>
         <div style="font-size:11px;color:#66bb6a;letter-spacing:1px;margin-top:2px;">
             Last 24 hours of sensor activity</div>
@@ -758,11 +767,11 @@ elif page == "LOGS":
         st.info("No logs available.")
 
 # ==============================================================
-# PAGE: USER MANAGEMENT (unchanged)
+# PAGE: USER MANAGEMENT
 # ==============================================================
 elif page == "USERS":
     st.markdown("""
-    <div style="margin-bottom:12px;">
+    <div style="margin-bottom:12px; flex-shrink:0;">
         <div style="font-size:22px;font-weight:900;color:#fff;">Admin Control Panel</div>
         <div style="font-size:11px;color:#66bb6a;letter-spacing:1px;margin-top:2px;">
             Registered user accounts</div>
