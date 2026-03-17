@@ -139,7 +139,7 @@ section.main > div {
 }
 
 [data-testid="stVerticalBlock"] {
-    gap: 4px !important;
+    gap: 1px !important;
 }
 
 /* ── 4. HIDE STREAMLIT CHROME ─────────────────────────────── */
