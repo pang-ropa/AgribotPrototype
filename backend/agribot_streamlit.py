@@ -930,7 +930,7 @@ elif page == "ANALYSIS":
     st.markdown(
         '<div style="padding:6px 12px 4px;">'
         '<div style="font-size:18px;font-weight:900;color:#fff;">Historical Trends</div>'
-        '<div style="font-size:14px;color:#66bb6a;letter-spacing:1px;margin-top:-25px;">'
+        '<div style="font-size:20px;color:#66bb6a;letter-spacing:1px;margin-top:-75px;">'
         'Sensor data over time</div></div>',
         unsafe_allow_html=True)
 
