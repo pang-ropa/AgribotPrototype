@@ -571,7 +571,7 @@ def show_login():
     # Adjust this value (in pixels) to add space at the bottom.
     # Positive values push content UP, negative values push it DOWN.
     # Start with 40 and adjust until the layout looks perfect.
-    BOTTOM_SPACER_HEIGHT = -50   # <-- change this number
+    BOTTOM_SPACER_HEIGHT = 0   # <-- change this number
     # ======================================
 
     st.markdown(f"""<style>
