@@ -35,7 +35,6 @@ if not os.path.exists(CREDENTIALS_FILE):
     CREDENTIALS_FILE = os.path.expanduser("~/env/Thesis code/credentials.json")
 
 SPREADSHEET_ID = "1mYScsUkoZn84FIoO_QMaku3gZT3Z9df72kPE3ray9-A"
-SESSION_FILE   = os.path.join(SCRIPT_DIR, ".agribot_session")
 
 # ── Tab favicon ───────────────────────────────────────────────
 _page_icon = "🌱"
@@ -54,10 +53,22 @@ st.set_page_config(
 )
 
 # ============================================================
-# OPTIMIZED CSS FOR 7-INCH DISPLAY (larger fonts, tighter spacing)
+# OPTIMIZED CSS FOR 7-INCH DISPLAY
+# Includes adjustable margin variables at the top
 # ============================================================
 OPTIMIZED_CSS = """
 <style>
+/* ── GLOBAL MARGIN VARIABLES ────────────────────────────── */
+:root {
+    --page-margin-top: 0px;      /* Adjust top spacing for all pages */
+    --page-margin-bottom: 0px;   /* Adjust bottom spacing */
+    --page-margin-left: 0px;     /* Adjust left spacing */
+    --page-margin-right: 0px;    /* Adjust right spacing */
+
+    /* Login page fine‑tuning (on top of global margins) */
+    --login-margin-top: -20px;   /* negative moves up, positive down */
+}
+
 /* ── 1. BASE ───────────────────────────────────────────────── */
 html, body {
     margin: 0 !important;
@@ -65,7 +76,7 @@ html, body {
     overflow: hidden !important;
     height: 100% !important;
     width: 100% !important;
-    font-size: 14px !important;  /* increased base font */
+    font-size: 14px !important;
 }
 
 /* ── 2. ROOT APP ──────────────────────────────────────────── */
@@ -108,8 +119,9 @@ section.main > div {
     margin-top: 0 !important;
 }
 
+/* ── MAIN CONTAINER WITH ADJUSTABLE MARGINS ───────────────── */
 .main .block-container {
-    padding: 0 !important;
+    padding: var(--page-margin-top) var(--page-margin-right) var(--page-margin-bottom) var(--page-margin-left) !important;
     margin: 0 !important;
     max-width: 100% !important;
     width: 100% !important;
@@ -118,6 +130,7 @@ section.main > div {
     max-height: 100vh !important;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;  /* ensures padding does not increase height */
 }
 
 .main .block-container > div:first-child {
@@ -153,7 +166,7 @@ a[href*="streamlit.io"],
 
 /* ── 5. SIDEBAR ────────────────────────────────────────────── */
 section[data-testid="stSidebar"] {
-    width: 230px !important;          /* slightly wider for better readability */
+    width: 230px !important;
     min-width: 230px !important;
     background: linear-gradient(180deg, #0a0d12 0%, #0d1117 100%) !important;
     border-right: 1px solid rgba(46,125,50,0.5) !important;
@@ -181,7 +194,7 @@ section[data-testid="stSidebar"] {
     flex-direction: column !important;
 }
 .stRadio label {
-    font-size: 13px !important;       /* increased from 11px */
+    font-size: 13px !important;
     font-weight: 700 !important;
     color: #81c784 !important;
     letter-spacing: 0.8px !important;
@@ -217,12 +230,12 @@ div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
     color: #81c784 !important;
     border-radius: 10px !important;
     width: 100% !important;
-    font-size: 13px !important;       /* increased from 11px */
+    font-size: 13px !important;
     font-weight: 700 !important;
     letter-spacing: 1px !important;
     text-transform: uppercase !important;
     padding: 10px !important;
-    min-height: 48px !important;      /* slightly taller for touch */
+    min-height: 48px !important;
     transition: all 0.2s !important;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
@@ -241,14 +254,14 @@ div[data-testid="stMetric"] {
 }
 div[data-testid="stMetricLabel"] {
     font-weight: 700 !important;
-    font-size: 11px !important;       /* increased from 9px */
+    font-size: 11px !important;
     color: #66bb6a !important;
     letter-spacing: 1.2px !important;
     text-transform: uppercase !important;
     justify-content: center !important;
 }
 div[data-testid="stMetricValue"] {
-    font-size: 24px !important;       /* increased from 22px */
+    font-size: 24px !important;
     font-weight: 900 !important;
     color: #fff !important;
     margin-top: 1px !important;
@@ -263,7 +276,7 @@ div[data-testid="stMetricValue"] {
     height: 100%;
 }
 .section-title {
-    font-size: 12px !important;       /* increased from 10px */
+    font-size: 12px !important;
     font-weight: 700;
     color: #66bb6a;
     letter-spacing: 1.2px;
@@ -274,13 +287,13 @@ div[data-testid="stMetricValue"] {
     padding-left: 7px;
 }
 .alert-item {
-    padding: 6px 10px;                /* slightly larger padding */
+    padding: 6px 10px;
     background: rgba(183,28,28,0.12);
     border: 1px solid rgba(183,28,28,0.3);
     color: #ef9a9a;
     border-radius: 8px;
     margin: 4px 0;
-    font-size: 13px !important;       /* increased from 11px */
+    font-size: 13px !important;
 }
 .sched-badge {
     display: inline-block;
@@ -288,13 +301,13 @@ div[data-testid="stMetricValue"] {
     border: 1px solid rgba(21,101,192,0.5);
     border-radius: 5px;
     padding: 2px 6px;
-    font-size: 10px !important;       /* increased from 9px */
+    font-size: 10px !important;
     color: #90CAF9;
     font-weight: 700;
     margin: 0 2px;
 }
 .cam-meta {
-    font-size: 10px !important;       /* increased from 9px */
+    font-size: 10px !important;
     color: #66bb6a;
     margin-top: 4px;
     line-height: 1.5;
@@ -305,9 +318,9 @@ div[data-testid="stMetricValue"] {
     background: rgba(46,125,50,0.15);
     border: 1px solid rgba(76,175,80,0.3);
     border-radius: 7px;
-    padding: 4px 10px;                /* larger touch target */
+    padding: 4px 10px;
     color: #81c784;
-    font-size: 11px !important;       /* increased from 10px */
+    font-size: 11px !important;
     text-decoration: none;
 }
 .cam-placeholder {
@@ -323,7 +336,7 @@ div[data-testid="stMetricValue"] {
     padding: 20px;
 }
 
-/* ── 10. PLOTLY CHART HEIGHT (unchanged) ───────────────────── */
+/* ── 10. PLOTLY CHART HEIGHT ───────────────────────────────── */
 .js-plotly-plot, .plotly, .plot-container {
     max-height: 210px !important;
 }
@@ -336,7 +349,7 @@ div[data-testid="stMetricValue"] {
 [data-testid="stDataFrame"] {
     max-height: 300px !important;
     overflow-y: auto !important;
-    font-size: 13px !important;       /* larger table text */
+    font-size: 13px !important;
 }
 
 /* ── 12. STREAMLIT ALERTS ──────────────────────────────────── */
@@ -352,7 +365,7 @@ div[data-testid="stMetricValue"] {
     margin-bottom: 4px !important;
 }
 [data-baseweb="select"] {
-    min-height: 42px !important;      /* taller for touch */
+    min-height: 42px !important;
 }
 .stSelectbox label {
     font-size: 12px !important;
@@ -362,7 +375,7 @@ div[data-testid="stMetricValue"] {
 .stTextInput label {
     color: #c8e6c9 !important;
     font-weight: 600 !important;
-    font-size: 13px !important;      /* increased from 12px */
+    font-size: 13px !important;
 }
 
 /* ── 14. LANDING PAGE BUTTON ───────────────────────────────── */
@@ -373,7 +386,7 @@ div[data-testid="stMetricValue"] {
     color: white !important;
     font-size: 24px !important;
     font-weight: 700 !important;
-    padding: 14px 48px !important;    /* slightly smaller to fit left */
+    padding: 14px 48px !important;
     cursor: pointer !important;
     letter-spacing: 2px !important;
     text-transform: uppercase !important;
@@ -407,7 +420,7 @@ div[data-testid="stMetricValue"] {
     color: #fff !important;
     border: 1px solid rgba(165,214,167,0.45) !important;
     border-radius: 10px !important;
-    font-size: 16px !important;       /* larger for touch */
+    font-size: 16px !important;
     min-height: 48px !important;
 }
 [data-testid="stForm"] input::placeholder {
@@ -420,7 +433,7 @@ div[data-testid="stMetricValue"] {
     font-weight: 700 !important;
     border-radius: 10px !important;
     letter-spacing: 1.5px;
-    font-size: 16px !important;       /* larger */
+    font-size: 16px !important;
     padding: 12px !important;
     min-height: 52px !important;
     margin-top: 4px !important;
@@ -496,44 +509,15 @@ def set_background(path: str):
     </style>""", unsafe_allow_html=True)
 
 # ============================================================
-# PERSISTENT SESSION (unchanged)
-# ============================================================
-def session_save(role: str):
-    try:
-        with open(SESSION_FILE, "w") as f:
-            json.dump({"logged_in": True, "role": role}, f)
-    except Exception:
-        pass
-
-def session_load() -> dict:
-    try:
-        if os.path.exists(SESSION_FILE):
-            with open(SESSION_FILE) as f:
-                return json.load(f)
-    except Exception:
-        pass
-    return {}
-
-def session_clear():
-    try:
-        if os.path.exists(SESSION_FILE):
-            os.remove(SESSION_FILE)
-    except Exception:
-        pass
-
-# ============================================================
-# SESSION STATE (unchanged)
+# SESSION STATE — always start at landing page after reboot
+# No persistent file – session survives browser refresh only.
 # ============================================================
 if "logged_in" not in st.session_state:
-    saved = session_load()
-    st.session_state.logged_in = saved.get("logged_in", False)
-    st.session_state.role      = saved.get("role", None)
+    st.session_state.logged_in = False
+    st.session_state.role = None
 
 if "page" not in st.session_state:
-    if st.session_state.logged_in:
-        st.session_state.page = "dashboard"
-    else:
-        st.session_state.page = "landing"
+    st.session_state.page = "landing"   # always start at landing
 
 USERS = {
     "admin@agribot.ai": {"password": "admin123", "role": "admin"},
@@ -578,7 +562,7 @@ def show_landing():
     st.stop()
 
 # ============================================================
-# PAGE: LOGIN (unchanged)
+# PAGE: LOGIN (with adjustable top margin)
 # ============================================================
 def show_login():
     set_background(ACTUAL_BG)
@@ -589,9 +573,6 @@ def show_login():
     /* Adjust this variable to move the entire login block up/down */
     .login-container {
         margin-top: var(--login-margin-top, 0px);
-    }
-    :root {
-        --login-margin-top: -20px;   /* ← Change this value (negative moves up, positive moves down) */
     }
     </style>""", unsafe_allow_html=True)
 
@@ -644,7 +625,6 @@ def show_login():
                     st.session_state.logged_in = True
                     st.session_state.role      = USERS[email]["role"]
                     st.session_state.page      = "dashboard"
-                    session_save(USERS[email]["role"])
                     st.rerun()
                 else:
                     st.error("Invalid email or password")
@@ -660,6 +640,20 @@ def show_login():
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.stop()
+
+# ============================================================
+# MAIN FLOW: route by st.session_state.page
+# ============================================================
+if st.session_state.page == "landing":
+    show_landing()
+
+if st.session_state.page == "login":
+    show_login()
+
+# If not logged in but somehow page is dashboard, redirect to login
+if not st.session_state.logged_in and st.session_state.page == "dashboard":
+    st.session_state.page = "login"
+    st.rerun()
 
 # ============================================================
 # DATA FUNCTIONS (unchanged)
@@ -805,7 +799,6 @@ with st.sidebar:
     </div>""", unsafe_allow_html=True)
 
     if st.button("Logout", use_container_width=True):
-        session_clear()
         st.session_state.logged_in = False
         st.session_state.role      = None
         st.session_state.page      = "landing"
