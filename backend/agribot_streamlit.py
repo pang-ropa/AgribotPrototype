@@ -192,7 +192,8 @@ section[data-testid="stSidebar"] {
     width: 100% !important;
     flex-direction: column !important;
 }
-.stRadio label {
+./* More specific selector to override any default */
+section[data-testid="stSidebar"] .stRadio label {
     font-size: 13px !important;
     font-weight: 700 !important;
     color: #ffffff !important;
@@ -209,18 +210,26 @@ section[data-testid="stSidebar"] {
     display: flex !important;
     align-items: center !important;
 }
-.stRadio label:hover {
+section[data-testid="stSidebar"] .stRadio label:hover {
     background: rgba(76,175,80,0.12) !important;
-    color: #fff !important;
+    color: #ffffff !important;
 }
-div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
+section[data-testid="stSidebar"] div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
     background: rgba(46,125,50,0.22) !important;
     border-left: 3px solid #4CAF50 !important;
-    color: #blue !important;
+    color: #ffffff !important;
     padding-left: 9px !important;
 }
-.stRadio [data-baseweb="radio"] > div:first-child { display: none !important; }
-.stRadio [data-testid="stMarkdownContainer"] p { margin: 0 !important; }
+section[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] > div:first-child {
+    display: none !important;
+}
+section[data-testid="stSidebar"] .stRadio [data-testid="stMarkdownContainer"] p {
+    margin: 0 !important;
+}
+/* If the text inside the label is wrapped in a <p>, force its color too */
+section[data-testid="stSidebar"] .stRadio label p {
+    color: #ffffff !important;
+}
 
 /* ── 7. LOGOUT BUTTON ──────────────────────────────────────── */
 [data-testid="stSidebar"] .stButton > button {
@@ -277,12 +286,12 @@ div[data-testid="stMetricValue"] {
 }
 .section-title {
     font-size: 12px !important;
-    font-weight: 700;
-    color: #66bb6a;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    margin-bottom: 15px;
-    margin-top: 0;
+    font-weight: 700 !important;
+    color: #66bb6a !important;
+    letter-spacing: 1.2px !important;
+    text-transform: uppercase !important;
+    margin-bottom: 15px !important;
+    margin-top: 0 !important;
     border-left: 3px solid #4CAF50;
     padding-left: 7px;
 }
