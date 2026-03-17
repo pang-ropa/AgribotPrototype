@@ -195,7 +195,7 @@ section[data-testid="stSidebar"] {
 }
 ./* More specific selector to override any default */
 section[data-testid="stSidebar"] .stRadio label {
-    font-size: 14px !important;
+    font-size: 16px !important;
     font-weight: 700 !important;
     color: #ffffff !important;
     letter-spacing: 0.8px !important;
@@ -234,19 +234,24 @@ section[data-testid="stSidebar"] .stRadio label p {
 
 /* ── 7. LOGOUT BUTTON ──────────────────────────────────────── */
 [data-testid="stSidebar"] .stButton > button {
-    background: rgba(46,125,50,0.12) !important;
-    border: 1px solid rgba(76,175,80,0.3) !important;
-    color: #ffffff !important;
-    border-radius: 10px !important;
-    width: 100% !important;
-    font-size: 13px !important;
+    font-size: 16px !important;
     font-weight: 700 !important;
-    letter-spacing: 1px !important;
+    color: #ffffff !important;
+    letter-spacing: 0.8px !important;
     text-transform: uppercase !important;
-    padding: 10px !important;
-    min-height: 48px !important;
+    background: rgba(46,125,50,0.12) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 6px 8px !important;
+    width: 100% !important;
+    min-height: 44px !important;
     transition: all 0.2s !important;
-    margin-top: 20px !important;
+    margin-top: 8px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
 }
 [data-testid="stSidebar"] .stButton > button:hover {
     background: rgba(198,40,40,0.15) !important;
