@@ -357,7 +357,7 @@ div[data-testid="stMetricValue"] {
     padding: 8px 12px !important;
     font-size: 13px !important;
     border-radius: 8px !important;
-    margin: 10px 0 !important;
+    margin: 4px 0 !important;
 }
 
 /* ── 13. SELECTBOX & INPUTS ────────────────────────────────── */
@@ -903,7 +903,7 @@ if page == "DASHBOARD":
         else:
             st.warning("Awaiting data / AI model...")
 
-        st.markdown("<div style='margin:6px 0 2px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin:10px 0 2px;'></div>", unsafe_allow_html=True)
         st.markdown('<div class="section-title">🔔 Alerts</div>',
                     unsafe_allow_html=True)
         alerts = []
