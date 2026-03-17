@@ -765,7 +765,7 @@ with st.sidebar:
         f'margin:8px auto 12px;"></div>'
         f'<div style="font-size:8px;font-weight:700;color:#ffffff;'
         f'letter-spacing:2.5px;text-transform:uppercase;width:100%;'
-        f'text-align:center;padding:0 4px;margin-bottom:6px;">Navigation</div>'
+        f'text-align:center;padding:0 4px;margin-bottom:6px;">Navigation</div>',
         unsafe_allow_html=True)
 
     nav_opts = (
