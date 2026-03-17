@@ -567,20 +567,8 @@ def show_landing():
 def show_login():
     set_background(ACTUAL_BG)
 
-    # ===== CONFIGURABLE BOTTOM MARGIN =====
-    # Adjust this value (in pixels) to add space at the bottom.
-    # Larger values push content up, smaller values bring it down.
-    BOTTOM_SPACER_HEIGHT = -1000   # <-- change this number as needed
-    # ======================================
-
-    st.markdown(f"""<style>
-    section[data-testid="stSidebar"] {{ display: none !important; }}
-
-    /* Spacer that adds adjustable bottom margin */
-    .login-bottom-spacer {{
-        height: {BOTTOM_SPACER_HEIGHT}px;
-        flex-shrink: 0;
-    }}
+    st.markdown("""<style>
+    section[data-testid="stSidebar"] { display: none !important; }
     </style>""", unsafe_allow_html=True)
 
     logo_b64  = file_to_b64(ACTUAL_LOGO)
@@ -592,35 +580,20 @@ def show_login():
         f'box-shadow:0 0 28px rgba(76,175,80,0.5);"/></div>'
     ) if logo_b64 else ""
 
-    # Centered column (the middle column will take full height)
+    st.markdown(
+        f'<div style="display:flex;flex-direction:column;align-items:center;margin-top:-20px;">'
+        f'{logo_html}'
+        f'<div style="text-align:center;font-size:34px;font-weight:900;color:#fff;'
+        f'letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,0.6);margin-bottom:4px;">'
+        f'AgriBot-AI</div>'
+        f'<div style="text-align:center;color:#81c784;font-size:12px;'
+        f'letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;">'
+        f'Smart Farming &middot; Intelligent Monitoring</div>'
+        f'</div>',
+        unsafe_allow_html=True)
+
     _, mid, _ = st.columns([1, 1.6, 1])
     with mid:
-        # Flex container that fills the column height and centers its children
-        st.markdown(
-            '<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">',
-            unsafe_allow_html=True
-        )
-
-        # Logo
-        st.markdown(logo_html, unsafe_allow_html=True)
-
-        # Title
-        st.markdown(
-            '<div style="text-align:center; font-size:34px; font-weight:900; color:#fff; '
-            'letter-spacing:1px; text-shadow:0 2px 12px rgba(0,0,0,0.6); margin-bottom:4px;">'
-            'AgriBot-AI</div>',
-            unsafe_allow_html=True
-        )
-
-        # Subtitle
-        st.markdown(
-            '<div style="text-align:center; color:#81c784; font-size:12px; '
-            'letter-spacing:3px; text-transform:uppercase; margin-bottom:20px;">'
-            'Smart Farming &middot; Intelligent Monitoring</div>',
-            unsafe_allow_html=True
-        )
-
-        # Login form
         with st.form("login_form"):
             email    = st.text_input("Email",    placeholder="admin@agribot.ai")
             password = st.text_input("Password", type="password", placeholder="••••••••")
@@ -629,20 +602,18 @@ def show_login():
                     st.session_state.logged_in = True
                     st.session_state.role      = USERS[email]["role"]
                     st.session_state.page      = "dashboard"
+                    session_save(USERS[email]["role"])
                     st.rerun()
                 else:
                     st.error("Invalid email or password")
 
-        # Back to landing button
+        st.markdown(
+            '<div style="text-align:center;margin-top:10px;">'
+            '<span style="font-size:11px;color:#388e3c;">← </span>'
+            '</div>', unsafe_allow_html=True)
         if st.button("← Back to Landing", use_container_width=True, key="back_btn"):
             st.session_state.page = "landing"
             st.rerun()
-
-        # Bottom spacer – add adjustable space after all content
-        st.markdown('<div class="login-bottom-spacer"></div>', unsafe_allow_html=True)
-
-        # Close flex container
-        st.markdown('</div>', unsafe_allow_html=True)
 
     st.stop()
 
