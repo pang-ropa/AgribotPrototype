@@ -820,7 +820,7 @@ if page == "DASHBOARD":
         '<div style="padding:6px 12px 2px;">'
         '<div style="font-size:20px;font-weight:900;color:#fff;line-height:1.2;">'
         'Real-Time Monitoring</div>'
-        '<div style="font-size:20px;color:#66bb6a;letter-spacing:1px;margin-top:50px;">'
+        '<div style="font-size:20px;color:#66bb6a;letter-spacing:1px;margin-top:-50px;">'
         'Greenhouse Overview — AgriBot-AI</div>'
         '</div>',
         unsafe_allow_html=True)
