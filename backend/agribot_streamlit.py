@@ -66,7 +66,7 @@ OPTIMIZED_CSS = """
     --page-margin-right: 0px;    /* Adjust right spacing */
 
     /* Login page fine‑tuning (on top of global margins) */
-    --login-margin-top: 70px;   /* negative moves up, positive down */
+    --login-margin-top: -20px;   /* negative moves up, positive down */
 }
 
 /* ── 1. BASE ───────────────────────────────────────────────── */
@@ -443,7 +443,7 @@ div[data-testid="stMetricValue"] {
     font-size: 16px !important;
     padding: 8px !important;
     min-height: 52px !important;
-    margin-top: 2000px !important;
+    margin-top: 6px !important;
 }
 
 /* ── 16. PULSE ANIMATION ───────────────────────────────────── */
