@@ -191,7 +191,7 @@ section[data-testid="stSidebar"] {
     gap: 2px !important;
     width: 100% !important;
     flex-direction: column !important;
-    margin-bottom: 8px !important;
+    margin-bottom: 2px !important;
 }
 
 /* Navigation labels now match the button's format */
