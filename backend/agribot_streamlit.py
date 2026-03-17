@@ -182,13 +182,10 @@ section[data-testid="stSidebar"] {
     padding: 0 4px 4px !important;
 }
 
-/* ── 6. SIDEBAR NAVIGATION RADIO ───────────────────────────── */
-.stRadio > div {
-    gap: 2px !important;
-    width: 100% !important;
-    flex-direction: column !important;
-    margin-bottom: 8px !important;
+[data-testid="stSidebar"] [data-testid="stElementToolbar"] {
+    display: none !important;
 }
+
 
 /* Navigation labels now match the button's format */
 section[data-testid="stSidebar"] .stRadio label {
