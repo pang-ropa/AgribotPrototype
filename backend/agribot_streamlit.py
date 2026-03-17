@@ -281,7 +281,7 @@ div[data-testid="stMetricValue"] {
     color: #66bb6a;
     letter-spacing: 1.2px;
     text-transform: uppercase;
-    margin-bottom: 12px;
+    margin-bottom: 15px;
     margin-top: 0;
     border-left: 3px solid #4CAF50;
     padding-left: 7px;
