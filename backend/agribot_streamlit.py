@@ -192,6 +192,13 @@ section[data-testid="stSidebar"] {
     width: 100% !important;
     flex-direction: column !important;
     margin-bottom: 8px !important;
+/* 🚫 FIX: Remove empty/ghost sidebar navigation item */
+section[data-testid="stSidebar"] .stRadio > label {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
 }
 
 /* Navigation labels now match the button's format */
