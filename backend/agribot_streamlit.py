@@ -792,14 +792,14 @@ if st.session_state.role == "admin":
 else:
     nav_opts = ["Live Dashboard", "Analysis"]
 
-raw_page = st.radio("", nav_opts, label_visibility="collapsed")
-page_map = {
+    raw_page = st.radio("", nav_opts, label_visibility="collapsed")
+    page_map = {
     "Live Dashboard": "DASHBOARD",
     "Analysis":       "ANALYSIS",
     "System Logs":    "LOGS",
     "Users":          "USERS",
 }
-page = page_map.get(raw_page, "DASHBOARD")
+    page = page_map.get(raw_page, "DASHBOARD")
 
     if st.button("Logout", use_container_width=True):
         st.session_state.logged_in = False
