@@ -792,7 +792,7 @@ with st.sidebar:
 
     st.markdown("""
     <div style="display:flex;align-items:center;gap:6px;
-                background:rgba(46,125,50,0.1);border:0px solid rgba(46,125,50,0.3);
+                background:rgba(46,125,50,0.1);border:none;
                 border-radius:6px;padding:4px 6px;width:100%;
                 margin:4px 0 2px;box-sizing:border-box;">
         <div style="width:6px;height:6px;background:#4CAF50;border-radius:50%;
