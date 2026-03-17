@@ -187,17 +187,50 @@ section[data-testid="stSidebar"] {
 }
 
 /* ── 6. SIDEBAR NAVIGATION RADIO ───────────────────────────── */
+/* ── 6. SIDEBAR NAVIGATION RADIO ───────────────────────────── */
+
+/* Remove the ghost/empty item (first hidden element) */
+section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] > div:first-child:empty {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* ALSO force-remove any empty containers */
+section[data-testid="stSidebar"] .stRadio div:empty {
+    display: none !important;
+}
+
+/* Keep your styling */
 .stRadio > div {
     gap: 2px !important;
     width: 100% !important;
     flex-direction: column !important;
     margin-bottom: 8px !important;
-/* 🚫 FIX: Remove empty/ghost sidebar navigation item */
-section[data-testid="stSidebar"] .stRadio > label {
+}
+
+section[data-testid="stSidebar"] .stRadio label {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    letter-spacing: 0.8px !important;
+    text-transform: uppercase !important;
+    background: rgba(46,125,50,0.12) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 6px 8px !important;
+    width: 100% !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* Hide radio circle */
+section[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] > div:first-child {
     display: none !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
 }
 }
 
