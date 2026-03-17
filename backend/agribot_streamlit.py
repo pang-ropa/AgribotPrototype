@@ -196,7 +196,7 @@ section[data-testid="stSidebar"] {
 .stRadio label {
     font-size: 13px !important;
     font-weight: 700 !important;
-    color: #fff !important;
+    color: #c8e6c9 !important;
     letter-spacing: 0.8px !important;
     text-transform: uppercase !important;
     background: transparent !important;
@@ -227,7 +227,7 @@ div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
 [data-testid="stSidebar"] .stButton > button {
     background: rgba(46,125,50,0.12) !important;
     border: 1px solid rgba(76,175,80,0.3) !important;
-    color: #81c784 !important;
+    color: #c8e6c9 !important;
     border-radius: 10px !important;
     width: 100% !important;
     font-size: 13px !important;
