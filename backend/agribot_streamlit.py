@@ -170,7 +170,7 @@ section[data-testid="stSidebar"] {
     min-width: 230px !important;
     background: linear-gradient(180deg, #0a0d12 0%, #0d1117 100%) !important;
     border-right: 1px solid rgba(46,125,50,0.5) !important;
-    overflow-y: auto !important;
+    overflow-y: hidden !important;
     overflow-x: hidden !important;
     height: 100vh !important;
     padding-top: 0 !important;
@@ -455,6 +455,7 @@ div[data-testid="stMetricValue"] {
 .main .block-container {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 .main .block-container > [data-testid="stVerticalBlock"] {
     flex: 1;
