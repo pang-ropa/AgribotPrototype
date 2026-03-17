@@ -816,12 +816,11 @@ HUM_LOW,  HUM_HIGH  = 50,  85
 # PAGE: LIVE DASHBOARD (unchanged)
 # ============================================================
 if page == "DASHBOARD":
-    # Compact page header
     st.markdown(
-        '<div style="padding:4px 12px 0px;">'
-        '<div style="font-size:16px; font-weight:900; color:#fff; line-height:1.2;">'
+        '<div style="padding:6px 12px 2px;">'
+        '<div style="font-size:18px;font-weight:900;color:#fff;line-height:1.2;">'
         'Real-Time Monitoring</div>'
-        '<div style="font-size:9px; color:#66bb6a; letter-spacing:1px; margin-top:1px;">'
+        '<div style="font-size:10px;color:#66bb6a;letter-spacing:1px;margin-top:1px;">'
         'Greenhouse Overview — AgriBot-AI</div>'
         '</div>',
         unsafe_allow_html=True)
@@ -835,60 +834,59 @@ if page == "DASHBOARD":
     avg_ph   = float(latest['ph'].mean())
     avg_soil = float(latest['soil_moisture'].mean())
 
-    # Four metric cards – smaller font for labels
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("TEMP",     f"{avg_temp:.1f} °C")
     m2.metric("HUMIDITY", f"{avg_hum:.0f} %")
     m3.metric("PH",       f"{avg_ph:.2f}")
     m4.metric("SOIL",     f"{avg_soil:.0f} %")
 
-    # Adjust column gap to "small" already set, but we can tighten further
+    img_data = get_latest_image()
+
     cam_col, right_col = st.columns([3, 2], gap="small")
 
-    # Left column – camera card
     with cam_col:
         st.markdown('<div class="cam-card">', unsafe_allow_html=True)
         st.markdown('<div class="section-title">📷 Plant Health Feed</div>',
                     unsafe_allow_html=True)
-
-        img_data = get_latest_image()
         if img_data.get("url"):
             st.markdown(
                 f'<img src="{img_data["url"]}" '
-                f'style="width:100%; max-height:200px; object-fit:cover; border-radius:8px;"/>',
+                f'style="width:100%;max-height:230px;object-fit:cover;'
+                f'border-radius:8px;"/>',
                 unsafe_allow_html=True)
             pid_txt = f"🥬 Plant {img_data['plant_id']}" if img_data.get("plant_id") else ""
             ts_txt  = f"🕒 {img_data['timestamp']}"       if img_data.get("timestamp") else ""
             st.markdown(
-                f'<div class="cam-meta" style="font-size:9px;">{pid_txt}&nbsp;&nbsp;{ts_txt}<br>'
-                f'Captures at '
-                f'<span class="sched-badge">7:00</span> '
-                f'<span class="sched-badge">12:00</span> '
-                f'<span class="sched-badge">17:00</span></div>'
+                f'<div class="cam-meta">{pid_txt}&nbsp;&nbsp;{ts_txt}<br>'
+                f'Captured at '
+                f'<span class="sched-badge">7:00 AM</span>'
+                f'<span class="sched-badge">12:00 NN</span>'
+                f'<span class="sched-badge">12:30 PM</span></div>'
                 f'<a href="{img_data["url"]}" target="_blank" class="drive-link">'
-                f'☁️ View ↗</a>',
+                f'☁️ View in Drive ↗</a>',
                 unsafe_allow_html=True)
         else:
             st.markdown(
-                '<div class="cam-placeholder" style="min-height:160px;">'
-                '<div style="font-size:32px; margin-bottom:6px;">📷</div>'
-                '<div style="font-size:11px; font-weight:700; color:#4CAF50;">No image</div>'
-                '<div style="font-size:9px; color:#2e7d32; margin-top:4px;">'
-                'Captures at 7:00, 12:00, 17:00</div>'
+                '<div class="cam-placeholder">'
+                '<div style="font-size:36px;margin-bottom:8px;">📷</div>'
+                '<div style="font-size:12px;font-weight:700;color:#4CAF50;">No image yet</div>'
+                '<div style="font-size:10px;color:#2e7d32;margin-top:4px;">'
+                'Captures at '
+                '<span class="sched-badge">7:00 AM</span>'
+                '<span class="sched-badge">12:00 NN</span>'
+                '<span class="sched-badge">12:30 PM</span></div>'
                 '</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # Right column – AI status and alerts
     with right_col:
         if not latest.empty:
             last_ts = pd.to_datetime(latest['timestamp']).max()
             st.markdown(
-                f'<div style="text-align:right; font-size:8px; color:#388e3c; '
-                f'margin-bottom:4px;">🔄 {last_ts.strftime("%H:%M")}</div>',
+                f'<div style="text-align:right;font-size:9px;color:#388e3c;'
+                f'margin-bottom:6px;">🔄 {last_ts.strftime("%H:%M:%S")}</div>',
                 unsafe_allow_html=True)
 
-        # AI Health Status (smaller font)
-        st.markdown('<div class="section-title" style="font-size:10px;">🤖 AI Status</div>',
+        st.markdown('<div class="section-title">🤖 AI Health Status</div>',
                     unsafe_allow_html=True)
         p1 = latest[latest['plant_id'] == 1]
         if not p1.empty and model and scaler:
@@ -898,26 +896,16 @@ if page == "DASHBOARD":
                                   float(p1.iloc[0]['ph'])]])
                 pred = model.predict(scaler.transform(feat))[0]
                 if pred == -1:
-                    st.markdown(
-                        '<div style="background:#b71c1c; color:#fff; padding:4px 6px; '
-                        'border-radius:6px; font-size:12px; font-weight:700; text-align:center;">'
-                        '🚨 ALERT – Anomaly</div>',
-                        unsafe_allow_html=True)
+                    st.error("🚨 **ALERT** — Anomaly detected.")
                 else:
-                    st.markdown(
-                        '<div style="background:#1b5e20; color:#fff; padding:4px 6px; '
-                        'border-radius:6px; font-size:12px; font-weight:700; text-align:center;">'
-                        '✅ HEALTHY – Optimal</div>',
-                        unsafe_allow_html=True)
+                    st.success("✅ **HEALTHY** — Optimal conditions.")
             except Exception as e:
-                st.info(f"Processing...")
+                st.info(f"Processing... ({e})")
         else:
-            st.warning("Awaiting data")
+            st.warning("Awaiting data / AI model...")
 
         st.markdown("<div style='margin:6px 0 2px;'></div>", unsafe_allow_html=True)
-
-        # Alerts section – more compact
-        st.markdown('<div class="section-title" style="font-size:10px;">🔔 Alerts</div>',
+        st.markdown('<div class="section-title">🔔 Alerts</div>',
                     unsafe_allow_html=True)
         alerts = []
         for _, plant in latest.iterrows():
@@ -925,32 +913,20 @@ if page == "DASHBOARD":
             soil = float(plant['soil_moisture'])
             ph   = float(plant['ph'])
             if soil < SOIL_DRY:
-                alerts.append(f"🌱 P{pid}: dry ({soil:.0f}%)")
+                alerts.append(f"🌱 P{pid}: soil dry ({soil:.0f}%)")
             elif soil > SOIL_WET:
-                alerts.append(f"🌱 P{pid}: wet ({soil:.0f}%)")
+                alerts.append(f"🌱 P{pid}: soil wet ({soil:.0f}%)")
             if ph < PH_LOW or ph > PH_HIGH:
                 alerts.append(f"🧪 P{pid}: pH {ph:.2f}")
         if avg_temp < TEMP_LOW or avg_temp > TEMP_HIGH:
             alerts.append(f"🌡️ Temp: {avg_temp:.1f}°C")
         if avg_hum < HUM_LOW or avg_hum > HUM_HIGH:
             alerts.append(f"💧 Hum: {avg_hum:.0f}%")
-
         if alerts:
-            # Show only first 5 alerts, each with small font and tight spacing
             for a in alerts[:5]:
-                st.markdown(
-                    f'<div style="background:rgba(183,28,28,0.12); border:1px solid rgba(183,28,28,0.3); '
-                    f'color:#ef9a9a; border-radius:4px; padding:2px 6px; margin:2px 0; font-size:10px;">'
-                    f'{a}</div>',
-                    unsafe_allow_html=True)
-            if len(alerts) > 5:
-                st.markdown(
-                    f'<div style="font-size:9px; color:#66bb6a; text-align:right;">+{len(alerts)-5} more</div>',
-                    unsafe_allow_html=True)
+                st.markdown(f'<div class="alert-item">{a}</div>', unsafe_allow_html=True)
         else:
-            st.markdown(
-                '<div style="font-size:10px; color:#4CAF50;">✅ All parameters in range</div>',
-                unsafe_allow_html=True)
+            st.success("✅ All parameters in range.")
 
 # ============================================================
 # PAGE: ANALYSIS (unchanged)
