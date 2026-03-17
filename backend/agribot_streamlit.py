@@ -168,7 +168,7 @@ a[href*="streamlit.io"],
 section[data-testid="stSidebar"] {
     width: 230px !important;
     min-width: 230px !important;
-    background: #2e7d32 !important;
+    background: #023f23 !important;
     border-right: 1px solid rgba(46,125,50,0.5) !important;
     overflow-y: hidden !important;
     overflow-x: hidden !important;
