@@ -792,7 +792,7 @@ with st.sidebar:
                 margin:10px 0 8px;box-sizing:border-box;">
         <div style="width:7px;height:7px;background:#4CAF50;border-radius:50%;
                     animation:pulse 2s infinite;flex-shrink:0;"></div>
-        <span style="font-size:10px;font-weight:700;color:#66bb6a;
+        <span style="font-size:10px;font-weight:700;color:#ffffff;
                      letter-spacing:1.5px;text-transform:uppercase;">System Online</span>
     </div>""", unsafe_allow_html=True)
 
