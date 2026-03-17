@@ -753,7 +753,7 @@ with st.sidebar:
         f'display:block;object-fit:cover;background:#0a0d12;"/>'
         f'</div>'
         f'<div style="font-size:15px;font-weight:900;color:#ffffff;'
-        f'letter-spacing:0.5px;margin-bottom:1px;">AgriBot-AI</div>'
+        f'letter-spacing:0.5px;margin-bottom:100px;">AgriBot-AI</div>'
         f'<div style="font-size:8px;font-weight:700;letter-spacing:1.2px;'
         f'text-transform:uppercase;padding:2px 10px;border-radius:20px;'
         f'background:rgba(46,125,50,0.15);border:1px solid rgba(76,175,80,0.25);'
