@@ -195,10 +195,10 @@ section[data-testid="stSidebar"] {
 .stRadio label {
     font-size: 13px !important;
     font-weight: 700 !important;
-    color: #black !important;
+    color: #ffffff !important;
     letter-spacing: 0.8px !important;
     text-transform: uppercase !important;
-    background: transparent !important;
+    background: #ffffff !important;
     border: none !important;
     border-radius: 8px !important;
     padding: 6px 8px !important;
