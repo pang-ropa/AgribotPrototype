@@ -246,7 +246,7 @@ div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
 
 /* ── 8. METRIC CARDS ───────────────────────────────────────── */
 div[data-testid="stMetric"] {
-    background: rgba(13,17,23,0.85) !important;
+    background: #023f23 !important;
     border: 1px solid rgba(76,175,80,0.3) !important;
     border-radius: 10px !important;
     padding: 8px 6px !important;
