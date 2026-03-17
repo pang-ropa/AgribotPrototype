@@ -747,7 +747,7 @@ with st.sidebar:
         f'padding-top:20px;width:100%;margin-bottom:6px;">'
         f'<div style="padding:3px;border-radius:50%;'
         f'background:linear-gradient(145deg,#388e3c,#1b5e20);'
-        f'box-shadow:0 0 16px rgba(76,175,80,0.3);margin-bottom:-50px;">'
+        f'box-shadow:0 0 16px rgba(76,175,80,0.3);margin-bottom:-55px;">'
         f'<img src="data:image/png;base64,{logo_b64}" '
         f'style="border-radius:50%;width:80px;height:80px;'
         f'display:block;object-fit:cover;background:#0a0d12;"/>'
