@@ -583,9 +583,16 @@ def show_landing():
 def show_login():
     set_background(ACTUAL_BG)
 
-    # Hide sidebar
     st.markdown("""<style>
     section[data-testid="stSidebar"] { display: none !important; }
+
+    /* Adjust this variable to move the entire login block up/down */
+    .login-container {
+        margin-top: var(--login-margin-top, 0px);
+    }
+    :root {
+        --login-margin-top: -20px;   /* ← Change this value (negative moves up, positive moves down) */
+    }
     </style>""", unsafe_allow_html=True)
 
     logo_b64  = file_to_b64(ACTUAL_LOGO)
@@ -600,6 +607,9 @@ def show_login():
     # Centered column
     _, mid, _ = st.columns([1, 1.6, 1])
     with mid:
+        # Apply the adjustable top margin via the login-container class
+        st.markdown('<div class="login-container">', unsafe_allow_html=True)
+
         # Flex container that fills the column height and centers its children
         st.markdown(
             '<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">',
@@ -644,23 +654,12 @@ def show_login():
             st.session_state.page = "landing"
             st.rerun()
 
-        # Close the flex container
+        # Close flex container
+        st.markdown('</div>', unsafe_allow_html=True)
+        # Close login-container
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.stop()
-
-# ============================================================
-# MAIN FLOW (unchanged)
-# ============================================================
-if st.session_state.page == "landing":
-    show_landing()
-
-if st.session_state.page == "login":
-    show_login()
-
-if not st.session_state.logged_in:
-    st.session_state.page = "login"
-    st.rerun()
 
 # ============================================================
 # DATA FUNCTIONS (unchanged)
