@@ -208,7 +208,6 @@ section[data-testid="stSidebar"] {
     min-height: 44px !important;
     display: flex !important;
     align-items: center !important;
-    font color: #ffffff !important;
 }
 .stRadio label:hover {
     background: rgba(76,175,80,0.12) !important;
@@ -217,7 +216,7 @@ section[data-testid="stSidebar"] {
 div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
     background: rgba(46,125,50,0.22) !important;
     border-left: 3px solid #4CAF50 !important;
-    color: #ffffff !important;
+    color: #blue !important;
     padding-left: 9px !important;
 }
 .stRadio [data-baseweb="radio"] > div:first-child { display: none !important; }
