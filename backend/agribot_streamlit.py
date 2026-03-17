@@ -234,17 +234,14 @@ section[data-testid="stSidebar"] .stRadio label p {
 
 /* ── 7. LOGOUT BUTTON ──────────────────────────────────────── */
 [data-testid="stSidebar"] .stButton > button {
-    background: rgba(46,125,50,0.12) !important;
-    border: 1px solid rgba(76,175,80,0.3) !important;
     color: #ffffff !important;
-    border-radius: 10px !important;
     width: 100% !important;
-    font-size: 13px !important;
+    font-size: 14px !important;
     font-weight: 700 !important;
     letter-spacing: 1px !important;
-    text-transform: uppercase !important;
-    padding: 10px !important;
-    min-height: 48px !important;
+    text-transform: sentence !important;
+    padding: 6px !important;
+    min-height: 40px !important;
     transition: all 0.2s !important;
     margin-top: 20px !important;
 }
