@@ -274,6 +274,7 @@ div[data-testid="stMetricValue"] {
     border-radius: 12px;
     padding: 10px;
     height: 100%;
+    margin-top: 100px;
 }
 .section-title {
     font-size: 12px !important;
@@ -846,7 +847,6 @@ if page == "DASHBOARD":
 
     with cam_col:
         st.markdown('<div style="margin-top: 10px;">', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('<div class="section-title">📷 Plant Health Feed</div>',
                     unsafe_allow_html=True)
         if img_data.get("url"):
