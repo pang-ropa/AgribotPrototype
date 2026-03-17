@@ -203,7 +203,7 @@ section[data-testid="stSidebar"] .stRadio label {
     background: transparent !important;
     border: none !important;
     border-radius: 8px !important;
-    padding: 6px 8px !important;
+    padding: 8px 12px !important;
     width: 100% !important;
     cursor: pointer !important;
     transition: all 0.2s !important;
