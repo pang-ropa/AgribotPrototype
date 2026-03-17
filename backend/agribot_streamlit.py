@@ -292,7 +292,7 @@ div[data-testid="stMetricValue"] {
     border: 1px solid rgba(183,28,28,0.3);
     color: #ef9a9a;
     border-radius: 8px;
-    margin: 100px 0;
+    margin: 10px 0;
     font-size: 13px !important;
 }
 .sched-badge {
