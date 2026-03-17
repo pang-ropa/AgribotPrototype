@@ -188,19 +188,20 @@ section[data-testid="stSidebar"] {
 
 /* ── 6. SIDEBAR NAVIGATION RADIO ───────────────────────────── */
 .stRadio > div {
-    gap: 25px !important;
+    gap: 2px !important;
     width: 100% !important;
     flex-direction: column !important;
     margin-bottom: 8px !important;
 }
-./* More specific selector to override any default */
+
+/* Navigation labels now match the button's format */
 section[data-testid="stSidebar"] .stRadio label {
     font-size: 16px !important;
     font-weight: 700 !important;
     color: #ffffff !important;
     letter-spacing: 0.8px !important;
     text-transform: uppercase !important;
-    background: transparent !important;
+    background: rgba(46,125,50,0.12) !important;  /* same subtle green as button */
     border: none !important;
     border-radius: 8px !important;
     padding: 6px 8px !important;
@@ -211,15 +212,20 @@ section[data-testid="stSidebar"] .stRadio label {
     display: flex !important;
     align-items: center !important;
 }
+
+/* Hover effect to match button's intended style (if any) */
 section[data-testid="stSidebar"] .stRadio label:hover {
     background: rgba(76,175,80,0.12) !important;
     color: #ffffff !important;
 }
+
+/* Selected item state (active page) – keep the left accent */
 section[data-testid="stSidebar"] div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
     background: rgba(46,125,50,0.22) !important;
     border-left: 3px solid #4CAF50 !important;
     color: #ffffff !important;
     padding-left: 9px !important;
+}
 }
 section[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] > div:first-child {
     display: none !important;
@@ -781,17 +787,17 @@ with st.sidebar:
         unsafe_allow_html=True)
 
     nav_opts = (
-        ["Live Dashboard", "Analysis",
-         "System Logs",    "Users"]
-        if st.session_state.role == "admin"
-        else ["Live Dashboard", "Analysis"]
+    ["Live Dashboard", "Analysis", "System Logs", "Users"]
+    if st.session_state.role == "admin"
+    else ["Live Dashboard", "Analysis"]
     )
+
     raw_page = st.radio("", nav_opts, label_visibility="collapsed")
     page_map = {
-        "Live Dashboard": "DASHBOARD",
-        "Analysis":       "ANALYSIS",
-        "System Logs":    "LOGS",
-        "Users":          "USERS",
+    "Live Dashboard": "DASHBOARD",
+    "Analysis":       "ANALYSIS",
+    "System Logs":    "LOGS",
+    "Users":          "USERS",
     }
     page = page_map.get(raw_page, "DASHBOARD")
 
