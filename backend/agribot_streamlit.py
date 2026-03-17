@@ -443,7 +443,7 @@ div[data-testid="stMetricValue"] {
     font-size: 16px !important;
     padding: 8px !important;
     min-height: 52px !important;
-    margin-top: 20px !important;
+    margin-top: 2000px !important;
 }
 
 /* ── 16. PULSE ANIMATION ───────────────────────────────────── */
