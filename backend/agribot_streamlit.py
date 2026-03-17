@@ -76,7 +76,7 @@ html, body {
     overflow: hidden !important;
     height: 100% !important;
     width: 100% !important;
-    font-size: 16px !important;
+    font-size: 14px !important;
 }
 
 /* ── 2. ROOT APP ──────────────────────────────────────────── */
@@ -195,7 +195,7 @@ section[data-testid="stSidebar"] {
 }
 ./* More specific selector to override any default */
 section[data-testid="stSidebar"] .stRadio label {
-    font-size: 14px !important;
+    font-size: 13px !important;
     font-weight: 700 !important;
     color: #ffffff !important;
     letter-spacing: 0.8px !important;
@@ -286,7 +286,7 @@ div[data-testid="stMetricValue"] {
     height: 100%;
 }
 .section-title {
-    font-size: 14px !important;
+    font-size: 12px !important;
     font-weight: 700 !important;
     color: #66bb6a !important;
     letter-spacing: 1.2px !important;
@@ -303,7 +303,7 @@ div[data-testid="stMetricValue"] {
     color: #ef9a9a;
     border-radius: 8px;
     margin: 10px 0;
-    font-size: 14px !important;
+    font-size: 13px !important;
 }
 .sched-badge {
     display: inline-block;
@@ -330,7 +330,7 @@ div[data-testid="stMetricValue"] {
     border-radius: 7px;
     padding: 4px 10px;
     color: #81c784;
-    font-size: 12px !important;
+    font-size: 11px !important;
     text-decoration: none;
 }
 .cam-placeholder {
@@ -378,14 +378,14 @@ div[data-testid="stMetricValue"] {
     min-height: 42px !important;
 }
 .stSelectbox label {
-    font-size: 14px !important;
+    font-size: 12px !important;
     color: #66bb6a !important;
     margin-bottom: 2px !important;
 }
 .stTextInput label {
     color: #c8e6c9 !important;
     font-weight: 600 !important;
-    font-size: 14px !important;
+    font-size: 13px !important;
 }
 
 /* ── 14. LANDING PAGE BUTTON ───────────────────────────────── */
@@ -762,15 +762,15 @@ with st.sidebar:
         f'style="border-radius:50%; width:80px; height:80px; ' 
         f'display:block; object-fit:cover; background:#0a0d12;"/>'
         f'</div>'
-        f'<div style="font-size:16px; font-weight:900; color:#ffffff; '
+        f'<div style="font-size:15px; font-weight:900; color:#ffffff; '
         f'letter-spacing:0.5px; margin-bottom:3px;">AgriBot-AI</div>'
-        f'<div style="font-size:10px; font-weight:700; letter-spacing:1px; '
+        f'<div style="font-size:9px; font-weight:700; letter-spacing:1px; '
         f'text-transform:uppercase; padding:1px 8px; border-radius:20px; '
         f'background:rgba(46,125,50,0.15); border:1px solid rgba(76,175,80,0.25); '
         f'color:#ffffff; margin-bottom:7px;">' 
         f'{"👑 Admin" if st.session_state.role == "admin" else "🌿 Field User"}'
         f'</div>'
-        f'<div style="font-size:10px; font-weight:700; color:#ffffff; '
+        f'<div style="font-size:9px; font-weight:700; color:#ffffff; '
         f'letter-spacing:2px; text-transform:uppercase; width:100%; '
         f'text-align:center; padding:0 2px; margin-bottom:25px;">Navigation</div>',
         unsafe_allow_html=True)
@@ -797,7 +797,7 @@ with st.sidebar:
                 margin:4px 0 2px;box-sizing:border-box;">
         <div style="width:7px;height:7px;background:#4CAF50;border-radius:50%;
                     animation:pulse 2s infinite;flex-shrink:0;"></div>
-        <span style="font-size:12px;font-weight:700;color:#ffffff;
+        <span style="font-size:10px;font-weight:700;color:#ffffff;
                      letter-spacing:1.5px;text-transform:uppercase;">System Online</span>
     </div>""", unsafe_allow_html=True)
 
@@ -888,7 +888,7 @@ if page == "DASHBOARD":
         if not latest.empty:
             last_ts = pd.to_datetime(latest['timestamp']).max()
             st.markdown(
-                f'<div style="text-align:right;font-size:10px;color:#388e3c;'
+                f'<div style="text-align:right;font-size:9px;color:#388e3c;'
                 f'margin-bottom:6px;">🔄 {last_ts.strftime("%H:%M:%S")}</div>',
                 unsafe_allow_html=True)
 
