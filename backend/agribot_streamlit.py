@@ -570,7 +570,7 @@ def show_login():
     # ===== CONFIGURABLE BOTTOM MARGIN =====
     # Adjust this value (in pixels) to add space at the bottom.
     # Larger values push content up, smaller values bring it down.
-    BOTTOM_SPACER_HEIGHT = 0   # <-- change this number as needed
+    BOTTOM_SPACER_HEIGHT = -1000   # <-- change this number as needed
     # ======================================
 
     st.markdown(f"""<style>
