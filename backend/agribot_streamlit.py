@@ -226,7 +226,17 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label[data-baseweb="radi
     color: #ffffff !important;
     padding-left: 9px !important;
 }
-
+}
+section[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] > div:first-child {
+    display: none !important;
+}
+section[data-testid="stSidebar"] .stRadio [data-testid="stMarkdownContainer"] p {
+    margin: 0 !important;
+}
+/* If the text inside the label is wrapped in a <p>, force its color too */
+section[data-testid="stSidebar"] .stRadio label p {
+    color: #ffffff !important;
+}
 
 /* ── 7. LOGOUT BUTTON ──────────────────────────────────────── */
 [data-testid="stSidebar"] .stButton > button {
