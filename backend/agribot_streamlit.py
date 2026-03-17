@@ -754,23 +754,23 @@ logo_b64 = file_to_b64(ACTUAL_LOGO)
 with st.sidebar:
     st.markdown(
         f'<div style="display:flex; flex-direction:column; align-items:center; '
-        f'padding-top:5px; width:100%;">'  
+        f'padding-top:8px; width:100%;">'  
         f'<div style="padding:2px; border-radius:50%; '
         f'background:linear-gradient(145deg,#388e3c,#1b5e20); '
         f'box-shadow:0 0 12px rgba(76,175,80,0.3); margin-bottom:2px;">'
         f'<img src="data:image/png;base64,{logo_b64}" '
-        f'style="border-radius:50%; width:80px; height:80px; ' 
+        f'style="border-radius:50%; width:90px; height:90px; ' 
         f'display:block; object-fit:cover; background:#0a0d12;"/>'
         f'</div>'
-        f'<div style="font-size:15px; font-weight:900; color:#ffffff; '
+        f'<div style="font-size:18px; font-weight:900; color:#ffffff; '
         f'letter-spacing:0.5px; margin-bottom:3px;">AgriBot-AI</div>'
-        f'<div style="font-size:9px; font-weight:700; letter-spacing:1px; '
+        f'<div style="font-size:12px; font-weight:700; letter-spacing:1px; '
         f'text-transform:uppercase; padding:1px 8px; border-radius:20px; '
         f'background:rgba(46,125,50,0.15); border:1px solid rgba(76,175,80,0.25); '
         f'color:#ffffff; margin-bottom:7px;">' 
         f'{"👑 Admin" if st.session_state.role == "admin" else "🌿 Field User"}'
         f'</div>'
-        f'<div style="font-size:9px; font-weight:700; color:#ffffff; '
+        f'<div style="font-size:14px; font-weight:700; color:#ffffff; '
         f'letter-spacing:2px; text-transform:uppercase; width:100%; '
         f'text-align:center; padding:0 2px; margin-bottom:25px;">Navigation</div>',
         unsafe_allow_html=True)
