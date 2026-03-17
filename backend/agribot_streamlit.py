@@ -234,14 +234,14 @@ div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
     font-weight: 700 !important;
     letter-spacing: 1px !important;
     text-transform: uppercase !important;
-    padding: 10px !important;
+    padding: 15px !important;
     min-height: 48px !important;
     transition: all 0.2s !important;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
     background: rgba(198,40,40,0.15) !important;
     border-color: rgba(198,40,40,0.5) !important;
-    color: #ef9a9a !important;
+    color: #c8e6c9 !important;
 }
 
 /* ── 8. METRIC CARDS ───────────────────────────────────────── */
