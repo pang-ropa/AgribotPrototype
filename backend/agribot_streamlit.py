@@ -168,7 +168,7 @@ a[href*="streamlit.io"],
 section[data-testid="stSidebar"] {
     width: 230px !important;
     min-width: 230px !important;
-    background: linear-gradient(180deg, #0a0d12 0%, #0d1117 100%) !important;
+    background: #2e7d32 !important;
     border-right: 1px solid rgba(46,125,50,0.5) !important;
     overflow-y: hidden !important;
     overflow-x: hidden !important;
@@ -196,7 +196,7 @@ section[data-testid="stSidebar"] {
 .stRadio label {
     font-size: 13px !important;
     font-weight: 700 !important;
-    color: #81c784 !important;
+    color: #fff !important;
     letter-spacing: 0.8px !important;
     text-transform: uppercase !important;
     background: transparent !important;
