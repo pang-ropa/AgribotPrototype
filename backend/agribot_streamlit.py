@@ -165,8 +165,15 @@ a[href*="streamlit.io"],
 }
 
 /* ── 5. SIDEBAR ────────────────────────────────────────────── */
-
-
+section[data-testid="stSidebar"] {
+    width: 230px !important;
+    min-width: 230px !important;
+    background: #023f23 !important;
+    border-right: 1px solid rgba(46,125,50,0.5) !important;
+    overflow: remove !important;
+    height: 100vh !important;
+    padding-top: 0 !important;
+}
 
 [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
     display: flex !important;
