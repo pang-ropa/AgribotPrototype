@@ -198,7 +198,7 @@ section[data-testid="stSidebar"] {
     color: #ffffff !important;
     letter-spacing: 0.8px !important;
     text-transform: uppercase !important;
-    background: #ffffff !important;
+    background: transparent !important;
     border: none !important;
     border-radius: 8px !important;
     padding: 6px 8px !important;
@@ -208,6 +208,7 @@ section[data-testid="stSidebar"] {
     min-height: 44px !important;
     display: flex !important;
     align-items: center !important;
+    font color: #ffffff !important;
 }
 .stRadio label:hover {
     background: rgba(76,175,80,0.12) !important;
