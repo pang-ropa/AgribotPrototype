@@ -188,7 +188,7 @@ section[data-testid="stSidebar"] {
 
 /* ── 6. SIDEBAR NAVIGATION RADIO ───────────────────────────── */
 .stRadio > div {
-    gap: 2px !important;
+    gap: 5px !important;
     width: 100% !important;
     flex-direction: column !important;
 }
