@@ -188,20 +188,19 @@ section[data-testid="stSidebar"] {
 
 /* ── 6. SIDEBAR NAVIGATION RADIO ───────────────────────────── */
 .stRadio > div {
-    gap: 2px !important;
+    gap: 25px !important;
     width: 100% !important;
     flex-direction: column !important;
     margin-bottom: 8px !important;
 }
-
-/* Navigation labels now match the button's format */
+./* More specific selector to override any default */
 section[data-testid="stSidebar"] .stRadio label {
     font-size: 16px !important;
     font-weight: 700 !important;
     color: #ffffff !important;
     letter-spacing: 0.8px !important;
     text-transform: uppercase !important;
-    background: rgba(46,125,50,0.12) !important;  /* same subtle green as button */
+    background: transparent !important;
     border: none !important;
     border-radius: 8px !important;
     padding: 6px 8px !important;
@@ -212,20 +211,15 @@ section[data-testid="stSidebar"] .stRadio label {
     display: flex !important;
     align-items: center !important;
 }
-
-/* Hover effect to match button's intended style (if any) */
 section[data-testid="stSidebar"] .stRadio label:hover {
     background: rgba(76,175,80,0.12) !important;
     color: #ffffff !important;
 }
-
-/* Selected item state (active page) – keep the left accent */
 section[data-testid="stSidebar"] div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
     background: rgba(46,125,50,0.22) !important;
     border-left: 3px solid #4CAF50 !important;
     color: #ffffff !important;
     padding-left: 9px !important;
-}
 }
 section[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] > div:first-child {
     display: none !important;
@@ -778,18 +772,20 @@ with st.sidebar:
         f'<div style="font-size:12px; font-weight:700; letter-spacing:1px; '
         f'text-transform:uppercase; padding:1px 8px; border-radius:20px; '
         f'background:rgba(46,125,50,0.15); border:1px solid rgba(76,175,80,0.25); '
-        f'color:#ffffff; margin-bottom:10px;">'  # slightly increased from 7px to give space before nav items
+        f'color:#ffffff; margin-bottom:7px;">' 
         f'{"👑 Admin" if st.session_state.role == "admin" else "🌿 Field User"}'
-        f'</div>',
-        # The "Navigation" heading line has been removed
+        f'</div>'
+        f'<div style="font-size:14px; font-weight:700; color:#ffffff; '
+        f'letter-spacing:2px; text-transform:uppercase; width:100%; '
+        f'text-align:center; padding:0 2px; margin-bottom:25px;">Navigation</div>',
         unsafe_allow_html=True)
 
     nav_opts = (
-        ["Live Dashboard", "Analysis", "System Logs", "Users"]
+        ["Live Dashboard", "Analysis",
+         "System Logs",    "Users"]
         if st.session_state.role == "admin"
         else ["Live Dashboard", "Analysis"]
     )
-
     raw_page = st.radio("", nav_opts, label_visibility="collapsed")
     page_map = {
         "Live Dashboard": "DASHBOARD",
