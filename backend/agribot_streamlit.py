@@ -815,7 +815,7 @@ if page == "DASHBOARD":
         '<div style="padding:6px 12px 2px;">'
         '<div style="font-size:20px;font-weight:900;color:#fff;line-height:1.2;">'
         'Real-Time Monitoring</div>'
-        '<div style="font-size:20px;color:#66bb6a;letter-spacing:1px;margin-top:-75px;">'
+       '<div style="font-size:20px;color:#66bb6a;letter-spacing:1px;margin-top:-75px;font-weight:bold;">'
         'Greenhouse Overview — AgriBot-AI</div>'
         '</div>',
         unsafe_allow_html=True)
@@ -930,7 +930,7 @@ elif page == "ANALYSIS":
     st.markdown(
         '<div style="padding:6px 12px 4px;">'
         '<div style="font-size:18px;font-weight:900;color:#fff;">Historical Trends</div>'
-        '<div style="font-size:20px;color:#66bb6a;letter-spacing:1px;margin-top:-75px;">'
+        '<div style="font-size:20px;color:#66bb6a;letter-spacing:1px;margin-top:-75px;font-weight:bold;">'
         'Sensor data over time</div></div>',
         unsafe_allow_html=True)
 
