@@ -869,7 +869,7 @@ if page == "DASHBOARD":
                 '<div class="cam-placeholder">'
                 '<div style="font-size:36px;margin-bottom:8px;">📷</div>'
                 '<div style="font-size:12px;font-weight:700;color:#4CAF50;">No image yet</div>'
-                '<div style="font-size:10px;color:#2e7d32;margin-top:4px;">'
+                '<div style="font-size:10px;color:#2e7d32;margin-top:6px;">'
                 'Captures at '
                 '<span class="sched-badge">7:00 AM</span>'
                 '<span class="sched-badge">12:00 NN</span>'
