@@ -357,7 +357,7 @@ div[data-testid="stMetricValue"] {
     padding: 8px 12px !important;
     font-size: 13px !important;
     border-radius: 8px !important;
-    margin: 4px 0 !important;
+    margin: 10px 0 !important;
 }
 
 /* ── 13. SELECTBOX & INPUTS ────────────────────────────────── */
