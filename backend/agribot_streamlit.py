@@ -292,7 +292,7 @@ div[data-testid="stMetricValue"] {
     border: 1px solid rgba(183,28,28,0.3);
     color: #ef9a9a;
     border-radius: 8px;
-    margin: 4px 0;
+    margin: 4px 4px;
     font-size: 13px !important;
 }
 .sched-badge {
@@ -903,7 +903,7 @@ if page == "DASHBOARD":
         else:
             st.warning("Awaiting data / AI model...")
 
-        st.markdown("<div style='margin:6px 0 10px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin:6px 0 2px;'></div>", unsafe_allow_html=True)
         st.markdown('<div class="section-title">🔔 Alerts</div>',
                     unsafe_allow_html=True)
         alerts = []
