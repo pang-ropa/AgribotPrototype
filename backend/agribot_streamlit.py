@@ -234,7 +234,7 @@ section[data-testid="stSidebar"] .stRadio label p {
 
 /* ── 7. LOGOUT BUTTON ──────────────────────────────────────── */
 [data-testid="stSidebar"] .stButton > button {
-    font color: #ffffff !important;
+    color: #ffffff !important;
     width: 100% !important;
     font-size: 14px !important;
     font-weight: 700 !important;
