@@ -790,17 +790,6 @@ with st.sidebar:
     }
     page = page_map.get(raw_page, "DASHBOARD")
 
-    st.markdown("""
-    <div style="display:flex;align-items:center;gap:8px;
-                background:rgba(46,125,50,0.1);border:1px solid rgba(46,125,50,0.3);
-                border-radius:8px;padding:4px 8px;width:100%;
-                margin:4px 0 2px;box-sizing:border-box;">
-        <div style="width:7px;height:7px;background:#4CAF50;border-radius:50%;
-                    animation:pulse 2s infinite;flex-shrink:0;"></div>
-        <span style="font-size:10px;font-weight:700;color:#ffffff;
-                     letter-spacing:1.5px;text-transform:uppercase;">System Online</span>
-    </div>""", unsafe_allow_html=True)
-
     if st.button("Logout", use_container_width=True):
         st.session_state.logged_in = False
         st.session_state.role      = None
