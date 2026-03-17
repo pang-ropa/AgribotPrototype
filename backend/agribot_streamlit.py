@@ -444,9 +444,9 @@ div[data-testid="stMetricValue"] {
     border-radius: 10px !important;
     letter-spacing: 1.5px;
     font-size: 16px !important;
-    padding: 12px !important;
+    padding: 8px !important;
     min-height: 52px !important;
-    margin-top: 4px !important;
+    margin-top: 6px !important;
 }
 
 /* ── 16. PULSE ANIMATION ───────────────────────────────────── */
@@ -754,7 +754,7 @@ logo_b64 = file_to_b64(ACTUAL_LOGO)
 with st.sidebar:
     st.markdown(
         f'<div style="display:flex; flex-direction:column; align-items:center; '
-        f'padding-top:5px; width:100%;">'  
+        f'padding-top:4px; width:100%;">'  
         f'<div style="padding:2px; border-radius:50%; '
         f'background:linear-gradient(145deg,#388e3c,#1b5e20); '
         f'box-shadow:0 0 12px rgba(76,175,80,0.3); margin-bottom:2px;">'
@@ -765,7 +765,7 @@ with st.sidebar:
         f'<div style="font-size:16px; font-weight:900; color:#ffffff; '
         f'letter-spacing:0.5px; margin-bottom:3px;">AgriBot-AI</div>'
         f'<div style="font-size:10px; font-weight:700; letter-spacing:1px; '
-        f'text-transform:uppercase; padding:1px 8px; border-radius:20px; '
+        f'text-transform:uppercase; padding:1px 6px; border-radius:20px; '
         f'background:rgba(46,125,50,0.15); border:1px solid rgba(76,175,80,0.25); '
         f'color:#ffffff; margin-bottom:7px;">' 
         f'{"👑 Admin" if st.session_state.role == "admin" else "🌿 Field User"}'
@@ -791,11 +791,11 @@ with st.sidebar:
     page = page_map.get(raw_page, "DASHBOARD")
 
     st.markdown("""
-    <div style="display:flex;align-items:center;gap:8px;
+    <div style="display:flex;align-items:center;gap:6px;
                 background:rgba(46,125,50,0.1);border:1px solid rgba(46,125,50,0.3);
-                border-radius:8px;padding:4px 8px;width:100%;
+                border-radius:6px;padding:4px 6px;width:100%;
                 margin:4px 0 2px;box-sizing:border-box;">
-        <div style="width:7px;height:7px;background:#4CAF50;border-radius:50%;
+        <div style="width:6px;height:6px;background:#4CAF50;border-radius:50%;
                     animation:pulse 2s infinite;flex-shrink:0;"></div>
         <span style="font-size:12px;font-weight:700;color:#ffffff;
                      letter-spacing:1.5px;text-transform:uppercase;">System Online</span>
