@@ -187,7 +187,6 @@ section[data-testid="stSidebar"] {
 }
 
 /* ── 6. SIDEBAR NAVIGATION RADIO ───────────────────────────── */
-/* ── 6. SIDEBAR NAVIGATION RADIO ───────────────────────────── */
 
 /* Remove the ghost/empty item (first hidden element) */
 section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] > div:first-child:empty {
@@ -226,6 +225,8 @@ section[data-testid="stSidebar"] .stRadio label {
     min-height: 44px !important;
     display: flex !important;
     align-items: center !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
 }
 
 /* Hide radio circle */
