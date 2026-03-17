@@ -995,7 +995,7 @@ elif page == "LOGS":
     st.markdown(
         '<div style="padding:6px 12px 4px;">'
         '<div style="font-size:18px;font-weight:900;color:#fff;">System Logs</div>'
-        '<div style="font-size:10px;color:#66bb6a;letter-spacing:1px;margin-top:1px;">'
+           '<div style="font-size:20px;color:#66bb6a;letter-spacing:1px;margin-top:-75px;font-weight:bold;">'
         'Last 24 hours</div></div>',
         unsafe_allow_html=True)
 
