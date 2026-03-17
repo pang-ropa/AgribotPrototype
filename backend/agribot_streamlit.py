@@ -213,12 +213,6 @@ section[data-testid="stSidebar"] .stRadio label {
     align-items: center !important;
 }
 
-/* Hover effect to match button's intended style (if any) */
-section[data-testid="stSidebar"] .stRadio label:hover {
-    background: rgba(76,175,80,0.12) !important;
-    color: #ffffff !important;
-}
-
 /* Selected item state (active page) – keep the left accent */
 section[data-testid="stSidebar"] div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
     background: rgba(46,125,50,0.22) !important;
