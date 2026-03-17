@@ -66,7 +66,7 @@ OPTIMIZED_CSS = """
     --page-margin-right: 0px;    /* Adjust right spacing */
 
     /* Login page fine‑tuning (on top of global margins) */
-    --login-margin-top: -20px;   /* negative moves up, positive down */
+    --login-margin-top: -5px;   /* negative moves up, positive down */
 }
 
 /* ── 1. BASE ───────────────────────────────────────────────── */
