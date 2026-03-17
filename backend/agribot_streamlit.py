@@ -823,7 +823,7 @@ with st.sidebar:
         f'</div>'
         f'<div style="font-size:14px; font-weight:700; color:#ffffff; '
         f'letter-spacing:2px; text-transform:uppercase; width:100%; '
-        f'text-align:center; padding:0 2px; margin-bottom:25px;">Navigation</div>',
+        f'text-align:center; padding:0 2px; margin-bottom:8px;">Navigation</div>',
         unsafe_allow_html=True)
 
     nav_opts = (
