@@ -233,10 +233,10 @@ div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
     font-weight: 700 !important;
     letter-spacing: 1px !important;
     text-transform: uppercase !important;
-    padding: 2px !important;
+    padding: 10px !important;
     min-height: 48px !important;
     transition: all 0.2s !important;
-    margin-top: -5px !important;
+    margin-top: 20px !important;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
     background: rgba(198,40,40,0.15) !important;
