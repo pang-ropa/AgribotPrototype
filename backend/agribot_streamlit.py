@@ -567,6 +567,23 @@ def show_landing():
 def show_login():
     set_background(ACTUAL_BG)
 
+    st.markdown(
+    """
+    <style>
+    /* Disable scrolling on the main content area */
+    .main {
+        overflow: hidden;
+    }
+    
+    /* Optional: Hide the scrollbar entirely for all browsers */
+    ::-webkit-scrollbar {
+        display: none;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
     st.markdown("""<style>
     section[data-testid="stSidebar"] { display: none !important; }
     </style>""", unsafe_allow_html=True)
