@@ -786,11 +786,11 @@ with st.sidebar:
         f'text-align:center; padding:0 2px; margin-bottom:25px;">Navigation</div>',
         unsafe_allow_html=True)
 
-nav_opts = ["Live Dashboard", "Analysis", "System Logs"]  # only three items – adjust as needed
-if st.session_state.role == "admin":
-    nav_opts = ["Live Dashboard", "Analysis", "System Logs", "Users"]  # include "Users" if you want it
-else:
-    nav_opts = ["Live Dashboard", "Analysis"]
+    nav_opts = (
+    ["Live Dashboard", "Analysis", "System Logs", "Users"]
+    if st.session_state.role == "admin"
+    else ["Live Dashboard", "Analysis"]
+    )
 
     raw_page = st.radio("", nav_opts, label_visibility="collapsed")
     page_map = {
@@ -798,7 +798,7 @@ else:
     "Analysis":       "ANALYSIS",
     "System Logs":    "LOGS",
     "Users":          "USERS",
-}
+    }
     page = page_map.get(raw_page, "DASHBOARD")
 
     if st.button("Logout", use_container_width=True):
