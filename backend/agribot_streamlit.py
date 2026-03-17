@@ -787,17 +787,17 @@ with st.sidebar:
         unsafe_allow_html=True)
 
     nav_opts = (
-        ["Live Dashboard", "Analysis",
-         "System Logs",    "Users"]
-        if st.session_state.role == "admin"
-        else ["Live Dashboard", "Analysis"]
+    ["Live Dashboard", "Analysis", "System Logs", "Users"]
+    if st.session_state.role == "admin"
+    else ["Live Dashboard", "Analysis"]
     )
+
     raw_page = st.radio("", nav_opts, label_visibility="collapsed")
     page_map = {
-        "Live Dashboard": "DASHBOARD",
-        "Analysis":       "ANALYSIS",
-        "System Logs":    "LOGS",
-        "Users":          "USERS",
+    "Live Dashboard": "DASHBOARD",
+    "Analysis":       "ANALYSIS",
+    "System Logs":    "LOGS",
+    "Users":          "USERS",
     }
     page = page_map.get(raw_page, "DASHBOARD")
 
