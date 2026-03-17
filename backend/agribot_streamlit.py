@@ -274,7 +274,6 @@ div[data-testid="stMetricValue"] {
     border-radius: 12px;
     padding: 10px;
     height: 100%;
-    margin-top: 100px;
 }
 .section-title {
     font-size: 12px !important;
@@ -282,7 +281,7 @@ div[data-testid="stMetricValue"] {
     color: #66bb6a;
     letter-spacing: 1.2px;
     text-transform: uppercase;
-    margin-bottom: 6px;
+    margin-bottom: 10px;
     margin-top: 0;
     border-left: 3px solid #4CAF50;
     padding-left: 7px;
