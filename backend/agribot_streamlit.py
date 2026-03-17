@@ -178,50 +178,49 @@ section[data-testid="stSidebar"] {
 [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
     display: flex !important;
     flex-direction: column !important;
-    align-items: center !important;
-    padding: 0 4px 4px !important;
-}
+    align-items: stretch !important;   /* make items full width */
+    padding: 16px 8px !important;      /* balanced top/bottom and side padding */
 
 [data-testid="stSidebar"] [data-testid="stElementToolbar"] {
     display: none !important;
 }
 
 /* ── 6. SIDEBAR NAVIGATION RADIO ───────────────────────────── */
-.stRadio > div {
-    gap: 25px !important;
+section[data-testid="stSidebar"] .stRadio > div {
+    gap: 8px !important;                /* space between each navigation item */
     width: 100% !important;
     flex-direction: column !important;
-    margin-bottom: 8px !important;
 }
+
 ./* More specific selector to override any default */
 section[data-testid="stSidebar"] .stRadio label {
-    font-size: 16px !important;
-    font-weight: 700 !important;
+    font-size: 15px !important;          /* slightly larger for readability */
+    font-weight: 600 !important;         /* medium weight, less bold */
     color: #ffffff !important;
-    letter-spacing: 0.8px !important;
-    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    text-transform: none !important;     /* keep as is, or remove if you prefer */
     background: transparent !important;
-    border: 1px solid rgba(76, 175, 80, 0.5) !important;  /* semi-transparent green */
-    border-radius: 10px !important;                       /* keep as you had */
-    padding: 8px 12px !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 16px !important;       /* comfortable click area */
     width: 100% !important;
     cursor: pointer !important;
-    transition: all 0.2s !important;
-    min-height: 44px !important;
+    transition: all 0.2s ease !important;
+    min-height: 48px !important;
     display: flex !important;
     align-items: center !important;
 }
 
 }
 section[data-testid="stSidebar"] .stRadio label:hover {
-    background: rgba(76,175,80,0.12) !important;
+    background: rgba(255, 255, 255, 0.1) !important; /* subtle white overlay */
     color: #ffffff !important;
 }
 section[data-testid="stSidebar"] div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
-    background: rgba(46,125,50,0.22) !important;
-    border-left: 3px solid #4CAF50 !important;
+    background: rgba(76, 175, 80, 0.2) !important;    /* green tint */
+    border-left: 4px solid #4CAF50 !important;        /* thicker left accent */
     color: #ffffff !important;
-    padding-left: 9px !important;
+    padding-left: 12px !important;                     /* adjust for border */
 }
 section[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] > div:first-child {
     display: none !important;
