@@ -752,7 +752,7 @@ with st.sidebar:
         f'style="border-radius:50%;width:80px;height:80px;'
         f'display:block;object-fit:cover;background:#0a0d12;"/>'
         f'</div>'
-        f'<div style="font-size:15px;font-weight:900;color:#4CAF50;'
+        f'<div style="font-size:15px;font-weight:900;color:#ffffff;'
         f'letter-spacing:0.5px;margin-bottom:1px;">AgriBot-AI</div>'
         f'<div style="font-size:8px;color:#388e3c;letter-spacing:2.5px;'
         f'text-transform:uppercase;margin-bottom:6px;">Crop Monitor</div>'
