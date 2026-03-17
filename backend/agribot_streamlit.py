@@ -747,15 +747,13 @@ with st.sidebar:
         f'padding-top:20px;width:100%;margin-bottom:6px;">'
         f'<div style="padding:3px;border-radius:50%;'
         f'background:linear-gradient(145deg,#388e3c,#1b5e20);'
-        f'box-shadow:0 0 16px rgba(76,175,80,0.3);margin-bottom:10px;">'
+        f'box-shadow:0 0 16px rgba(76,175,80,0.3);margin-bottom:-50px;">'
         f'<img src="data:image/png;base64,{logo_b64}" '
         f'style="border-radius:50%;width:80px;height:80px;'
         f'display:block;object-fit:cover;background:#0a0d12;"/>'
         f'</div>'
         f'<div style="font-size:15px;font-weight:900;color:#ffffff;'
         f'letter-spacing:0.5px;margin-bottom:1px;">AgriBot-AI</div>'
-        f'<div style="font-size:8px;color:#ffffff;letter-spacing:2.5px;'
-        f'text-transform:uppercase;margin-bottom:6px;">Crop Monitor</div>'
         f'<div style="font-size:8px;font-weight:700;letter-spacing:1.2px;'
         f'text-transform:uppercase;padding:2px 10px;border-radius:20px;'
         f'background:rgba(46,125,50,0.15);border:1px solid rgba(76,175,80,0.25);'
@@ -767,7 +765,7 @@ with st.sidebar:
         f'margin:8px auto 12px;"></div>'
         f'<div style="font-size:8px;font-weight:700;color:#ffffff;'
         f'letter-spacing:2.5px;text-transform:uppercase;width:100%;'
-        f'padding:0 4px;margin-bottom:6px;">Navigation</div>',
+        f'text-align:center;padding:0 4px;margin-bottom:6px;">Navigation</div>'
         unsafe_allow_html=True)
 
     nav_opts = (
