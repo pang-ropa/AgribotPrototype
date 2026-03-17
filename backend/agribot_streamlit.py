@@ -201,8 +201,8 @@ section[data-testid="stSidebar"] .stRadio label {
     letter-spacing: 0.8px !important;
     text-transform: uppercase !important;
     background: transparent !important;
-    border: none !important;
-    border-radius: 8px !important;
+    border: 1px solid rgba(76, 175, 80, 0.5) !important;  /* semi-transparent green */
+    border-radius: 10px !important;                       /* keep as you had */
     padding: 8px 12px !important;
     width: 100% !important;
     cursor: pointer !important;
@@ -210,7 +210,8 @@ section[data-testid="stSidebar"] .stRadio label {
     min-height: 44px !important;
     display: flex !important;
     align-items: center !important;
-    border-radius: 10px !important;
+}
+
 }
 section[data-testid="stSidebar"] .stRadio label:hover {
     background: rgba(76,175,80,0.12) !important;
