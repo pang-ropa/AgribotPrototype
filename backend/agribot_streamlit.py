@@ -309,7 +309,7 @@ div[data-testid="stMetricValue"] {
 .cam-meta {
     font-size: 10px !important;
     color: #66bb6a;
-    margin-top: 4px;
+    margin-top: 8px;
     line-height: 1.5;
 }
 .drive-link {
