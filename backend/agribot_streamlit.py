@@ -846,6 +846,7 @@ if page == "DASHBOARD":
 
     with cam_col:
         st.markdown('<div style="margin-top: 10px;">', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('<div class="section-title">📷 Plant Health Feed</div>',
                     unsafe_allow_html=True)
         if img_data.get("url"):
