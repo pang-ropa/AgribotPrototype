@@ -188,9 +188,10 @@ section[data-testid="stSidebar"] {
 
 /* ── 6. SIDEBAR NAVIGATION RADIO ───────────────────────────── */
 .stRadio > div {
-    gap: 2px !important;
+    gap: 25px !important;
     width: 100% !important;
     flex-direction: column !important;
+    margin-bottom: 8px !important;
 }
 ./* More specific selector to override any default */
 section[data-testid="stSidebar"] .stRadio label {
@@ -771,7 +772,7 @@ with st.sidebar:
         f'</div>'
         f'<div style="font-size:9px; font-weight:700; color:#ffffff; '
         f'letter-spacing:2px; text-transform:uppercase; width:100%; '
-        f'text-align:center; padding:0 2px; margin-bottom:4px;">Navigation</div>',
+        f'text-align:center; padding:0 2px; margin-bottom:25px;">Navigation</div>',
         unsafe_allow_html=True)
 
     nav_opts = (
