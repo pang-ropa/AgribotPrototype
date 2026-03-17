@@ -179,7 +179,7 @@ section[data-testid="stSidebar"] {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    padding: 0 12px 16px !important;
+    padding: 0 4px 4px !important;
 }
 
 [data-testid="stSidebar"] [data-testid="stElementToolbar"] {
