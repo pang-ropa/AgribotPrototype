@@ -567,38 +567,18 @@ def show_landing():
 def show_login():
     set_background(ACTUAL_BG)
 
-    # ===== CONFIGURABLE BOTTOM SPACER =====
+    # ===== CONFIGURABLE BOTTOM MARGIN =====
     # Adjust this value (in pixels) to add space at the bottom.
-    # Positive values push content UP, negative values push it DOWN.
-    # Start with 40 and adjust until the layout looks perfect.
-    BOTTOM_SPACER_HEIGHT = 0   # <-- change this number
+    # Larger values push content up, smaller values bring it down.
+    BOTTOM_SPACER_HEIGHT = 0   # <-- change this number as needed
     # ======================================
 
     st.markdown(f"""<style>
     section[data-testid="stSidebar"] {{ display: none !important; }}
 
-    /* Force the whole app to be non‑scrollable for this page */
-    .stApp {{
-        overflow: hidden !important;
-    }}
-    [data-testid="stAppViewContainer"] {{
-        overflow: hidden !important;
-    }}
-    [data-testid="stAppViewBlockContainer"] {{
-        overflow: hidden !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }}
-    .main .block-container {{
-        overflow: hidden !important;
-        padding: 0 !important;
-    }}
-
-    /* Spacer – visible light green while testing (remove background later) */
+    /* Spacer that adds adjustable bottom margin */
     .login-bottom-spacer {{
         height: {BOTTOM_SPACER_HEIGHT}px;
-        width: 100%;
-        background: rgba(76, 175, 80, 0.3);  /* light green – remove after tuning */
         flex-shrink: 0;
     }}
     </style>""", unsafe_allow_html=True)
@@ -612,12 +592,12 @@ def show_login():
         f'box-shadow:0 0 28px rgba(76,175,80,0.5);"/></div>'
     ) if logo_b64 else ""
 
-    # Centered column
+    # Centered column (the middle column will take full height)
     _, mid, _ = st.columns([1, 1.6, 1])
     with mid:
-        # Full‑viewport flex container inside the column
+        # Flex container that fills the column height and centers its children
         st.markdown(
-            '<div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;">',
+            '<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">',
             unsafe_allow_html=True
         )
 
@@ -632,11 +612,11 @@ def show_login():
             unsafe_allow_html=True
         )
 
-        # Subtitle (fixed typo from your image)
+        # Subtitle
         st.markdown(
             '<div style="text-align:center; color:#81c784; font-size:12px; '
             'letter-spacing:3px; text-transform:uppercase; margin-bottom:20px;">'
-            'Smart Farming · Intelligent Monitoring</div>',
+            'Smart Farming &middot; Intelligent Monitoring</div>',
             unsafe_allow_html=True
         )
 
@@ -658,10 +638,10 @@ def show_login():
             st.session_state.page = "landing"
             st.rerun()
 
-        # Bottom spacer – this adds adjustable empty space after all content
+        # Bottom spacer – add adjustable space after all content
         st.markdown('<div class="login-bottom-spacer"></div>', unsafe_allow_html=True)
 
-        # Close the full‑viewport container
+        # Close flex container
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.stop()
