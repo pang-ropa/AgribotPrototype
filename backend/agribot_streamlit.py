@@ -191,6 +191,7 @@ section[data-testid="stSidebar"] {
     gap: 5px !important;
     width: 100% !important;
     flex-direction: column !important;
+    margin-bottom: 8px !important;
 }
 ./* More specific selector to override any default */
 section[data-testid="stSidebar"] .stRadio label {
