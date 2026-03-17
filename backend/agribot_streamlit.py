@@ -567,13 +567,20 @@ def show_landing():
 def show_login():
     set_background(ACTUAL_BG)
 
-    st.markdown("""<style>
-    section[data-testid="stSidebar"] { display: none !important; }
+    # ===== CONFIGURABLE BOTTOM MARGIN =====
+    # Adjust this value (in pixels) to add space at the bottom.
+    # Larger values push content up, smaller values bring it down.
+    BOTTOM_SPACER_HEIGHT = 40   # <-- change this number as needed
+    # ======================================
 
-    /* Adjust this variable to move the entire login block up/down */
-    .login-container {
-        margin-top: var(--login-margin-top, 0px);
-    }
+    st.markdown(f"""<style>
+    section[data-testid="stSidebar"] {{ display: none !important; }}
+
+    /* Spacer that adds adjustable bottom margin */
+    .login-bottom-spacer {{
+        height: {BOTTOM_SPACER_HEIGHT}px;
+        flex-shrink: 0;
+    }}
     </style>""", unsafe_allow_html=True)
 
     logo_b64  = file_to_b64(ACTUAL_LOGO)
@@ -585,12 +592,9 @@ def show_login():
         f'box-shadow:0 0 28px rgba(76,175,80,0.5);"/></div>'
     ) if logo_b64 else ""
 
-    # Centered column
+    # Centered column (the middle column will take full height)
     _, mid, _ = st.columns([1, 1.6, 1])
     with mid:
-        # Apply the adjustable top margin via the login-container class
-        st.markdown('<div class="login-container">', unsafe_allow_html=True)
-
         # Flex container that fills the column height and centers its children
         st.markdown(
             '<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">',
@@ -634,9 +638,10 @@ def show_login():
             st.session_state.page = "landing"
             st.rerun()
 
+        # Bottom spacer – add adjustable space after all content
+        st.markdown('<div class="login-bottom-spacer"></div>', unsafe_allow_html=True)
+
         # Close flex container
-        st.markdown('</div>', unsafe_allow_html=True)
-        # Close login-container
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.stop()
