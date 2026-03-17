@@ -182,10 +182,6 @@ section[data-testid="stSidebar"] {
     padding: 0 4px 4px !important;
 }
 
-[data-testid="stSidebar"] [data-testid="stElementToolbar"] {
-    display: none !important;
-}
-
 /* ── 6. SIDEBAR NAVIGATION RADIO ───────────────────────────── */
 .stRadio > div {
     gap: 2px !important;
