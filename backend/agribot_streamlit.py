@@ -195,7 +195,7 @@ section[data-testid="stSidebar"] {
 }
 ./* More specific selector to override any default */
 section[data-testid="stSidebar"] .stRadio label {
-    font-size: 13px !important;
+    font-size: 16px !important;
     font-weight: 700 !important;
     color: #ffffff !important;
     letter-spacing: 0.8px !important;
