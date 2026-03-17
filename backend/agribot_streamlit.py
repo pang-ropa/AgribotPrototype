@@ -195,7 +195,7 @@ section[data-testid="stSidebar"] {
 .stRadio label {
     font-size: 13px !important;
     font-weight: 700 !important;
-    color: #ffffff !important;
+    color: #black !important;
     letter-spacing: 0.8px !important;
     text-transform: uppercase !important;
     background: transparent !important;
@@ -216,7 +216,7 @@ section[data-testid="stSidebar"] {
 div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
     background: rgba(46,125,50,0.22) !important;
     border-left: 3px solid #4CAF50 !important;
-    color: #fff !important;
+    color: #ffffff !important;
     padding-left: 9px !important;
 }
 .stRadio [data-baseweb="radio"] > div:first-child { display: none !important; }
