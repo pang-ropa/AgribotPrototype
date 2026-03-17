@@ -562,27 +562,31 @@ def show_landing():
     st.stop()
 
 # ============================================================
-# PAGE: LOGIN (with adjustable top margin)
+# PAGE: LOGIN
 # ============================================================
 def show_login():
     set_background(ACTUAL_BG)
 
-    st.markdown(
-    """
-    <style>
-    /* Disable scrolling on the main content area */
-    .main {
-        overflow: hidden;
-    }
-    
-    /* Optional: Hide the scrollbar entirely for all browsers */
-    ::-webkit-scrollbar {
-        display: none;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+     # --- LOCK SCROLLING CSS ---
+    st.markdown("""
+        <style>
+        /* Force the app container to never exceed screen height */
+        html, body, [data-testid="stAppViewContainer"] {
+            overflow: hidden !important;
+            height: 100vh !important;
+            position: fixed;
+            width: 100vw;
+        }
+        /* Hide the Streamlit header and padding */
+        header {visibility: hidden;}
+        .main .block-container {
+            padding-top: 2rem !important;
+            padding-bottom: 0rem !important;
+        }
+        /* Completely hide scrollbars */
+        ::-webkit-scrollbar {display: none;}
+        </style>
+    """, unsafe_allow_html=True)
 
     st.markdown("""<style>
     section[data-testid="stSidebar"] { display: none !important; }
