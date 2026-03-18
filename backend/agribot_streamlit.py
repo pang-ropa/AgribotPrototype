@@ -225,7 +225,7 @@ section[data-testid="stSidebar"] .stRadio label {
     min-height: 44px !important;
     display: flex !important;
     align-items: center !important;
-    margin-top: -15px !important;
+    margin-top: 8px !important;
     padding-top: 0 !important;
 }
 
@@ -272,7 +272,7 @@ section[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] > div:first-chi
     display: none !important;
 }
 section[data-testid="stSidebar"] .stRadio [data-testid="stMarkdownContainer"] p {
-    margin: 10 !important;
+    margin: 0 !important;
 }
 /* If the text inside the label is wrapped in a <p>, force its color too */
 section[data-testid="stSidebar"] .stRadio label p {
