@@ -498,7 +498,7 @@ div[data-testid="stMetricValue"] {
     font-size: 16px !important;
     padding: 12px !important;
     min-height: 52px !important;
-    margin-top: 1000px !important;
+    margin-top: 12px !important;
 }
 
 /* ── 16. PULSE ANIMATION ───────────────────────────────────── */
@@ -692,7 +692,7 @@ def show_login():
                     st.error("Invalid email or password")
 
         st.markdown(
-            '<div style="text-align:center;margin-top:10px;">'
+            '<div style="text-align:center;margin-top:12px;">'
             '<span style="font-size:11px;color:#388e3c;">← </span>'
             '</div>', unsafe_allow_html=True)
         if st.button("← Back to Landing", use_container_width=True, key="back_btn"):
