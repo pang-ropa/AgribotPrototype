@@ -203,7 +203,7 @@ section[data-testid="stSidebar"] .stRadio div:empty {
 
 /* Keep your styling */
 .stRadio > div {
-    gap: 2px !important;
+    gap: 6px !important;
     width: 100% !important;
     flex-direction: column !important;
     margin-bottom: 8px !important;
