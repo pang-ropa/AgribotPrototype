@@ -203,7 +203,7 @@ section[data-testid="stSidebar"] .stRadio div:empty {
 
 /* Keep your styling */
 .stRadio > div {
-    gap: 15px !important;
+    gap: 2px !important;
     width: 100% !important;
     flex-direction: column !important;
     margin-bottom: 8px !important;
@@ -225,7 +225,7 @@ section[data-testid="stSidebar"] .stRadio label {
     min-height: 44px !important;
     display: flex !important;
     align-items: center !important;
-    margin-top: -10px !important;
+    margin-top: 0 !important;
     padding-top: 0 !important;
 }
 
@@ -820,7 +820,7 @@ with st.sidebar:
         f'text-transform:uppercase; padding:1px 8px; border-radius:20px; '
         f'background:rgba(46,125,50,0.15); border:1px solid rgba(76,175,80,0.25); '
         f'color:#ffffff; margin-bottom:7px;">' 
-        f'{"Admin" if st.session_state.role == "admin" else "Field User"}'
+        f'{"👑 Admin" if st.session_state.role == "admin" else "🌿 Field User"}'
         f'</div>'
         f'<div style="font-size:14px; font-weight:700; color:#ffffff; '
         f'letter-spacing:2px; text-transform:uppercase; width:100%; '
