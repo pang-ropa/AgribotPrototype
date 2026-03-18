@@ -821,17 +821,19 @@ with st.sidebar:
         f'background:rgba(46,125,50,0.15); border:1px solid rgba(76,175,80,0.25); '
         f'color:#ffffff; margin-bottom:7px;">' 
         f'{"👑 Admin" if st.session_state.role == "admin" else "🌿 Field User"}'
-        f'</div>',
-
+        f'</div>'
+        f'<div style="font-size:14px; font-weight:700; color:#ffffff; '
+        f'letter-spacing:2px; text-transform:uppercase; width:100%; '
+        f'text-align:center; padding:0 2px; margin-bottom:8px;">Navigation</div>',
         unsafe_allow_html=True)
 
     nav_opts = (
-    ["Live Dashboard", "Analysis", "System Logs", "Users"]
-    if st.session_state.role == "admin"
+    ["Live Dashboard","Analysis","System Logs","Users"]
+    if st.session_state.role =="admin"
     else ["Live Dashboard", "Analysis"]
     )
 
-    raw_page = st.radio("", nav_opts, label_visibility="collapsed")
+    raw_page = st.radio(nav_opts, label_visibility="collapsed")
     page_map = {
     "Live Dashboard": "DASHBOARD",
     "Analysis":       "ANALYSIS",
