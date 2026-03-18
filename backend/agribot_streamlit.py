@@ -139,7 +139,7 @@ section.main > div {
 }
 
 [data-testid="stVerticalBlock"] {
-    gap: 0px !important;
+    gap: 5px !important;
 }
 
 /* ── 4. HIDE STREAMLIT CHROME ─────────────────────────────── */
@@ -629,6 +629,9 @@ def show_landing():
 # ============================================================
 def show_login():
     set_background(ACTUAL_BG)
+    st.markdown("""<style>
+section[data-testid="stSidebar"] { display: none !important; }
+</style>""", unsafe_allow_html=True)
 
      # --- LOCK SCROLLING CSS ---
     st.markdown("""
