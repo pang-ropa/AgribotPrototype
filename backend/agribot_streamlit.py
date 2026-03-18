@@ -679,14 +679,15 @@ def show_login():
     _, mid, _ = st.columns([1, 1.6, 1])
     with mid:
         with st.form("login_form"):
-         email    = st.text_input("Email",    placeholder="admin@agribot.ai")
-         password = st.text_input("Password", type="password", placeholder="••••••••")
-        if st.form_submit_button("LOGIN", use_container_width=True):
-          if email in USERS and USERS[email]["password"] == password:
+         email = st.text_input("Email", placeholder="admin@agribot.ai")
+        password = st.text_input("Password", type="password", placeholder="••••••••")
+    
+    # The submit button MUST be inside the with block
+    if st.form_submit_button("LOGIN", use_container_width=True):
+        if email in USERS and USERS[email]["password"] == password:
             st.session_state.logged_in = True
-            st.session_state.role      = USERS[email]["role"]
-            st.session_state.page      = "dashboard"
-            # session_save(USERS[email]["role"])   ← REMOVE THIS LINE
+            st.session_state.role = USERS[email]["role"]
+            st.session_state.page = "dashboard"
             st.rerun()
         else:
             st.error("Invalid email or password")
