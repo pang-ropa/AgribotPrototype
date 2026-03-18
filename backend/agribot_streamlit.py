@@ -194,6 +194,7 @@ section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] > div:first-chi
     height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
+    visibility: hidden !important;
 }
 
 /* ALSO force-remove any empty containers */
