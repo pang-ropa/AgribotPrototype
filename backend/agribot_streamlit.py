@@ -192,7 +192,7 @@ section[data-testid="stSidebar"] {
 sdiv[data-testid="stRadio"]:has(> div > [key="nav_radio"]) > label {
     display: hidden !important;
     height: 0 !important;
-    margin: 1000px !important;
+    margin: 0 !important;
     padding: 0 !important;
 }
 
@@ -225,7 +225,7 @@ section[data-testid="stSidebar"] .stRadio label {
     min-height: 44px !important;
     display: flex !important;
     align-items: center !important;
-    margin-top: 0 !important;
+    margin-top: -25px !important;
     padding-top: 0 !important;
 }
 
