@@ -820,7 +820,7 @@ with st.sidebar:
         f'text-transform:uppercase; padding:1px 8px; border-radius:20px; '
         f'background:rgba(46,125,50,0.15); border:1px solid rgba(76,175,80,0.25); '
         f'color:#ffffff; margin-bottom:7px;">' 
-        f'{"👑 Admin" if st.session_state.role == "admin" else "🌿 Field User"}'
+        f'{"Admin" if st.session_state.role == "admin" else "Field User"}'
         f'</div>'
         f'<div style="font-size:14px; font-weight:700; color:#ffffff; '
         f'letter-spacing:2px; text-transform:uppercase; width:100%; '
