@@ -272,7 +272,7 @@ section[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] > div:first-chi
     display: none !important;
 }
 section[data-testid="stSidebar"] .stRadio [data-testid="stMarkdownContainer"] p {
-    margin: 0 !important;
+    margin: 10 !important;
 }
 /* If the text inside the label is wrapped in a <p>, force its color too */
 section[data-testid="stSidebar"] .stRadio label p {
