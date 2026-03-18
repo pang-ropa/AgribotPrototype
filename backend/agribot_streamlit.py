@@ -194,7 +194,6 @@ section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] > div:first-chi
     height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
-    visibility: hidden !important;
 }
 
 /* ALSO force-remove any empty containers */
@@ -834,7 +833,7 @@ with st.sidebar:
     else ["Live Dashboard", "Analysis"]
     )
 
-    raw_page = st.radio("fdgsdg", nav_opts, label_visibility="collapsed")
+    raw_page = st.radio("", nav_opts, label_visibility="collapsed", key="nav_radio")
     page_map = {
     "Live Dashboard": "DASHBOARD",
     "Analysis":       "ANALYSIS",
