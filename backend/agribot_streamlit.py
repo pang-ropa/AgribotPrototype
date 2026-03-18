@@ -225,7 +225,7 @@ section[data-testid="stSidebar"] .stRadio label {
     min-height: 44px !important;
     display: flex !important;
     align-items: center !important;
-    margin-top: -10px !important;
+    margin-top: -15px !important;
     padding-top: 0 !important;
 }
 
