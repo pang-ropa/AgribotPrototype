@@ -821,7 +821,7 @@ with st.sidebar:
         f'background:rgba(46,125,50,0.15); border:1px solid rgba(76,175,80,0.25); '
         f'color:#ffffff; margin-bottom:7px;">' 
         f'{"👑 Admin" if st.session_state.role == "admin" else "🌿 Field User"}'
-        f'</div>'
+        f'</div>',
 
         unsafe_allow_html=True)
 
