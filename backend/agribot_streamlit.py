@@ -190,7 +190,7 @@ section[data-testid="stSidebar"] {
 
 /* Remove the ghost/empty item (first hidden element) */
 sdiv[data-testid="stRadio"]:has(> div > [key="nav_radio"]) > label {
-    display: none !important;
+    display: hidden !important;
     height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
