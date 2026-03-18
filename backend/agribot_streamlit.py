@@ -225,7 +225,7 @@ section[data-testid="stSidebar"] .stRadio label {
     min-height: 44px !important;
     display: flex !important;
     align-items: center !important;
-    margin-top: 8px !important;
+    margin-top: 25px !important;
     padding-top: 0 !important;
 }
 
@@ -824,7 +824,7 @@ with st.sidebar:
         f'</div>'
         f'<div style="font-size:14px; font-weight:700; color:#ffffff; '
         f'letter-spacing:2px; text-transform:uppercase; width:100%; '
-        f'text-align:center; padding:0 2px; margin-bottom:8px;">Navigation</div>',
+        f'text-align:center; padding:0 2px; margin-bottom:2px;">Navigation</div>',
         unsafe_allow_html=True)
 
     nav_opts = (
