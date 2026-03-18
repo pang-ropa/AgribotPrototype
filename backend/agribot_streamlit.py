@@ -189,7 +189,7 @@ section[data-testid="stSidebar"] {
 /* ── 6. SIDEBAR NAVIGATION RADIO ───────────────────────────── */
 
 /* Remove the ghost/empty item (first hidden element) */
-section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] > div:first-child:empty {
+sdiv[data-testid="stRadio"]:has(> div > [key="nav_radio"]) > label {
     display: none !important;
     height: 0 !important;
     margin: 0 !important;
