@@ -833,7 +833,7 @@ with st.sidebar:
     else ["Live Dashboard", "Analysis"]
     )
 
-    raw_page = st.radio(nav_opts, label_visibility="collapsed")
+    raw_page = st.radio("fdgsdg", nav_opts, label_visibility="collapsed")
     page_map = {
     "Live Dashboard": "DASHBOARD",
     "Analysis":       "ANALYSIS",
