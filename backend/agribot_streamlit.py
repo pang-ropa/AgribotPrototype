@@ -140,8 +140,10 @@ section.main > div {
 }
 
 /* ── 4. HIDE STREAMLIT CHROME ─────────────────────────────── */
-#MainMenu display: none !important;,
-footer display: none !important;,
+#MainMenu {display: none !important;
+    visibility: hidden !important;},
+footer {display: none !important;
+    visibility: hidden !important;},
 header,
 [data-testid="stHeader"],
 [data-testid="stToolbar"],
