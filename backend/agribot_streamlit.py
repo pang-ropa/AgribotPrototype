@@ -482,47 +482,58 @@ div[data-testid="stMetricValue"] {
 st.markdown(OPTIMIZED_CSS, unsafe_allow_html=True)
 
 # ============================================================
-# 🔥 BULLETPROOF HIDING – MUTATIONOBSERVER + CSS 🔥
+# 🚀 ULTIMATE HIDING – NO MERCY FOR THE FOOTER 🚀
 # ============================================================
 st.markdown("""
 <style>
-/* First line of defence – hide by stable attributes */
-a[href*="streamlit.io/cloud"] { display: none !important; }
-div[class*="profileContainer"] { display: none !important; }
-footer { display: none !important; }
+/* Hide by any means possible */
+footer, .stApp footer, [data-testid="stFooter"] { display: none !important; }
+a[href*="streamlit.io"] { display: none !important; }
+[class*="profileContainer"] { display: none !important; }
+[class*="viewerBadge"] { display: none !important; }
 </style>
 
 <script>
-// Function that removes all offending elements
-function removeStreamlitChrome() {
-    // Selectors – update these if Streamlit ever changes the class names
-    const selectors = [
-        'a[href*="streamlit.io/cloud"]',
-        'div[class*="profileContainer"]',
-        'footer'
-    ];
-    selectors.forEach(selector => {
-        document.querySelectorAll(selector).forEach(el => el.remove());
+// Function that uses every trick to obliterate the footer and profile
+function exterminate() {
+    // 1. Remove by tag
+    document.querySelectorAll('footer').forEach(el => el.remove());
+
+    // 2. Remove by attribute (links to streamlit.io)
+    document.querySelectorAll('a[href*="streamlit.io"]').forEach(el => el.remove());
+
+    // 3. Remove by class pattern (profile container)
+    document.querySelectorAll('[class*="profileContainer"], [class*="viewerBadge"]').forEach(el => el.remove());
+
+    // 4. Remove any element whose text contains the offending phrases
+    document.querySelectorAll('div, a, span, p, footer, section').forEach(el => {
+        if (el.innerText && (el.innerText.includes('Created by') || el.innerText.includes('Hosted with Streamlit'))) {
+            el.remove();
+        }
     });
 }
 
-// Run once on page load
+// Run immediately
+exterminate();
+
+// Run after DOM is fully loaded
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', removeStreamlitChrome);
+    document.addEventListener('DOMContentLoaded', exterminate);
 } else {
-    removeStreamlitChrome();
+    exterminate();
 }
 
-// MutationObserver – watches for any new elements added to the DOM
+// Run every 200ms (brute force) – ensures anything that sneaks in later is nuked
+setInterval(exterminate, 200);
+
+// Use a MutationObserver for instant reaction
 const observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(mutation) {
         if (mutation.addedNodes.length) {
-            removeStreamlitChrome();
+            exterminate();
         }
     });
 });
-
-// Start observing the entire document
 observer.observe(document.documentElement, { childList: true, subtree: true });
 </script>
 """, unsafe_allow_html=True)
