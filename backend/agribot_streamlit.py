@@ -142,10 +142,6 @@ section.main > div {
 /* ── 4. HIDE STREAMLIT CHROME ─────────────────────────────── */
 #MainMenu,
 footer,
-.css-1dp5vir {
-    display: none !important;
-    visibility: hidden !important;
-}
 header,
 [data-testid="stHeader"],
 [data-testid="stToolbar"],
@@ -484,6 +480,38 @@ div[data-testid="stMetricValue"] {
 </style>
 """
 st.markdown(OPTIMIZED_CSS, unsafe_allow_html=True)
+
+# ============================================================
+# ADDITIONAL HIDING (TARGETS THE EXACT ELEMENTS + JS BACKUP)
+# ============================================================
+st.markdown("""
+<style>
+/* Force‑hide the "Hosted with Streamlit" badge and profile container */
+a[href*="streamlit.io/cloud"] { display: none !important; }
+div[class*="profileContainer"] { display: none !important; }
+</style>
+<script>
+function removeStreamlitChrome() {
+    // Remove hosted badge
+    const badge = document.querySelector('a[href*="streamlit.io/cloud"]');
+    if (badge) badge.remove();
+    // Remove profile container
+    const profile = document.querySelector('div[class*="profileContainer"]');
+    if (profile) profile.remove();
+    // Also remove any footer (in case CSS failed)
+    const footer = document.querySelector('footer');
+    if (footer) footer.remove();
+}
+// Run after page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', removeStreamlitChrome);
+} else {
+    removeStreamlitChrome();
+}
+// Run periodically in case of dynamic reloads (every 2 seconds)
+setInterval(removeStreamlitChrome, 2000);
+</script>
+""", unsafe_allow_html=True)
 
 # ============================================================
 # HELPERS
