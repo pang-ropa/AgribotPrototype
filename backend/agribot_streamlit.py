@@ -482,63 +482,6 @@ div[data-testid="stMetricValue"] {
 st.markdown(OPTIMIZED_CSS, unsafe_allow_html=True)
 
 # ============================================================
-# 🚀 ULTIMATE HIDING – NO MERCY FOR THE FOOTER 🚀
-# ============================================================
-st.markdown("""
-<style>
-/* Hide by any means possible */
-footer, .stApp footer, [data-testid="stFooter"] { display: none !important; }
-a[href*="streamlit.io"] { display: none !important; }
-[class*="profileContainer"] { display: none !important; }
-[class*="viewerBadge"] { display: none !important; }
-</style>
-
-<script>
-// Function that uses every trick to obliterate the footer and profile
-function exterminate() {
-    // 1. Remove by tag
-    document.querySelectorAll('footer').forEach(el => el.remove());
-
-    // 2. Remove by attribute (links to streamlit.io)
-    document.querySelectorAll('a[href*="streamlit.io"]').forEach(el => el.remove());
-
-    // 3. Remove by class pattern (profile container)
-    document.querySelectorAll('[class*="profileContainer"], [class*="viewerBadge"]').forEach(el => el.remove());
-
-    // 4. Remove any element whose text contains the offending phrases
-    document.querySelectorAll('div, a, span, p, footer, section').forEach(el => {
-        if (el.innerText && (el.innerText.includes('Created by') || el.innerText.includes('Hosted with Streamlit'))) {
-            el.remove();
-        }
-    });
-}
-
-// Run immediately
-exterminate();
-
-// Run after DOM is fully loaded
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', exterminate);
-} else {
-    exterminate();
-}
-
-// Run every 200ms (brute force) – ensures anything that sneaks in later is nuked
-setInterval(exterminate, 200);
-
-// Use a MutationObserver for instant reaction
-const observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-        if (mutation.addedNodes.length) {
-            exterminate();
-        }
-    });
-});
-observer.observe(document.documentElement, { childList: true, subtree: true });
-</script>
-""", unsafe_allow_html=True)
-
-# ============================================================
 # HELPERS
 # ============================================================
 def file_to_b64(path: str) -> str:
@@ -809,7 +752,7 @@ with st.sidebar:
         f'text-transform:uppercase; padding:1px 8px; border-radius:20px; '
         f'background:rgba(46,125,50,0.15); border:1px solid rgba(76,175,80,0.25); '
         f'color:#ffffff; margin-bottom:7px;">'
-        f'{"Admin" if st.session_state.role == "admin" else "Field User"}'
+        f'{"👑 Admin" if st.session_state.role == "admin" else "🌿 Field User"}'
         f'</div>'
         f'<div style="font-size:14px; font-weight:700; color:#ffffff; '
         f'letter-spacing:2px; text-transform:uppercase; width:100%; '
