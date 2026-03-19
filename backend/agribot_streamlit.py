@@ -12,7 +12,7 @@ import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
 
 # ============================================================
-# PATHS (unchanged)
+# PATHS
 # ============================================================
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH  = os.path.join(SCRIPT_DIR, "agribotailogo.png")
@@ -53,8 +53,7 @@ st.set_page_config(
 )
 
 # ============================================================
-# OPTIMIZED CSS FOR 7-INCH DISPLAY
-# Includes adjustable margin variables at the top
+# OPTIMIZED CSS FOR 7-INCH DISPLAY (cleaned)
 # ============================================================
 OPTIMIZED_CSS = """
 <style>
@@ -64,8 +63,6 @@ OPTIMIZED_CSS = """
     --page-margin-bottom: 0px;   /* Adjust bottom spacing */
     --page-margin-left: 0px;     /* Adjust left spacing */
     --page-margin-right: 0px;    /* Adjust right spacing */
-
-    /* Login page fine‑tuning (on top of global margins) */
     --login-margin-top: -20px;   /* negative moves up, positive down */
 }
 
@@ -130,7 +127,7 @@ section.main > div {
     max-height: 100vh !important;
     display: flex;
     flex-direction: column;
-    box-sizing: border-box;  /* ensures padding does not increase height */
+    box-sizing: border-box;
 }
 
 .main .block-container > div:first-child {
@@ -170,7 +167,7 @@ section[data-testid="stSidebar"] {
     min-width: 230px !important;
     background: #023f23 !important;
     border-right: 1px solid rgba(46,125,50,0.5) !important;
-    overflow: remove !important;
+    overflow: hidden !important;
     height: 100vh !important;
     padding-top: 0 !important;
 }
@@ -187,21 +184,6 @@ section[data-testid="stSidebar"] {
 }
 
 /* ── 6. SIDEBAR NAVIGATION RADIO ───────────────────────────── */
-
-/* Remove the ghost/empty item (first hidden element) */
-sdiv[data-testid="stRadio"]:has(> div > [key="nav_radio"]) > label {
-    display: hidden !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-/* ALSO force-remove any empty containers */
-section[data-testid="stSidebar"] .stRadio div:empty {
-    display: none !important;
-}
-
-/* Keep your styling */
 .stRadio > div {
     gap: 20px !important;
     width: 100% !important;
@@ -233,49 +215,21 @@ section[data-testid="stSidebar"] .stRadio label {
 section[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] > div:first-child {
     display: none !important;
 }
-}
 
-/* Navigation labels now match the button's format */
-section[data-testid="stSidebar"] .stRadio label {
-    font-size: 16px !important;
-    font-weight: 700 !important;
-    color: #ffffff !important;
-    letter-spacing: 0.8px !important;
-    text-transform: uppercase !important;
-    background: rgba(46,125,50,0.12) !important;  /* same subtle green as button */
-    border: none !important;
-    border-radius: 8px !important;
-    padding: 6px 8px !important;
-    width: 100% !important;
-    cursor: pointer !important;
-    transition: all 0.2s !important;
-    min-height: 44px !important;
-    display: flex !important;
-    align-items: center !important;
-}
-
-/* Hover effect to match button's intended style (if any) */
 section[data-testid="stSidebar"] .stRadio label:hover {
     background: rgba(76,175,80,0.12) !important;
     color: #ffffff !important;
 }
 
-/* Selected item state (active page) – keep the left accent */
 section[data-testid="stSidebar"] div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
     background: rgba(46,125,50,0.22) !important;
     border-left: 3px solid #4CAF50 !important;
     color: #ffffff !important;
     padding-left: 9px !important;
 }
-}
-section[data-testid="stSidebar"] .stRadio [data-baseweb="radio"] > div:first-child {
-    display: none !important;
-}
+
 section[data-testid="stSidebar"] .stRadio [data-testid="stMarkdownContainer"] p {
     margin: 0 !important;
-}
-/* If the text inside the label is wrapped in a <p>, force its color too */
-section[data-testid="stSidebar"] .stRadio label p {
     color: #ffffff !important;
 }
 
@@ -299,7 +253,7 @@ section[data-testid="stSidebar"] .stRadio label p {
     align-items: center !important;
     justify-content: center !important;
 }
-}
+
 [data-testid="stSidebar"] .stButton > button:hover {
     background: rgba(198,40,40,0.15) !important;
     border-color: rgba(198,40,40,0.5) !important;
@@ -528,7 +482,7 @@ div[data-testid="stMetricValue"] {
 st.markdown(OPTIMIZED_CSS, unsafe_allow_html=True)
 
 # ============================================================
-# HELPERS (unchanged)
+# HELPERS
 # ============================================================
 def file_to_b64(path: str) -> str:
     try:
@@ -572,25 +526,22 @@ def set_background(path: str):
     </style>""", unsafe_allow_html=True)
 
 # ============================================================
-# SESSION STATE — always start at landing page after reboot
-# No persistent file – session survives browser refresh only.
+# SESSION STATE — always start at landing page
 # ============================================================
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.role = None
 
 if "page" not in st.session_state:
-    st.session_state.page = "landing"   # always start at landing
+    st.session_state.page = "landing"
 
 USERS = {
     "admin@agribot.ai": {"password": "admin123", "role": "admin"},
     "user@agribot.ai":  {"password": "user123",  "role": "user"},
 }
 
-st_autorefresh(interval=30_000, limit=None, key="dashboard_autorefresh")
-
 # ============================================================
-# PAGE: LANDING (clean left-aligned button, no negative margins)
+# PAGE: LANDING
 # ============================================================
 def show_landing():
     if ACTUAL_LANDING_BG:
@@ -599,21 +550,15 @@ def show_landing():
         st.markdown("""<style>.stApp { background: #0a0d12 !important; }</style>""",
                     unsafe_allow_html=True)
 
-    # Remove the dark overlay for the landing page
     st.markdown("""
     <style>
     section[data-testid="stSidebar"] { display: none !important; }
-    /* Disable the semi-transparent overlay added by set_background */
-    .stApp::before {
-        display: none !important;
-    }
+    .stApp::before { display: none !important; }
     </style>
     """, unsafe_allow_html=True)
 
-    # Center the button with a top margin to appear below the existing text on the background
     col1, col2, col3 = st.columns([3, 2, 9])
     with col2:
-        # Adjust margin-top if needed (try 55vh–65vh)
         st.markdown("<div style='margin-top: 30vh;'></div>", unsafe_allow_html=True)
         st.markdown("<div style='margin-left: -45vh;'></div>", unsafe_allow_html=True)
         st.markdown('<div class="landing-btn-wrapper">', unsafe_allow_html=True)
@@ -625,37 +570,22 @@ def show_landing():
     st.stop()
 
 # ============================================================
-# PAGE: LOGIN
+# PAGE: LOGIN (FIXED – direct session assignment, no function call)
 # ============================================================
 def show_login():
     set_background(ACTUAL_BG)
-    st.markdown("""<style>
-section[data-testid="stSidebar"] { display: none !important; }
-</style>""", unsafe_allow_html=True)
-
-     # --- LOCK SCROLLING CSS ---
-    st.markdown("""
-        <style>
-        /* Force the app container to never exceed screen height */
-        html, body, [data-testid="stAppViewContainer"] {
-            overflow: hidden !important;
-            height: 100vh !important;
-            position: fixed;
-            width: 100vw;
-        }
-        /* Hide the Streamlit header and padding */
-        header {visibility: hidden;}
-        .main .block-container {
-            padding-top: 2rem !important;
-            padding-bottom: 0rem !important;
-        }
-        /* Completely hide scrollbars */
-        ::-webkit-scrollbar {display: none;}
-        </style>
-    """, unsafe_allow_html=True)
 
     st.markdown("""<style>
     section[data-testid="stSidebar"] { display: none !important; }
+    html, body, [data-testid="stAppViewContainer"] {
+        overflow: hidden !important;
+        height: 100vh !important;
+        position: fixed;
+        width: 100vw;
+    }
+    header {visibility: hidden;}
+    .main .block-container { padding-top: 2rem !important; padding-bottom: 0rem !important; }
+    ::-webkit-scrollbar {display: none;}
     </style>""", unsafe_allow_html=True)
 
     logo_b64  = file_to_b64(ACTUAL_LOGO)
@@ -686,10 +616,10 @@ section[data-testid="stSidebar"] { display: none !important; }
             password = st.text_input("Password", type="password", placeholder="••••••••")
             if st.form_submit_button("LOGIN", use_container_width=True):
                 if email in USERS and USERS[email]["password"] == password:
+                    # Directly set session state – no function call needed
                     st.session_state.logged_in = True
                     st.session_state.role      = USERS[email]["role"]
                     st.session_state.page      = "dashboard"
-                    session_save(USERS[email]["role"])
                     st.rerun()
                 else:
                     st.error("Invalid email or password")
@@ -713,13 +643,12 @@ if st.session_state.page == "landing":
 if st.session_state.page == "login":
     show_login()
 
-# If not logged in but somehow page is dashboard, redirect to login
 if not st.session_state.logged_in and st.session_state.page == "dashboard":
     st.session_state.page = "login"
     st.rerun()
 
 # ============================================================
-# DATA FUNCTIONS (unchanged)
+# DATA FUNCTIONS (unchanged, keep as before)
 # ============================================================
 @st.cache_resource
 def load_assets():
@@ -809,12 +738,12 @@ logo_b64 = file_to_b64(ACTUAL_LOGO)
 with st.sidebar:
     st.markdown(
         f'<div style="display:flex; flex-direction:column; align-items:center; '
-        f'padding-top:8px; width:100%;">'  
+        f'padding-top:8px; width:100%;">'
         f'<div style="padding:2px; border-radius:50%; '
         f'background:linear-gradient(145deg,#388e3c,#1b5e20); '
         f'box-shadow:0 0 12px rgba(76,175,80,0.3); margin-bottom:2px;">'
         f'<img src="data:image/png;base64,{logo_b64}" '
-        f'style="border-radius:50%; width:90px; height:90px; ' 
+        f'style="border-radius:50%; width:90px; height:90px; '
         f'display:block; object-fit:cover; background:#0a0d12;"/>'
         f'</div>'
         f'<div style="font-size:18px; font-weight:900; color:#ffffff; '
@@ -822,7 +751,7 @@ with st.sidebar:
         f'<div style="font-size:12px; font-weight:700; letter-spacing:1px; '
         f'text-transform:uppercase; padding:1px 8px; border-radius:20px; '
         f'background:rgba(46,125,50,0.15); border:1px solid rgba(76,175,80,0.25); '
-        f'color:#ffffff; margin-bottom:7px;">' 
+        f'color:#ffffff; margin-bottom:7px;">'
         f'{"👑 Admin" if st.session_state.role == "admin" else "🌿 Field User"}'
         f'</div>'
         f'<div style="font-size:14px; font-weight:700; color:#ffffff; '
@@ -831,17 +760,17 @@ with st.sidebar:
         unsafe_allow_html=True)
 
     nav_opts = (
-    ["Live Dashboard","Analysis","System Logs","Users"]
-    if st.session_state.role =="admin"
-    else ["Live Dashboard", "Analysis"]
+        ["Live Dashboard","Analysis","System Logs","Users"]
+        if st.session_state.role == "admin"
+        else ["Live Dashboard", "Analysis"]
     )
 
     raw_page = st.radio("", nav_opts, label_visibility="hidden", key="nav_radio")
     page_map = {
-    "Live Dashboard": "DASHBOARD",
-    "Analysis":       "ANALYSIS",
-    "System Logs":    "LOGS",
-    "Users":          "USERS",
+        "Live Dashboard": "DASHBOARD",
+        "Analysis":       "ANALYSIS",
+        "System Logs":    "LOGS",
+        "Users":          "USERS",
     }
     page = page_map.get(raw_page, "DASHBOARD")
 
@@ -863,14 +792,14 @@ TEMP_LOW, TEMP_HIGH = 15,  30
 HUM_LOW,  HUM_HIGH  = 50,  85
 
 # ============================================================
-# PAGE: LIVE DASHBOARD (unchanged)
+# PAGE: LIVE DASHBOARD
 # ============================================================
 if page == "DASHBOARD":
     st.markdown(
         '<div style="padding:6px 12px 2px;">'
         '<div style="font-size:20px;font-weight:900;color:#fff;line-height:1.2;">'
         'Real-Time Monitoring</div>'
-       '<div style="font-size:20px;color:#66bb6a;letter-spacing:1px;margin-top:-75px;font-weight:bold;">'
+        '<div style="font-size:20px;color:#66bb6a;letter-spacing:1px;margin-top:-75px;font-weight:bold;">'
         'Greenhouse Overview — AgriBot-AI</div>'
         '</div>',
         unsafe_allow_html=True)
@@ -979,7 +908,7 @@ if page == "DASHBOARD":
             st.success("✅ All parameters in range.")
 
 # ============================================================
-# PAGE: ANALYSIS (unchanged)
+# PAGE: ANALYSIS
 # ============================================================
 elif page == "ANALYSIS":
     st.markdown(
@@ -1044,13 +973,13 @@ elif page == "ANALYSIS":
         st.warning("No data available yet.")
 
 # ============================================================
-# PAGE: SYSTEM LOGS (unchanged)
+# PAGE: SYSTEM LOGS
 # ============================================================
 elif page == "LOGS":
     st.markdown(
         '<div style="padding:6px 12px 4px;">'
         '<div style="font-size:18px;font-weight:900;color:#fff;">System Logs</div>'
-           '<div style="font-size:20px;color:#66bb6a;letter-spacing:1px;margin-top:-75px;font-weight:bold;">'
+        '<div style="font-size:20px;color:#66bb6a;letter-spacing:1px;margin-top:-75px;font-weight:bold;">'
         'Last 24 hours</div></div>',
         unsafe_allow_html=True)
 
@@ -1088,13 +1017,13 @@ elif page == "LOGS":
         st.info("No logs available.")
 
 # ============================================================
-# PAGE: USER MANAGEMENT (unchanged)
+# PAGE: USER MANAGEMENT
 # ============================================================
 elif page == "USERS":
     st.markdown(
         '<div style="padding:6px 12px 4px;">'
         '<div style="font-size:18px;font-weight:900;color:#fff;">Admin Panel</div>'
-           '<div style="font-size:20px;color:#66bb6a;letter-spacing:1px;margin-top:-75px;font-weight:bold;">'
+        '<div style="font-size:20px;color:#66bb6a;letter-spacing:1px;margin-top:-75px;font-weight:bold;">'
         'Registered accounts</div></div>',
         unsafe_allow_html=True)
 
