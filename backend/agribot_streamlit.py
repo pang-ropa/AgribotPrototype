@@ -482,34 +482,48 @@ div[data-testid="stMetricValue"] {
 st.markdown(OPTIMIZED_CSS, unsafe_allow_html=True)
 
 # ============================================================
-# ADDITIONAL HIDING (TARGETS THE EXACT ELEMENTS + JS BACKUP)
+# 🔥 BULLETPROOF HIDING – MUTATIONOBSERVER + CSS 🔥
 # ============================================================
 st.markdown("""
 <style>
-/* Force‑hide the "Hosted with Streamlit" badge and profile container */
+/* First line of defence – hide by stable attributes */
 a[href*="streamlit.io/cloud"] { display: none !important; }
 div[class*="profileContainer"] { display: none !important; }
+footer { display: none !important; }
 </style>
+
 <script>
+// Function that removes all offending elements
 function removeStreamlitChrome() {
-    // Remove hosted badge
-    const badge = document.querySelector('a[href*="streamlit.io/cloud"]');
-    if (badge) badge.remove();
-    // Remove profile container
-    const profile = document.querySelector('div[class*="profileContainer"]');
-    if (profile) profile.remove();
-    // Also remove any footer (in case CSS failed)
-    const footer = document.querySelector('footer');
-    if (footer) footer.remove();
+    // Selectors – update these if Streamlit ever changes the class names
+    const selectors = [
+        'a[href*="streamlit.io/cloud"]',
+        'div[class*="profileContainer"]',
+        'footer'
+    ];
+    selectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => el.remove());
+    });
 }
-// Run after page load
+
+// Run once on page load
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', removeStreamlitChrome);
 } else {
     removeStreamlitChrome();
 }
-// Run periodically in case of dynamic reloads (every 2 seconds)
-setInterval(removeStreamlitChrome, 2000);
+
+// MutationObserver – watches for any new elements added to the DOM
+const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.addedNodes.length) {
+            removeStreamlitChrome();
+        }
+    });
+});
+
+// Start observing the entire document
+observer.observe(document.documentElement, { childList: true, subtree: true });
 </script>
 """, unsafe_allow_html=True)
 
