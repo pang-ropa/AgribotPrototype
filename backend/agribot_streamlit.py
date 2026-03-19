@@ -141,8 +141,10 @@ section.main > div {
 
 /* ── 4. HIDE STREAMLIT CHROME ─────────────────────────────── */
 #MainMenu,
-#footer, {
+#footer,
+.css-1dp5vir {
     display: none !important;
+    visibility: hidden !important;
 }
 header,
 [data-testid="stHeader"],
